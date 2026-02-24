@@ -33,6 +33,8 @@ echo "   ✓ architect.md"
 echo "   ✓ test-writer.md"
 echo "   ✓ developer.md"
 echo "   ✓ reviewer.md"
+echo "   ✓ qa.md"
+echo "   ✓ functionality-analyst.md"
 
 # Copy commands
 echo ""
@@ -45,17 +47,8 @@ echo "   ✓ workflow:bugfix"
 echo "   ✓ workflow:audit"
 echo "   ✓ workflow:docs"
 echo "   ✓ workflow:sync"
-
-# Copy CLAUDE.md only if it doesn't exist
-echo ""
-if [ ! -f "./CLAUDE.md" ]; then
-    echo "📋 Copying CLAUDE.md..."
-    cp "$SCRIPT_DIR/CLAUDE.md" ./CLAUDE.md
-    echo "   ✓ CLAUDE.md created"
-else
-    echo "📋 CLAUDE.md already exists — not overwriting"
-    echo "   (check $SCRIPT_DIR/CLAUDE.md to see the workflow rules)"
-fi
+echo "   ✓ workflow:improve"
+echo "   ✓ workflow:functionalities"
 
 # Create specs/ and docs/ structure if they don't exist
 echo ""
