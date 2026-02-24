@@ -28,6 +28,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 echo "🤖 Copying agents..."
 mkdir -p .claude/agents
 cp "$SCRIPT_DIR/.claude/agents/"*.md .claude/agents/
+echo "   ✓ discovery.md"
 echo "   ✓ analyst.md"
 echo "   ✓ architect.md"
 echo "   ✓ test-writer.md"

@@ -18,6 +18,7 @@ The setup script (`scripts/setup.sh`) copies agents, commands, and CLAUDE.md int
 ### Architecture
 
 **Agents** (`.claude/agents/`) — subagent definitions with YAML frontmatter (`name`, `description`, `tools`, `model`):
+- `discovery.md` (claude-opus-4-6) — pre-pipeline conversational agent: takes raw ideas, discusses with the user, challenges the concept, produces an Idea Brief. The only agent with extended user back-and-forth. Outputs `docs/.workflow/idea-brief.md`
 - `analyst.md` (claude-opus-4-6) — full BA: requirements with acceptance criteria, MoSCoW priorities, traceability matrix, impact analysis. Outputs `specs/[domain]-requirements.md`
 - `architect.md` (claude-opus-4-6) — designs architecture with failure modes, security, performance budgets. Maintains specs/ and docs/. Outputs `specs/[domain]-architecture.md`
 - `test-writer.md` (claude-opus-4-6) — writes failing tests before code (TDD red phase), priority-driven (Must first), references requirement IDs for traceability
@@ -27,8 +28,8 @@ The setup script (`scripts/setup.sh`) copies agents, commands, and CLAUDE.md int
 - `functionality-analyst.md` (claude-opus-4-6, read-only) — maps what the codebase does, outputs structured functionality inventory
 
 **Commands** (`.claude/commands/`) — slash command orchestrators that chain agents in sequence:
-- `workflow-new.md` — full chain (all 6 agents) for greenfield projects
-- `workflow-feature.md` — full chain for existing projects (context-aware)
+- `workflow-new.md` — full chain (discovery + all 6 agents) for greenfield projects
+- `workflow-feature.md` — full chain for existing projects (discovery conditional on vague descriptions)
 - `workflow-improve.md` — no architect; analyst → test-writer → developer → QA → reviewer
 - `workflow-bugfix.md` — reduced chain with bug reproduction test + QA validation
 - `workflow-audit.md` — reviewer only (read-only analysis)
@@ -62,20 +63,23 @@ When specs or docs conflict with the codebase, the codebase wins. Agents must fl
 ## Main Workflow
 
 ```
-Idea → Analyst (BA: requirements, acceptance criteria, MoSCoW priorities, traceability)
-     → Architect (design with failure modes, security, performance budgets)
-     → Test Writer (TDD by priority: Must first, then Should, then Could)
-     → Developer (implements module by module)
-     → Compiler (automatic validation)
-     → QA (end-to-end validation, acceptance criteria verification, exploratory testing)
-     → Reviewer (audits code, verifies specs/docs accuracy)
-     → Git (automatic versioning)
+Raw Idea ("build a CRM tool")
+  → Discovery (explores, challenges, clarifies the IDEA with the user)
+  → Idea Brief (clear, validated concept)
+  → Analyst (BA: requirements, acceptance criteria, MoSCoW priorities, traceability)
+  → Architect (design with failure modes, security, performance budgets)
+  → Test Writer (TDD by priority: Must first, then Should, then Could)
+  → Developer (implements module by module)
+  → Compiler (automatic validation)
+  → QA (end-to-end validation, acceptance criteria verification, exploratory testing)
+  → Reviewer (audits code, verifies specs/docs accuracy)
+  → Git (automatic versioning)
 ```
 
 ## Traceability Chain
 Every requirement flows through the entire pipeline via unique IDs:
 ```
-Analyst assigns REQ-XXX-001 → Architect maps to module → Test Writer writes TEST-XXX-001 → Developer implements → QA verifies acceptance criteria → Reviewer audits completeness
+Discovery validates the idea → Analyst assigns REQ-XXX-001 → Architect maps to module → Test Writer writes TEST-XXX-001 → Developer implements → QA verifies acceptance criteria → Reviewer audits completeness
 ```
 
 ## Global Rules
@@ -172,13 +176,13 @@ docs/
 ```
 /workflow:new "description of the idea"
 ```
-Full chain: analyst → architect → test-writer → developer → QA → reviewer
+Full chain: discovery → analyst → architect → test-writer → developer → QA → reviewer. Discovery explores the idea with the user first.
 
 ### Add feature to existing project
 ```
 /workflow:feature "description of the feature" [--scope="area"]
 ```
-Full chain: analyst → architect → test-writer → developer → QA → reviewer. The analyst reads the codebase + specs first.
+Full chain: (discovery if vague) → analyst → architect → test-writer → developer → QA → reviewer. Discovery is invoked when the feature description is vague; skipped for specific, well-scoped features.
 
 ### Improve existing code
 ```
