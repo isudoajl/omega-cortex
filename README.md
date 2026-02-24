@@ -16,10 +16,12 @@ This workflow solves all of that.
 
 ## How It Works
 
-Seven specialized agents execute in chain, each with a single responsibility:
+Eight specialized agents execute in chain, each with a single responsibility:
 
 ```
 Your Idea
+  ↓
+💡 Discovery     → Explores and challenges your idea through conversation
   ↓
 🔍 Analyst       → Questions your idea, defines requirements with acceptance criteria
   ↓
@@ -45,12 +47,13 @@ Each agent runs as a Claude Code subagent with its own isolated context window. 
 Every requirement flows through the entire pipeline via unique IDs:
 
 ```
-Analyst assigns REQ-XXX-001
-  → Architect maps to module
-    → Test Writer writes TEST-XXX-001
-      → Developer implements
-        → QA verifies acceptance criteria
-          → Reviewer audits completeness
+Discovery validates the idea
+  → Analyst assigns REQ-XXX-001
+    → Architect maps to module
+      → Test Writer writes TEST-XXX-001
+        → Developer implements
+          → QA verifies acceptance criteria
+            → Reviewer audits completeness
 ```
 
 Requirements use MoSCoW priorities (Must/Should/Could/Won't). Tests are written in priority order — Must requirements get exhaustive coverage first.
@@ -65,6 +68,13 @@ Codebase  →  specs/  →  docs/
 The codebase always wins. When specs or docs are outdated, agents flag the discrepancy and fix it. Every agent reads the actual code before trusting any documentation.
 
 ## Agents
+
+### 💡 Discovery (`discovery.md`)
+**Model:** Opus | **Tools:** Read, Grep, Glob, WebFetch, WebSearch
+
+The idea validator. The only agent that engages in extended back-and-forth with the user. Takes a raw idea, explores the vision, challenges assumptions, identifies risks, and produces a clear Idea Brief for the Analyst. Ensures the concept is well-understood before the pipeline invests effort in requirements and architecture.
+
+**Output:** `docs/.workflow/idea-brief.md`
 
 ### 🔍 Analyst (`analyst.md`)
 **Model:** Opus | **Tools:** Read, Grep, Glob, WebFetch, WebSearch
@@ -121,8 +131,8 @@ The cartographer. Reads the codebase (ignoring docs — code is the single sourc
 
 | Command | Description | Agents Used |
 |---------|-------------|-------------|
-| `/workflow:new "idea"` | Build something from scratch | analyst → architect → test-writer → developer → QA → reviewer |
-| `/workflow:feature "feature"` | Add to existing project | analyst → architect → test-writer → developer → QA → reviewer |
+| `/workflow:new "idea"` | Build something from scratch | discovery → analyst → architect → test-writer → developer → QA → reviewer |
+| `/workflow:feature "feature"` | Add to existing project | (discovery) → analyst → architect → test-writer → developer → QA → reviewer |
 | `/workflow:improve "improvement"` | Refactor, optimize, or enhance | analyst → test-writer → developer → QA → reviewer |
 | `/workflow:bugfix "bug"` | Fix a bug | analyst → test-writer → developer → QA → reviewer |
 | `/workflow:audit` | Full code + specs audit | Reviewer only |
@@ -270,19 +280,20 @@ If your project already has a `CLAUDE.md`, merge the workflow rules from this pr
 ### `/workflow:new` — Full Pipeline
 
 ```
-Step 1: Analyst    → questions user, generates requirements with IDs, priorities, acceptance criteria
-Step 2: Architect  → designs architecture with failure modes, security, performance budgets
-Step 3: Test Writer→ writes failing tests by priority (Must first), references requirement IDs
-Step 4: Developer  → implements module by module until green, commits each
-Step 5: QA         → validates acceptance criteria, runs end-to-end and exploratory tests
-Step 6: Reviewer   → audits code + specs drift, approves or sends back
-Step 7: Iteration  → developer fixes → reviewer re-reviews (scoped to fix only)
-Step 8: Versioning → final commit, version tag, cleanup temp files
+Step 1: Discovery  → explores and challenges the idea with the user, produces Idea Brief
+Step 2: Analyst    → questions user, generates requirements with IDs, priorities, acceptance criteria
+Step 3: Architect  → designs architecture with failure modes, security, performance budgets
+Step 4: Test Writer→ writes failing tests by priority (Must first), references requirement IDs
+Step 5: Developer  → implements module by module until green, commits each
+Step 6: QA         → validates acceptance criteria, runs end-to-end and exploratory tests
+Step 7: Reviewer   → audits code + specs drift, approves or sends back
+Step 8: Iteration  → developer fixes → reviewer re-reviews (scoped to fix only)
+Step 9: Versioning → final commit, version tag, cleanup temp files
 ```
 
 ### `/workflow:feature` — Same as New, Context-Aware
 
-Same pipeline but every agent reads existing code first. The analyst checks for specs drift and performs impact analysis. The test-writer matches existing test conventions. All previous tests must continue passing (regression).
+Same pipeline but every agent reads existing code first. Discovery is invoked when the feature description is vague; skipped for specific, well-scoped features. The analyst checks for specs drift and performs impact analysis. The test-writer matches existing test conventions. All previous tests must continue passing (regression).
 
 ### `/workflow:improve` — Refactor and Optimize
 
