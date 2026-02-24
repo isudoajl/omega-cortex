@@ -18,22 +18,25 @@ The setup script (`scripts/setup.sh`) copies agents, commands, and CLAUDE.md int
 ### Architecture
 
 **Agents** (`.claude/agents/`) — subagent definitions with YAML frontmatter (`name`, `description`, `tools`, `model`):
-- `analyst.md` (opus) — questions requirements, reads codebase + specs, outputs `specs/[domain]-requirements.md`
-- `architect.md` (opus) — designs architecture, maintains specs/ and docs/, outputs `specs/[domain]-architecture.md`
-- `test-writer.md` (sonnet) — writes failing tests before code (TDD red phase), works module by module
-- `developer.md` (sonnet) — implements minimum code to pass tests, commits per module
-- `reviewer.md` (opus, read-only) — audits for bugs/security/performance/drift, outputs review reports
+- `analyst.md` (claude-opus-4-6) — full BA: requirements with acceptance criteria, MoSCoW priorities, traceability matrix, impact analysis. Outputs `specs/[domain]-requirements.md`
+- `architect.md` (claude-opus-4-6) — designs architecture with failure modes, security, performance budgets. Maintains specs/ and docs/. Outputs `specs/[domain]-architecture.md`
+- `test-writer.md` (claude-opus-4-6) — writes failing tests before code (TDD red phase), priority-driven (Must first), references requirement IDs for traceability
+- `developer.md` (claude-opus-4-6) — implements minimum code to pass tests, commits per module
+- `qa.md` (claude-opus-4-6) — end-to-end validation, acceptance criteria verification, traceability matrix completion, exploratory testing
+- `reviewer.md` (claude-opus-4-6, read-only) — audits for bugs/security/performance/drift, outputs review reports
+- `functionality-analyst.md` (claude-opus-4-6, read-only) — maps what the codebase does, outputs structured functionality inventory
 
 **Commands** (`.claude/commands/`) — slash command orchestrators that chain agents in sequence:
-- `workflow-new.md` — full chain (all 5 agents) for greenfield projects
+- `workflow-new.md` — full chain (all 6 agents) for greenfield projects
 - `workflow-feature.md` — full chain for existing projects (context-aware)
-- `workflow-improve.md` — no architect; analyst → test-writer → developer → reviewer
-- `workflow-bugfix.md` — reduced chain with bug reproduction test
+- `workflow-improve.md` — no architect; analyst → test-writer → developer → QA → reviewer
+- `workflow-bugfix.md` — reduced chain with bug reproduction test + QA validation
 - `workflow-audit.md` — reviewer only (read-only analysis)
 - `workflow-docs.md` — architect only (documentation generation)
 - `workflow-sync.md` — architect only (drift detection and fix)
+- `workflow-functionalities.md` — functionality-analyst only (codebase functionality inventory)
 
-All commands accept `--scope="area"` to limit context window usage. Agent model assignments (opus vs sonnet) are set in the YAML frontmatter.
+All commands accept `--scope="area"` to limit context window usage. Agent model assignments are set in the YAML frontmatter.
 
 ---
 
@@ -43,7 +46,7 @@ Everything below this line defines the workflow behavior when this CLAUDE.md is 
 
 ---
 
-# 🧠 Claude Code Quality Workflow
+# Claude Code Quality Workflow
 
 ## Philosophy
 This project uses a multi-agent workflow designed to produce the highest quality code possible.
@@ -59,13 +62,20 @@ When specs or docs conflict with the codebase, the codebase wins. Agents must fl
 ## Main Workflow
 
 ```
-Idea → Analyst (questions, clarifies, reads codebase + specs)
-     → Architect (designs, updates specs/ and docs/)
-     → Test Writer (TDD + edge cases)
+Idea → Analyst (BA: requirements, acceptance criteria, MoSCoW priorities, traceability)
+     → Architect (design with failure modes, security, performance budgets)
+     → Test Writer (TDD by priority: Must first, then Should, then Could)
      → Developer (implements module by module)
      → Compiler (automatic validation)
+     → QA (end-to-end validation, acceptance criteria verification, exploratory testing)
      → Reviewer (audits code, verifies specs/docs accuracy)
      → Git (automatic versioning)
+```
+
+## Traceability Chain
+Every requirement flows through the entire pipeline via unique IDs:
+```
+Analyst assigns REQ-XXX-001 → Architect maps to module → Test Writer writes TEST-XXX-001 → Developer implements → QA verifies acceptance criteria → Reviewer audits completeness
 ```
 
 ## Global Rules
@@ -77,6 +87,9 @@ Idea → Analyst (questions, clarifies, reads codebase + specs)
 5. **Every assumption must be explicit** — technical + human-readable summary
 6. **Codebase is king** — when in doubt, read the actual code
 7. **Keep specs/ and docs/ in sync** — every code change must update relevant specs and docs
+8. **Every requirement has acceptance criteria** — "it should work" is not acceptable
+9. **Every requirement has a priority** — Must/Should/Could/Won't (MoSCoW)
+10. **Every requirement is traceable** — from ID through tests to implementation
 
 ## Context Window Management
 
@@ -159,25 +172,25 @@ docs/
 ```
 /workflow:new "description of the idea"
 ```
-Activates the full chain: analyst → architect → test-writer → developer → reviewer
+Full chain: analyst → architect → test-writer → developer → QA → reviewer
 
 ### Add feature to existing project
 ```
 /workflow:feature "description of the feature" [--scope="area"]
 ```
-The analyst reads the codebase + specs first, then follows the chain.
+Full chain: analyst → architect → test-writer → developer → QA → reviewer. The analyst reads the codebase + specs first.
 
 ### Improve existing code
 ```
 /workflow:improve "description of the improvement" [--scope="area"]
 ```
-Reduced chain (no architect): analyst → test-writer (regression) → developer (refactor) → reviewer
+Reduced chain (no architect): analyst → test-writer (regression) → developer (refactor) → QA → reviewer
 
 ### Fix a bug
 ```
 /workflow:bugfix "description of the bug" [--scope="file or module"]
 ```
-Reduced chain: analyst → test-writer (reproduces the bug) → developer → reviewer
+Reduced chain: analyst → test-writer (reproduces the bug) → developer → QA → reviewer
 
 ### Audit existing code
 ```
@@ -196,6 +209,12 @@ Architect only: reads the codebase, generates/updates specs/ and docs/.
 /workflow:sync [--scope="milestone or module"]
 ```
 Architect only: reads the codebase, compares against specs/ and docs/, flags drift, updates outdated files.
+
+### Map codebase functionalities
+```
+/workflow:functionalities [--scope="module or area"]
+```
+Functionality-analyst only: reads the codebase and produces a structured inventory of all functionalities (endpoints, services, models, handlers, etc.).
 
 ## Conventions
 - Preferred language: Rust (or whatever the user defines)
