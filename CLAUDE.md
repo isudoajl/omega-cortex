@@ -1,3 +1,48 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## About This Repository
+
+This is a **multi-agent workflow toolkit** for Claude Code — not an application. It consists of agent definitions (`.claude/agents/*.md`), slash commands (`.claude/commands/*.md`), a setup script, and the CLAUDE.md rules file. All of these are designed to be **copied into target projects** to enable structured TDD workflows.
+
+### Development
+
+There is no build system, test suite, or runtime. To test changes:
+1. Edit agent/command files in this repo
+2. Copy them to a target project: `bash scripts/setup.sh` (run from the target project directory)
+3. Run the workflow commands in the target project via Claude Code
+
+The setup script (`scripts/setup.sh`) copies agents, commands, and CLAUDE.md into the current directory. It creates `specs/` and `docs/` scaffolding if missing and never overwrites existing files (except agents and commands which are always overwritten).
+
+### Architecture
+
+**Agents** (`.claude/agents/`) — subagent definitions with YAML frontmatter (`name`, `description`, `tools`, `model`):
+- `analyst.md` (opus) — questions requirements, reads codebase + specs, outputs `specs/[domain]-requirements.md`
+- `architect.md` (opus) — designs architecture, maintains specs/ and docs/, outputs `specs/[domain]-architecture.md`
+- `test-writer.md` (sonnet) — writes failing tests before code (TDD red phase), works module by module
+- `developer.md` (sonnet) — implements minimum code to pass tests, commits per module
+- `reviewer.md` (opus, read-only) — audits for bugs/security/performance/drift, outputs review reports
+
+**Commands** (`.claude/commands/`) — slash command orchestrators that chain agents in sequence:
+- `workflow-new.md` — full chain (all 5 agents) for greenfield projects
+- `workflow-feature.md` — full chain for existing projects (context-aware)
+- `workflow-improve.md` — no architect; analyst → test-writer → developer → reviewer
+- `workflow-bugfix.md` — reduced chain with bug reproduction test
+- `workflow-audit.md` — reviewer only (read-only analysis)
+- `workflow-docs.md` — architect only (documentation generation)
+- `workflow-sync.md` — architect only (drift detection and fix)
+
+All commands accept `--scope="area"` to limit context window usage. Agent model assignments (opus vs sonnet) are set in the YAML frontmatter.
+
+---
+
+# Workflow Rules (copied to target projects)
+
+Everything below this line defines the workflow behavior when this CLAUDE.md is installed in a target project.
+
+---
+
 # 🧠 Claude Code Quality Workflow
 
 ## Philosophy
