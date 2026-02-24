@@ -1,6 +1,6 @@
-# 🧠 Claude Code Quality Workflow
+# Claude Code Quality Workflow
 
-A multi-agent orchestration system for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that produces high-quality code through structured validation layers. Instead of asking an AI to "build X" and hoping for the best, this workflow forces every piece of code through questioning, architecture design, test-driven development, implementation, and review — each handled by a specialized agent with its own context window.
+A multi-agent orchestration system for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) that produces high-quality code through structured validation layers. Instead of asking an AI to "build X" and hoping for the best, this workflow forces every piece of code through questioning, architecture design, test-driven development, implementation, QA validation, and review — each handled by a specialized agent with its own context window.
 
 ## The Problem
 
@@ -10,25 +10,28 @@ When you ask an AI to write code directly, it:
 - **Skips architecture** — jumping straight to implementation without thinking through design
 - **Ignores context** — not reading existing code conventions, patterns, or documentation
 - **Lets documentation rot** — specs and docs drift out of sync with the actual codebase
+- **Has no traceability** — requirements, tests, and code aren't linked, so gaps go unnoticed
 
 This workflow solves all of that.
 
 ## How It Works
 
-Five specialized agents execute in chain, each with a single responsibility:
+Seven specialized agents execute in chain, each with a single responsibility:
 
 ```
 Your Idea
   ↓
-🔍 Analyst       → Questions your idea, reads existing code, eliminates ambiguity
+🔍 Analyst       → Questions your idea, defines requirements with acceptance criteria
   ↓
-🏗️ Architect     → Designs the architecture, updates specs/ and docs/
+🏗️ Architect     → Designs architecture with failure modes, security, performance budgets
   ↓
-🧪 Test Writer   → Writes tests BEFORE code exists (TDD)
+🧪 Test Writer   → Writes tests BEFORE code exists (TDD, priority-driven)
   ↓
 💻 Developer     → Implements module by module until all tests pass
   ↓
-🔨 Compiler      → Automatic validation (Rust recommended)
+🔨 Compiler      → Automatic validation
+  ↓
+✅ QA            → Validates end-to-end functionality and acceptance criteria
   ↓
 👁️ Reviewer      → Audits for bugs, security, performance, and documentation drift
   ↓
@@ -36,6 +39,21 @@ Your Idea
 ```
 
 Each agent runs as a Claude Code subagent with its own isolated context window. The analyst's heavy reading doesn't eat into the developer's context. Work is scoped, incremental, and saved to disk at every step.
+
+## Traceability Chain
+
+Every requirement flows through the entire pipeline via unique IDs:
+
+```
+Analyst assigns REQ-XXX-001
+  → Architect maps to module
+    → Test Writer writes TEST-XXX-001
+      → Developer implements
+        → QA verifies acceptance criteria
+          → Reviewer audits completeness
+```
+
+Requirements use MoSCoW priorities (Must/Should/Could/Won't). Tests are written in priority order — Must requirements get exhaustive coverage first.
 
 ## Source of Truth
 
@@ -51,34 +69,39 @@ The codebase always wins. When specs or docs are outdated, agents flag the discr
 ### 🔍 Analyst (`analyst.md`)
 **Model:** Opus | **Tools:** Read, Grep, Glob, WebFetch, WebSearch
 
-The gatekeeper. Reads `specs/SPECS.md` to understand the project, scopes to the relevant area, reads the actual code, then questions everything that isn't clear. Never assumes — always asks. Generates a requirements document with explicit assumptions in both technical and plain language formats. Flags any drift between code and specs.
+The business analyst. Reads `specs/SPECS.md` to understand the project, scopes to the relevant area, reads the actual code, then questions everything that isn't clear. Never assumes — always asks. Assigns requirement IDs with MoSCoW priorities and explicit acceptance criteria. Performs impact analysis on existing code. Flags any drift between code and specs.
 
-**Output:** `specs/[domain]-requirements.md`
+**Output:** `specs/[domain]-requirements.md` with requirement IDs, acceptance criteria, traceability matrix
 
 ### 🏗️ Architect (`architect.md`)
 **Model:** Opus | **Tools:** Read, Write, Edit, Grep, Glob
 
-The designer. Takes the analyst's requirements and designs the system architecture before any code is written. Defines modules, interfaces, dependencies, and implementation order. Creates and updates spec files in `specs/` and documentation in `docs/`. Maintains both master indexes (`SPECS.md` and `DOCS.md`).
+The designer. Takes the analyst's requirements and designs the system architecture before any code is written. Defines modules, interfaces, dependencies, and implementation order. Plans failure modes and recovery strategies. Identifies security considerations and trust boundaries. Sets performance budgets. Creates and updates spec files in `specs/` and documentation in `docs/`.
 
 Also handles `/workflow:docs` and `/workflow:sync` — reading the codebase and bringing specs/docs back in sync.
 
 **Output:** `specs/[domain]-architecture.md`, updated specs and docs
 
 ### 🧪 Test Writer (`test-writer.md`)
-**Model:** Sonnet | **Tools:** Read, Write, Edit, Bash, Glob, Grep
+**Model:** Opus | **Tools:** Read, Write, Edit, Bash, Glob, Grep
 
-The contract writer. Writes all tests BEFORE any implementation exists. Defines what the code must do through tests — happy paths, error handling, and edge cases. Follows existing test conventions found in the codebase. Works one module at a time, saving to disk after each.
-
-Always considers the 10 worst scenarios: empty input, negative numbers, overflow, unicode, concurrency, disk full, network failure, huge input, inconsistent data, and interrupted operations.
+The contract writer. Writes all tests BEFORE any implementation exists, driven by requirement priorities — Must requirements first (exhaustive coverage), then Should, then Could. References requirement IDs for full traceability. Covers acceptance criteria, failure modes, security scenarios, and edge cases. Works one module at a time, saving to disk after each.
 
 **Output:** Test files that must fail initially (red phase of TDD)
 
 ### 💻 Developer (`developer.md`)
-**Model:** Sonnet | **Tools:** Read, Write, Edit, Bash, Glob, Grep
+**Model:** Opus | **Tools:** Read, Write, Edit, Bash, Glob, Grep
 
 The builder. Implements the minimum code needed to pass all tests, one module at a time in the order defined by the architect. Matches existing code conventions by grepping the codebase. Never advances to the next module until the current one's tests all pass. Commits after each module.
 
 **Cycle:** Red → Green → Refactor → Commit → Next
+
+### ✅ QA (`qa.md`)
+**Model:** Opus | **Tools:** Read, Write, Edit, Bash, Glob, Grep
+
+The validator. Bridges the gap between "tests pass" and "it works as the user expects." Validates acceptance criteria for each requirement. Runs end-to-end flows, not just unit tests. Performs exploratory testing to find issues that scripted tests miss. Verifies failure modes and security scenarios actually behave correctly. Checks traceability matrix completeness.
+
+**Output:** QA validation report with acceptance criteria results and exploratory findings
 
 ### 👁️ Reviewer (`reviewer.md`)
 **Model:** Opus | **Tools:** Read, Grep, Glob (read-only)
@@ -87,17 +110,25 @@ The auditor. Reviews all implemented code looking for bugs, security vulnerabili
 
 **Output:** Review report with critical/minor findings, specs drift, and final verdict
 
+### 📊 Functionality Analyst (`functionality-analyst.md`)
+**Model:** Opus | **Tools:** Read, Grep, Glob (read-only)
+
+The cartographer. Reads the codebase (ignoring docs — code is the single source of truth) and produces a structured inventory of everything the system does: endpoints, services, models, CLI commands, handlers, integrations, workers, migrations. Identifies dead code and unused exports. Notes cross-module dependencies.
+
+**Output:** `docs/functionalities/[domain]-functionalities.md` and master index
+
 ## Commands
 
 | Command | Description | Agents Used |
 |---------|-------------|-------------|
-| `/workflow:new "idea"` | Build something from scratch | All 5 in chain |
-| `/workflow:feature "feature"` | Add to existing project | All 5 in chain |
-| `/workflow:improve "improvement"` | Refactor, optimize, or enhance existing code | analyst → test-writer → developer → reviewer |
-| `/workflow:bugfix "bug"` | Fix a bug | analyst → test-writer → developer → reviewer |
+| `/workflow:new "idea"` | Build something from scratch | analyst → architect → test-writer → developer → QA → reviewer |
+| `/workflow:feature "feature"` | Add to existing project | analyst → architect → test-writer → developer → QA → reviewer |
+| `/workflow:improve "improvement"` | Refactor, optimize, or enhance | analyst → test-writer → developer → QA → reviewer |
+| `/workflow:bugfix "bug"` | Fix a bug | analyst → test-writer → developer → QA → reviewer |
 | `/workflow:audit` | Full code + specs audit | Reviewer only |
 | `/workflow:docs` | Generate/update specs & docs | Architect only |
 | `/workflow:sync` | Fix drift between code and specs/docs | Architect only |
+| `/workflow:functionalities` | Map all codebase functionalities | Functionality Analyst only |
 
 ### Scope Parameter
 
@@ -136,8 +167,9 @@ git clone <repo-url> claude-workflow
 mkdir -p .claude/agents .claude/commands
 cp claude-workflow/.claude/agents/*.md .claude/agents/
 cp claude-workflow/.claude/commands/*.md .claude/commands/
-cp claude-workflow/CLAUDE.md ./CLAUDE.md
 ```
+
+> **Note:** Do not copy CLAUDE.md — each project should have its own. Merge the workflow rules from `claude-workflow/CLAUDE.md` into your project's CLAUDE.md manually (see [Integrate With Existing CLAUDE.md](#integrate-with-existing-claudemd)).
 
 ### Setup Script (new project)
 
@@ -147,7 +179,7 @@ cd my-project
 bash ../claude-workflow/scripts/setup.sh
 ```
 
-The setup script creates `specs/SPECS.md` and `docs/DOCS.md` if they don't exist, and never overwrites existing files.
+The setup script copies agents and commands, creates `specs/SPECS.md` and `docs/DOCS.md` if they don't exist, and never overwrites existing files (except agents and commands which are always kept in sync).
 
 ## Project Structure
 
@@ -173,14 +205,17 @@ your-project/
 │   ├── .workflow/             ← Temporary agent checkpoints (auto-cleaned)
 │   ├── reviews/               ← Code review reports
 │   ├── audits/                ← Audit reports
-│   └── sync/                  ← Sync/drift reports
+│   ├── sync/                  ← Sync/drift reports
+│   └── functionalities/       ← Codebase functionality inventories
 ├── .claude/
 │   ├── agents/                ← Subagent definitions
 │   │   ├── analyst.md
 │   │   ├── architect.md
 │   │   ├── test-writer.md
 │   │   ├── developer.md
-│   │   └── reviewer.md
+│   │   ├── qa.md
+│   │   ├── reviewer.md
+│   │   └── functionality-analyst.md
 │   └── commands/              ← Slash commands
 │       ├── workflow-new.md
 │       ├── workflow-feature.md
@@ -188,7 +223,8 @@ your-project/
 │       ├── workflow-bugfix.md
 │       ├── workflow-audit.md
 │       ├── workflow-docs.md
-│       └── workflow-sync.md
+│       ├── workflow-sync.md
+│       └── workflow-functionalities.md
 └── .gitignore
 ```
 
@@ -227,25 +263,26 @@ Your agent instructions here...
 Edit commands in `.claude/commands/` to change agent chain order, add steps, or create new workflow modes.
 
 ### Integrate With Existing CLAUDE.md
-If your project already has a `CLAUDE.md`, merge the workflow rules from this project's `CLAUDE.md` into yours — specifically the Source of Truth Hierarchy, Global Rules, and Context Window Management sections.
+If your project already has a `CLAUDE.md`, merge the workflow rules from this project's `CLAUDE.md` into yours — specifically the Source of Truth Hierarchy, Global Rules, Traceability Chain, and Context Window Management sections.
 
 ## Workflow Details
 
 ### `/workflow:new` — Full Pipeline
 
 ```
-Step 1: Analyst    → reads specs index, scopes, questions user, generates requirements
-Step 2: Architect  → reads scoped code, designs architecture, updates specs/ and docs/
-Step 3: Test Writer→ writes failing tests for each module (TDD red phase)
+Step 1: Analyst    → questions user, generates requirements with IDs, priorities, acceptance criteria
+Step 2: Architect  → designs architecture with failure modes, security, performance budgets
+Step 3: Test Writer→ writes failing tests by priority (Must first), references requirement IDs
 Step 4: Developer  → implements module by module until green, commits each
-Step 5: Reviewer   → audits code + specs drift, approves or sends back
-Step 6: Iteration  → developer fixes → reviewer re-reviews (scoped to fix only)
-Step 7: Versioning → final commit, version tag, cleanup temp files
+Step 5: QA         → validates acceptance criteria, runs end-to-end and exploratory tests
+Step 6: Reviewer   → audits code + specs drift, approves or sends back
+Step 7: Iteration  → developer fixes → reviewer re-reviews (scoped to fix only)
+Step 8: Versioning → final commit, version tag, cleanup temp files
 ```
 
 ### `/workflow:feature` — Same as New, Context-Aware
 
-Same pipeline but every agent reads existing code first. The analyst checks for specs drift. The test-writer matches existing test conventions. All previous tests must continue passing (regression).
+Same pipeline but every agent reads existing code first. The analyst checks for specs drift and performs impact analysis. The test-writer matches existing test conventions. All previous tests must continue passing (regression).
 
 ### `/workflow:improve` — Refactor and Optimize
 
@@ -253,7 +290,8 @@ Same pipeline but every agent reads existing code first. The analyst checks for 
 Step 1: Analyst    → reads current code, identifies what to improve (no new requirements)
 Step 2: Test Writer→ writes regression tests to lock in existing behavior
 Step 3: Developer  → refactors/optimizes, all tests must still pass
-Step 4: Reviewer   → verifies improvement is real, no behavior changes slipped in
+Step 4: QA         → validates behavior hasn't changed despite improvements
+Step 5: Reviewer   → verifies improvement is real, no behavior changes slipped in
 ```
 
 Skips the architect since the architecture already exists. The analyst focuses on code quality, performance, and patterns rather than questioning new requirements. Behavior stays the same — only the implementation gets better.
@@ -261,15 +299,16 @@ Skips the architect since the architecture already exists. The analyst focuses o
 ### `/workflow:bugfix` — Reduced Chain
 
 ```
-Step 1: Analyst    → locates bug in code (Grep), reads affected area only
+Step 1: Analyst    → locates bug in code (Grep), performs impact analysis
 Step 2: Test Writer→ writes a test that reproduces the bug (must fail)
 Step 3: Developer  → fixes bug, reproduction test passes, no regression
-Step 4: Reviewer   → verifies root cause fix (not a patch), checks specs
+Step 4: QA         → reproduces original scenario, validates root cause fix
+Step 5: Reviewer   → verifies root cause fix (not a patch), checks specs
 ```
 
 ### `/workflow:audit` — Read-Only Analysis
 
-Reviewer scans the codebase looking for security issues, performance problems, technical debt, dead code, missing tests, and documentation drift. On large codebases, works one milestone at a time with checkpoints. Produces a comprehensive report.
+Reviewer scans the codebase looking for security issues, performance problems, technical debt, dead code, missing tests, and documentation drift. On large codebases, works one milestone at a time with checkpoints. Produces a comprehensive report at `docs/audits/`.
 
 ### `/workflow:docs` — Documentation Generation
 
@@ -277,7 +316,11 @@ Architect reads the codebase (source of truth) and creates or updates specs and 
 
 ### `/workflow:sync` — Drift Detection and Fix
 
-Architect compares every spec and doc file against the actual code. Produces a drift report showing stale specs, missing specs, orphaned docs, and index gaps. Then fixes everything found.
+Architect compares every spec and doc file against the actual code. Produces a drift report showing stale specs, missing specs, orphaned docs, and index gaps. Then fixes everything found. Report saved to `docs/sync/`.
+
+### `/workflow:functionalities` — Codebase Inventory
+
+Functionality Analyst reads the source code (ignoring documentation) and maps everything the system does: endpoints, services, models, CLI commands, handlers, integrations, workers, and migrations. Identifies dead code and cross-module dependencies. Produces structured inventories at `docs/functionalities/`.
 
 ## Philosophy
 
@@ -286,7 +329,10 @@ Architect compares every spec and doc file against the actual code. Produces a d
 This workflow exists because:
 - Without constraints, AI assumes things and generates silent bugs
 - Tests written after code are biased toward what was built, not what should be built
+- Requirements without acceptance criteria and priorities lead to vague implementations
+- Traceability from requirement to test to code catches gaps that informal processes miss
 - A strict compiler (Rust) compensates for AI weaknesses in ways a dynamic language can't
+- QA validation catches issues that unit tests alone miss — "tests pass" doesn't mean "it works"
 - Code review by a separate instance catches what the original missed
 - Documenting before coding forces clarity of thought
 - Specs and docs drift silently — automated sync catches it before it becomes a liability
