@@ -107,6 +107,12 @@ Activates the full chain: analyst → architect → test-writer → developer �
 ```
 The analyst reads the codebase + specs first, then follows the chain.
 
+### Improve existing code
+```
+/workflow:improve "description of the improvement" [--scope="area"]
+```
+Reduced chain (no architect): analyst → test-writer (regression) → developer (refactor) → reviewer
+
 ### Fix a bug
 ```
 /workflow:bugfix "description of the bug" [--scope="file or module"]

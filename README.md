@@ -93,6 +93,7 @@ The auditor. Reviews all implemented code looking for bugs, security vulnerabili
 |---------|-------------|-------------|
 | `/workflow:new "idea"` | Build something from scratch | All 5 in chain |
 | `/workflow:feature "feature"` | Add to existing project | All 5 in chain |
+| `/workflow:improve "improvement"` | Refactor, optimize, or enhance existing code | analyst → test-writer → developer → reviewer |
 | `/workflow:bugfix "bug"` | Fix a bug | analyst → test-writer → developer → reviewer |
 | `/workflow:audit` | Full code + specs audit | Reviewer only |
 | `/workflow:docs` | Generate/update specs & docs | Architect only |
@@ -236,6 +237,17 @@ Step 7: Versioning → final commit, version tag, cleanup temp files
 ### `/workflow:feature` — Same as New, Context-Aware
 
 Same pipeline but every agent reads existing code first. The analyst checks for specs drift. The test-writer matches existing test conventions. All previous tests must continue passing (regression).
+
+### `/workflow:improve` — Refactor and Optimize
+
+```
+Step 1: Analyst    → reads current code, identifies what to improve (no new requirements)
+Step 2: Test Writer→ writes regression tests to lock in existing behavior
+Step 3: Developer  → refactors/optimizes, all tests must still pass
+Step 4: Reviewer   → verifies improvement is real, no behavior changes slipped in
+```
+
+Skips the architect since the architecture already exists. The analyst focuses on code quality, performance, and patterns rather than questioning new requirements. Behavior stays the same — only the implementation gets better.
 
 ### `/workflow:bugfix` — Reduced Chain
 
