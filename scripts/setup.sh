@@ -36,6 +36,7 @@ echo "   ✓ developer.md"
 echo "   ✓ reviewer.md"
 echo "   ✓ qa.md"
 echo "   ✓ functionality-analyst.md"
+echo "   ✓ codebase-expert.md"
 
 # Copy commands
 echo ""
@@ -50,6 +51,7 @@ echo "   ✓ workflow:docs"
 echo "   ✓ workflow:sync"
 echo "   ✓ workflow:improve"
 echo "   ✓ workflow:functionalities"
+echo "   ✓ workflow:understand"
 
 # Create specs/ and docs/ structure if they don't exist
 echo ""
@@ -111,6 +113,7 @@ echo "  /workflow:bugfix \"bug\"    → Fix a bug"
 echo "  /workflow:audit           → Audit code + specs drift"
 echo "  /workflow:docs            → Generate/update specs & docs"
 echo "  /workflow:sync            → Sync specs/docs with codebase"
+echo "  /workflow:understand      → Deep codebase comprehension"
 echo ""
 echo "  Source of truth: codebase → specs/ → docs/"
 echo ""

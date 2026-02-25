@@ -16,7 +16,7 @@ This workflow solves all of that.
 
 ## How It Works
 
-Eight specialized agents execute in chain, each with a single responsibility:
+Nine specialized agents execute in chain or standalone, each with a single responsibility:
 
 ```
 Your Idea
@@ -127,6 +127,13 @@ The cartographer. Reads the codebase (ignoring docs — code is the single sourc
 
 **Output:** `docs/functionalities/[domain]-functionalities.md` and master index
 
+### 🧠 Codebase Expert (`codebase-expert.md`)
+**Model:** Opus | **Tools:** Read, Grep, Glob (read-only)
+
+The comprehension engine. Goes beyond cataloging to build a deep understanding of any codebase — regardless of size. Works in 6 progressive layers: project shape → architecture & boundaries → domain & business logic → data flow & state → patterns & conventions → complexity & risk map. Produces a holistic understanding document that reads like a senior engineer's onboarding guide. Handles large codebases through progressive summarization with checkpoints.
+
+**Output:** `docs/understanding/PROJECT-UNDERSTANDING.md` (or `[scope]-understanding.md`)
+
 ## Commands
 
 | Command | Description | Agents Used |
@@ -139,6 +146,7 @@ The cartographer. Reads the codebase (ignoring docs — code is the single sourc
 | `/workflow:docs` | Generate/update specs & docs | Architect only |
 | `/workflow:sync` | Fix drift between code and specs/docs | Architect only |
 | `/workflow:functionalities` | Map all codebase functionalities | Functionality Analyst only |
+| `/workflow:understand` | Deep codebase comprehension | Codebase Expert only |
 
 ### Scope Parameter
 
@@ -216,7 +224,8 @@ your-project/
 │   ├── reviews/               ← Code review reports
 │   ├── audits/                ← Audit reports
 │   ├── sync/                  ← Sync/drift reports
-│   └── functionalities/       ← Codebase functionality inventories
+│   ├── functionalities/       ← Codebase functionality inventories
+│   └── understanding/        ← Deep codebase comprehension documents
 ├── .claude/
 │   ├── agents/                ← Subagent definitions
 │   │   ├── analyst.md
@@ -225,7 +234,8 @@ your-project/
 │   │   ├── developer.md
 │   │   ├── qa.md
 │   │   ├── reviewer.md
-│   │   └── functionality-analyst.md
+│   │   ├── functionality-analyst.md
+│   │   └── codebase-expert.md
 │   └── commands/              ← Slash commands
 │       ├── workflow-new.md
 │       ├── workflow-feature.md
@@ -234,7 +244,8 @@ your-project/
 │       ├── workflow-audit.md
 │       ├── workflow-docs.md
 │       ├── workflow-sync.md
-│       └── workflow-functionalities.md
+│       ├── workflow-functionalities.md
+│       └── workflow-understand.md
 └── .gitignore
 ```
 
@@ -332,6 +343,21 @@ Architect compares every spec and doc file against the actual code. Produces a d
 ### `/workflow:functionalities` — Codebase Inventory
 
 Functionality Analyst reads the source code (ignoring documentation) and maps everything the system does: endpoints, services, models, CLI commands, handlers, integrations, workers, and migrations. Identifies dead code and cross-module dependencies. Produces structured inventories at `docs/functionalities/`.
+
+### `/workflow:understand` — Deep Codebase Comprehension
+
+Codebase Expert progressively builds a holistic understanding of any project, regardless of size. Works through 6 layers:
+
+```
+Layer 1: Project Shape      → languages, frameworks, directory organization, build system
+Layer 2: Architecture       → modules, boundaries, dependency direction, bootstrap flow
+Layer 3: Domain Logic       → core entities, relationships, business workflows
+Layer 4: Data Flow          → entry → processing → storage → exit, config flow
+Layer 5: Patterns           → conventions, architectural patterns, the "template" for new features
+Layer 6: Complexity & Risk  → high-complexity areas, security-sensitive paths, technical debt
+```
+
+Handles large codebases through progressive summarization — saves checkpoints to `docs/.workflow/` after each layer pair. If it can't finish, it tells you exactly what was covered and what remains. Produces a comprehensive understanding document at `docs/understanding/` that reads like an onboarding guide for a senior engineer.
 
 ## Philosophy
 

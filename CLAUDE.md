@@ -26,6 +26,7 @@ The setup script (`scripts/setup.sh`) copies agents, commands, and CLAUDE.md int
 - `qa.md` (claude-opus-4-6) — end-to-end validation, acceptance criteria verification, traceability matrix completion, exploratory testing
 - `reviewer.md` (claude-opus-4-6, read-only) — audits for bugs/security/performance/drift, outputs review reports
 - `functionality-analyst.md` (claude-opus-4-6, read-only) — maps what the codebase does, outputs structured functionality inventory
+- `codebase-expert.md` (claude-opus-4-6, read-only) — deep codebase comprehension: progressively explores projects of any size, builds holistic understanding (architecture, domain, data flows, patterns, risk). Outputs `docs/understanding/PROJECT-UNDERSTANDING.md`
 
 **Commands** (`.claude/commands/`) — slash command orchestrators that chain agents in sequence:
 - `workflow-new.md` — full chain (discovery + all 6 agents) for greenfield projects
@@ -36,6 +37,7 @@ The setup script (`scripts/setup.sh`) copies agents, commands, and CLAUDE.md int
 - `workflow-docs.md` — architect only (documentation generation)
 - `workflow-sync.md` — architect only (drift detection and fix)
 - `workflow-functionalities.md` — functionality-analyst only (codebase functionality inventory)
+- `workflow-understand.md` — codebase-expert only (deep project comprehension)
 
 All commands accept `--scope="area"` to limit context window usage. Agent model assignments are set in the YAML frontmatter.
 
@@ -219,6 +221,12 @@ Architect only: reads the codebase, compares against specs/ and docs/, flags dri
 /workflow:functionalities [--scope="module or area"]
 ```
 Functionality-analyst only: reads the codebase and produces a structured inventory of all functionalities (endpoints, services, models, handlers, etc.).
+
+### Understand a codebase
+```
+/workflow:understand [--scope="module or area"]
+```
+Codebase-expert only: deep comprehension of a project of any size. Progressively explores through 6 layers (shape → architecture → domain → data flow → patterns → complexity). Produces a holistic understanding document at `docs/understanding/`.
 
 ## Conventions
 - Preferred language: Rust (or whatever the user defines)
