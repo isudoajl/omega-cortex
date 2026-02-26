@@ -16,7 +16,7 @@ This workflow solves all of that.
 
 ## How It Works
 
-Nine specialized agents execute in chain or standalone, each with a single responsibility:
+Eleven specialized agents execute in chain or standalone, each with a single responsibility:
 
 ```
 Your Idea
@@ -134,6 +134,20 @@ The comprehension engine. Goes beyond cataloging to build a deep understanding o
 
 **Output:** `docs/understanding/PROJECT-UNDERSTANDING.md` (or `[scope]-understanding.md`)
 
+### 🔬 Proto-Auditor (`proto-auditor.md`)
+**Model:** Opus | **Tools:** Read, Grep, Glob (read-only)
+
+The protocol auditor. Audits protocol specifications across 12 dimensions (self-reference integrity, trust model soundness, confidence claim validity, escalation & deadlock, quorum & partition, adversarial resistance, specification completeness, enforcement realism, temporal integrity, composability, information leakage, self-audit) at 3 levels (L1: protocol, L2: enforcement, L3: self). Operates with an adversarial stance — assumes broken until proven safe. Produces structured `audit()` blocks per dimension and a `final_report()` with severity stacking and back-propagation checks.
+
+**Output:** `C2C-protocol/audits/audit-[protocol]-[date].md`
+
+### 🔧 Proto-Architect (`proto-architect.md`)
+**Model:** Opus | **Tools:** Read, Write, Edit, Grep, Glob
+
+The protocol improver. Consumes audit reports from Proto-Auditor and generates structured patches to close findings. Runs a 6-step pipeline: triage, root cause isolation, patch generation, self-audit, version increment, and regression check. Patches are classified into quality tiers (Tier 1: closes root cause with no new surface, down to Tier 4: rejected). Never adds complexity without closing a finding. Never patches symptoms when root causes are reachable.
+
+**Output:** `C2C-protocol/patches/patches-[protocol]-[date].md`
+
 ## Commands
 
 | Command | Description | Agents Used |
@@ -148,6 +162,8 @@ The comprehension engine. Goes beyond cataloging to build a deep understanding o
 | `/workflow:functionalities` | Map all codebase functionalities | Functionality Analyst only |
 | `/workflow:understand` | Deep codebase comprehension | Codebase Expert only |
 | `/workflow:c2c` | Multi-round C2C protocol (writer ↔ auditor) | Writer + Auditor (up to 5 rounds) |
+| `/workflow:proto-audit` | Audit a protocol specification (12 dimensions, 3 levels) | Proto-Auditor only |
+| `/workflow:proto-improve` | Improve protocol based on audit findings | Proto-Architect only |
 
 ### Scope Parameter
 
@@ -237,7 +253,9 @@ your-project/
 │   │   ├── qa.md
 │   │   ├── reviewer.md
 │   │   ├── functionality-analyst.md
-│   │   └── codebase-expert.md
+│   │   ├── codebase-expert.md
+│   │   ├── proto-auditor.md
+│   │   └── proto-architect.md
 │   └── commands/              ← Slash commands
 │       ├── workflow-new.md
 │       ├── workflow-feature.md
@@ -247,7 +265,9 @@ your-project/
 │       ├── workflow-docs.md
 │       ├── workflow-sync.md
 │       ├── workflow-functionalities.md
-│       └── workflow-understand.md
+│       ├── workflow-understand.md
+│       ├── workflow-proto-audit.md
+│       └── workflow-proto-improve.md
 └── .gitignore
 ```
 
@@ -360,6 +380,40 @@ Layer 6: Complexity & Risk  → high-complexity areas, security-sensitive paths,
 ```
 
 Handles large codebases through progressive summarization — saves checkpoints to `docs/.workflow/` after each layer pair. If it can't finish, it tells you exactly what was covered and what remains. Produces a comprehensive understanding document at `docs/understanding/` that reads like an onboarding guide for a senior engineer.
+
+### `/workflow:proto-audit` — Protocol Specification Audit
+
+Proto-Auditor runs a full adversarial audit on a protocol specification across 12 dimensions at 3 levels:
+
+```
+D1:  Self-Reference Integrity       D7:  Specification Completeness
+D2:  Trust Model Soundness          D8:  Enforcement Realism
+D3:  Confidence Claim Validity      D9:  Temporal & Ordering Integrity
+D4:  Escalation & Deadlock          D10: Composability & Cross-Layer
+D5:  Quorum & Partition             D11: Information Leakage & Side Channels
+D6:  Adversarial Agent Resistance   D12: Self-Audit (Auditor Integrity)
+```
+
+Levels: L1 (protocol spec), L2 (enforcement layer), L3 (self-audit). Outputs structured `audit()` blocks per dimension and a `final_report()` with severity stacking, back-propagation, and deployment conditions. Findings are classified as CRITICAL, MAJOR, or MINOR. The overall verdict scale is: broken → degraded → hardened → production-ready.
+
+**Output:** `C2C-protocol/audits/audit-[protocol]-[date].md`
+
+### `/workflow:proto-improve` — Protocol Improvement from Audit
+
+Proto-Architect consumes an audit report and generates structured patches through a 6-step pipeline:
+
+```
+P1: Triage         → classify findings, group by root cause, order dependencies
+P2: Root Cause     → isolate layer (axiom/rule/meta/implicit), determine scope
+P3: Patch Gen      → generate patches (amend/extend/add/deprecate/axiom/define)
+P4: Self-Audit     → reject patches that add complexity without closing findings
+P5: Version        → classify version bump (major/minor)
+P6: Regression     → verify patches don't break interacting rules
+```
+
+Patches are quality-tiered: Tier 1 (closes root cause, no new surface) through Tier 4 (rejected). Structural changes require operator approval. CRITICAL findings cannot be closed with symptom-only patches without sign-off. Patch batches are atomic — all pass or none apply.
+
+**Output:** `C2C-protocol/patches/patches-[protocol]-[date].md`
 
 ### `/workflow:c2c` — Multi-Round C2C Protocol
 
