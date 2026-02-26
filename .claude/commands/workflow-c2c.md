@@ -17,7 +17,7 @@ Two agents have a multi-round conversation under the C2C protocol. Agent A (writ
 2. Initialize state:
    - `round = 1`
    - `next_turn = 0`
-   - `max_rounds = 5`
+   - `max_rounds = 20`
    - `certified = false`
    - `conversation_history = []`
 
