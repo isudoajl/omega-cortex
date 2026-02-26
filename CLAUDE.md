@@ -38,6 +38,11 @@ The setup script (`scripts/setup.sh`) copies agents and commands into the curren
 - `workflow-sync.md` — architect only (drift detection and fix)
 - `workflow-functionalities.md` — functionality-analyst only (codebase functionality inventory)
 - `workflow-understand.md` — codebase-expert only (deep project comprehension)
+- `workflow-c2c.md` — multi-round C2C protocol POC: writer ↔ auditor iterate until certification (max 5 rounds)
+
+**POC Agents** (`poc/c2c-protocol/`) — standalone agent prompts for the C2C protocol experiment:
+- `c2c-writer.md` — Agent A: code writer + doc author, operates under C2C protocol with confidence/source tags
+- `c2c-auditor.md` — Agent B: code auditor + fact-checker, issues certification when code is production-ready
 
 All commands accept `--scope="area"` to limit context window usage. Agent model assignments are set in the YAML frontmatter.
 

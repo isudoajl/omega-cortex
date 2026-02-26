@@ -147,6 +147,7 @@ The comprehension engine. Goes beyond cataloging to build a deep understanding o
 | `/workflow:sync` | Fix drift between code and specs/docs | Architect only |
 | `/workflow:functionalities` | Map all codebase functionalities | Functionality Analyst only |
 | `/workflow:understand` | Deep codebase comprehension | Codebase Expert only |
+| `/workflow:c2c` | Multi-round C2C protocol (writer ↔ auditor) | Writer + Auditor (up to 5 rounds) |
 
 ### Scope Parameter
 
@@ -359,6 +360,24 @@ Layer 6: Complexity & Risk  → high-complexity areas, security-sensitive paths,
 ```
 
 Handles large codebases through progressive summarization — saves checkpoints to `docs/.workflow/` after each layer pair. If it can't finish, it tells you exactly what was covered and what remains. Produces a comprehensive understanding document at `docs/understanding/` that reads like an onboarding guide for a senior engineer.
+
+### `/workflow:c2c` — Multi-Round C2C Protocol
+
+A proof-of-concept for multi-round agent-to-agent conversations using the C2C protocol. Two agents iterate in a loop:
+
+```
+Round 1: Writer produces code → Auditor audits and finds issues
+Round 2: Writer fixes/defends/concedes → Auditor re-audits changes
+Round 3: ...continues until certification or max 5 rounds
+```
+
+**Agent A (Writer):** Produces production code with persuasive documentation. Self-assesses honestly using confidence tags. Responds to audit findings with `FIX`, `DEFENSE`, or `CONCESSION` messages.
+
+**Agent B (Auditor):** Audits code line-by-line, fact-checks confidence claims, verifies R04 compliance (accuracy > persuasion). Issues `CERTIFICATION` when code meets production standards (`accepted`, `conditional`, or `rejected`).
+
+Both agents communicate exclusively through structured `msg()` blocks with mandatory `conf()` and `src()` tags on every claim. The orchestrator manages turn numbering, conversation history, and context compression across rounds.
+
+**Output:** Per-round transcripts in `poc/c2c-protocol/rounds/` and a `RESULTS.md` summarizing bugs found/fixed, defenses, concessions, and certification status.
 
 ## Philosophy
 
