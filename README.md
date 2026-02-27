@@ -69,6 +69,8 @@ The codebase always wins. When specs or docs are outdated, agents flag the discr
 
 ## Agents
 
+> For a complete inventory of every functionality, input, output, and fail-safe control for each agent, see [docs/agent-functionalities.md](docs/agent-functionalities.md).
+
 ### 💡 Discovery (`discovery.md`)
 **Model:** Opus | **Tools:** Read, Grep, Glob, WebFetch, WebSearch
 
