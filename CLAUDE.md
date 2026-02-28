@@ -45,7 +45,7 @@ The setup script (`scripts/setup.sh`) copies agents and commands into the curren
 - `workflow-c2c.md` — multi-round C2C protocol POC: writer ↔ auditor iterate until certification (max 5 rounds)
 - `workflow-proto-audit.md` — proto-auditor only (protocol specification audit, 12 dimensions, 3 levels)
 - `workflow-proto-improve.md` — proto-architect only (protocol improvement from audit findings, 6-step pipeline)
-- `workflow-create-role.md` — role-creator only (designs comprehensive agent role definitions)
+- `workflow-create-role.md` — role-creator → role-auditor → auto-remediation (designs agent roles, audits them adversarially, fixes findings automatically; max 2 remediation cycles)
 - `workflow-audit-role.md` — role-auditor only (adversarial audit of role definitions, 12 dimensions, 2 levels). Accepts `--scope` to limit to specific dimensions
 
 **POC Agents** (`poc/c2c-protocol/`) — standalone agent prompts for the C2C protocol experiment:

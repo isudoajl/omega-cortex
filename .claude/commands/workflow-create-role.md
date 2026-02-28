@@ -1,14 +1,14 @@
 ---
 name: workflow:create-role
-description: Create a new agent role definition. The role-creator designs comprehensive, battle-tested agent definitions with sharp boundaries, detailed processes, and complete failure handling.
+description: Create a new agent role definition with automatic audit and remediation. Role-creator designs the role, role-auditor audits it adversarially, then findings are auto-fixed (max 2 cycles).
 ---
 
 # Workflow: Create Role
 
-Invoke ONLY the `role-creator` subagent to design a new agent role definition.
+Three-phase workflow: (1) `role-creator` designs the agent definition, (2) `role-auditor` runs a full adversarial audit, (3) corrections are applied automatically if needed.
 Input: a description of the desired role (can be vague or detailed — the agent adapts).
 
-## Process
+## Phase 1: Role Creation
 
 The role-creator follows this sequence:
 
@@ -53,9 +53,56 @@ The role-creator follows this sequence:
    - If applicable, create a companion command at `.claude/commands/workflow-[name].md`
    - Note any existing commands that should be updated to integrate the new agent
 
-## What the Role Creator Produces
+---
+
+## Phase 2: Automatic Adversarial Audit
+
+Once the role-creator saves the agent definition, **immediately** invoke the `role-auditor` subagent on the newly created role file. Do NOT ask the user — this is automatic.
+
+9. **Invoke role-auditor**
+   - Run a full D1-D12 adversarial audit on `.claude/agents/[name].md`
+   - The auditor follows its standard process: pre-audit integrity check → context loading → dimensional audit → back-propagation → final report
+   - Save the audit report to `docs/.workflow/role-audit-[name].md`
+
+10. **Evaluate audit verdict**
+    - If verdict is **deployable** or **hardened** with no major/critical findings → Phase 2 complete, report results to user
+    - If verdict is **broken** or **degraded** → proceed to Phase 3 (remediation)
+
+---
+
+## Phase 3: Automatic Remediation
+
+If the audit finds critical or major issues, **immediately** apply corrections. Do NOT ask the user — this is automatic.
+
+11. **Apply corrections**
+    - Read the audit report from `docs/.workflow/role-audit-[name].md`
+    - For each CRITICAL finding: apply the fix directly to `.claude/agents/[name].md`
+    - For each MAJOR finding: apply the fix directly to `.claude/agents/[name].md`
+    - MINOR findings: apply fixes if straightforward, skip if cosmetic-only
+    - Each fix must address the specific audit finding — no speculative changes
+
+12. **Re-audit after remediation**
+    - Invoke the `role-auditor` again on the corrected `.claude/agents/[name].md`
+    - Save the new audit report (overwrites the previous one)
+    - Maximum **2 remediation cycles** (audit → fix → re-audit → fix → final audit)
+    - If still broken after 2 cycles → STOP and report remaining issues to the user for manual review
+
+13. **Final report to user**
+    - Summarize what was created, what the audit found, what was fixed, and the final verdict
+    - If companion command was created, include that in the summary
+    - Show the final audit verdict clearly
+
+---
+
+## Iteration Limits
+- **Remediation cycles:** Maximum **2** (create → audit → fix → re-audit → fix → final audit)
+- If the role is still **broken** after 2 cycles, stop and escalate to the user
+- A role reaching **degraded** after remediation is acceptable — report the remaining minors to the user
+
+## What the Workflow Produces
 - A complete agent definition file (`.claude/agents/[name].md`)
 - Optionally, a companion command file (`.claude/commands/workflow-[name].md`)
+- An audit report at `docs/.workflow/role-audit-[name].md`
 - Design rationale for key decisions (tools, model, boundaries)
 
 ## Quality Standards
@@ -71,3 +118,4 @@ Every role produced must have:
 - Hard rules (non-negotiable constraints)
 - Anti-patterns (explicit "don't do this" list)
 - Failure handling (missing input, context limits, upstream failures)
+- **Passed adversarial audit** with verdict of hardened or better

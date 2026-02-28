@@ -180,7 +180,7 @@ The enforcement layer for roles. Modeled directly on the C2C enforcement layer's
 | `/workflow:c2c` | Multi-round C2C protocol (writer ↔ auditor) | Writer + Auditor (up to 5 rounds) |
 | `/workflow:proto-audit` | Audit a protocol specification (12 dimensions, 3 levels) | Proto-Auditor only |
 | `/workflow:proto-improve` | Improve protocol based on audit findings | Proto-Architect only |
-| `/workflow:create-role` | Design a new agent role definition | Role Creator only |
+| `/workflow:create-role` | Design a new agent role definition + audit + remediation | Role Creator → Role Auditor → auto-fix |
 | `/workflow:audit-role` | Adversarial audit of role definitions (12 dimensions) | Role Auditor only |
 
 ### Scope Parameter
@@ -481,24 +481,33 @@ Both agents communicate exclusively through structured `msg()` blocks with manda
 
 **Output:** Per-round transcripts in `poc/c2c-protocol/rounds/` and a `RESULTS.md` summarizing bugs found/fixed, defenses, concessions, and certification status.
 
-### `/workflow:create-role` — Agent Role Design
+### `/workflow:create-role` — Agent Role Design + Audit + Remediation
 
-Role Creator designs comprehensive agent role definitions through a structured process:
+Role Creator designs comprehensive agent role definitions, then the Role Auditor automatically audits the result, and any critical/major findings are remediated immediately:
 
 ```
-Step 1: Analyze    → read the role request, study existing agents for overlap/patterns
-Step 2: Clarify    → ask targeted questions if the description is vague (skip if clear)
-Step 3: Research   → WebSearch for domain best practices, methodologies, pitfalls
-Step 4: Design     → walk the Role Anatomy Checklist, select tools and model
-Step 5: Write      → produce the complete agent definition
-Step 6: Validate   → completeness, consistency, clarity, boundary, failure checks
-Step 7: Confirm    → present to user, get explicit approval before saving
-Step 8: Save       → write agent file + optional companion command
+Phase 1: Creation
+  Step 1: Analyze    → read the role request, study existing agents for overlap/patterns
+  Step 2: Clarify    → ask targeted questions if the description is vague (skip if clear)
+  Step 3: Research   → WebSearch for domain best practices, methodologies, pitfalls
+  Step 4: Design     → walk the Role Anatomy Checklist, select tools and model
+  Step 5: Write      → produce the complete agent definition
+  Step 6: Validate   → completeness, consistency, clarity, boundary, failure checks
+  Step 7: Confirm    → present to user, get explicit approval before saving
+  Step 8: Save       → write agent file + optional companion command
+
+Phase 2: Automatic Audit
+  Step 9: Audit      → role-auditor runs full D1-D12 adversarial audit on the new role
+
+Phase 3: Automatic Remediation (if broken/degraded)
+  Step 10: Fix       → apply corrections for all critical and major findings
+  Step 11: Re-audit  → role-auditor re-audits the corrected role
+  (max 2 remediation cycles, then escalates to user)
 ```
 
-Every role produced includes: identity, boundaries, prerequisite gate, directory safety, source of truth, context management, step-by-step process, output format, rules, anti-patterns, and failure handling. The Role Creator validates against existing agents to prevent overlap and ensures consistency with CLAUDE.md workflow rules.
+Every role produced includes: identity, boundaries, prerequisite gate, directory safety, source of truth, context management, step-by-step process, output format, rules, anti-patterns, and failure handling. The Role Creator validates against existing agents to prevent overlap and ensures consistency with CLAUDE.md workflow rules. The automatic audit+remediation loop ensures roles reach **hardened** or better before delivery.
 
-**Output:** `.claude/agents/[name].md` and optionally `.claude/commands/workflow-[name].md`
+**Output:** `.claude/agents/[name].md`, `docs/.workflow/role-audit-[name].md`, and optionally `.claude/commands/workflow-[name].md`
 
 ### `/workflow:audit-role` — Adversarial Role Audit
 
