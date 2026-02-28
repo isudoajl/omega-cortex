@@ -31,10 +31,11 @@ The setup script (`scripts/setup.sh`) copies agents and commands into the curren
 - `proto-architect.md` (claude-opus-4-6) — protocol improvement specialist. Consumes audit reports from proto-auditor, generates structured patches through a 6-step pipeline. Outputs patch reports to `c2c-protocol/patches/`
 - `role-creator.md` (claude-opus-4-6) — meta-agent specialized in designing other agents. Researches the role's domain, studies existing agents for consistency, and produces comprehensive role definitions with sharp boundaries, detailed processes, and complete failure handling. Outputs `.claude/agents/[name].md`
 - `role-auditor.md` (claude-opus-4-6, read-only) — adversarial auditor for role definitions. Audits across 12 dimensions at 2 levels (role definition, self-audit). Assumes every role is broken until proven safe. Outputs structured findings with severity classification and deployment verdicts to `docs/.workflow/role-audit-[name].md`
+- `feature-evaluator.md` (claude-opus-4-6) — feature gate agent: scores proposed features across 7 dimensions (necessity, impact, complexity cost, alternatives, alignment, risk, timing) and produces a GO/NO-GO/CONDITIONAL verdict. Advisory — user always has final say. Automatically invoked in workflow-new-feature before the Analyst. Outputs `docs/.workflow/feature-evaluation.md`
 
 **Commands** (`.claude/commands/`) — slash command orchestrators that chain agents in sequence:
 - `workflow-new.md` — full chain (discovery + all 6 agents) for greenfield projects
-- `workflow-new-feature.md` — full chain for existing projects (discovery conditional on vague descriptions)
+- `workflow-new-feature.md` — full chain for existing projects (discovery conditional on vague descriptions, feature-evaluator gate before analyst)
 - `workflow-improve-functionality.md` — no architect; analyst → test-writer → developer → QA → reviewer
 - `workflow-bugfix.md` — reduced chain with bug reproduction test + QA validation
 - `workflow-audit.md` — reviewer only (read-only analysis)
@@ -92,6 +93,7 @@ When specs or docs conflict with the codebase, the codebase wins. Agents must fl
 Raw Idea ("build a CRM tool")
   → Discovery (explores, challenges, clarifies the IDEA with the user)
   → Idea Brief (clear, validated concept)
+  → Feature Evaluator (GO/NO-GO gate: scores necessity, impact, complexity, alternatives, alignment, risk, timing)
   → Analyst (BA: requirements, acceptance criteria, MoSCoW priorities, traceability)
   → Architect (design with failure modes, security, performance budgets)
   → Test Writer (TDD by priority: Must first, then Should, then Could)
@@ -246,7 +248,7 @@ Full chain: discovery → analyst → architect → test-writer → developer �
 ```
 /workflow:new-feature "description of the feature" [--scope="area"]
 ```
-Full chain: (discovery if vague) → analyst → architect → test-writer → developer → QA → reviewer. Discovery is invoked when the feature description is vague; skipped for specific, well-scoped features.
+Full chain: (discovery if vague) → **feature-evaluator** (GO/NO-GO gate) → analyst → architect → test-writer → developer → QA → reviewer. Discovery is invoked when the feature description is vague; skipped for specific, well-scoped features. The feature-evaluator always runs to assess whether the feature is worth building before committing pipeline resources.
 
 ### Improve existing code
 ```

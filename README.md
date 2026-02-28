@@ -16,12 +16,14 @@ This workflow solves all of that.
 
 ## How It Works
 
-Thirteen specialized agents execute in chain or standalone, each with a single responsibility:
+Fourteen specialized agents execute in chain or standalone, each with a single responsibility:
 
 ```
 Your Idea
   ↓
 💡 Discovery     → Explores and challenges your idea through conversation
+  ↓
+⚖️ Evaluator     → GO/NO-GO gate: scores necessity, impact, complexity, alternatives
   ↓
 🔍 Analyst       → Questions your idea, defines requirements with acceptance criteria
   ↓
@@ -157,6 +159,13 @@ The meta-agent. The only agent specialized in designing other agents. Analyzes t
 
 **Output:** `.claude/agents/[name].md` (and optionally `.claude/commands/workflow-[name].md`)
 
+### ⚖️ Feature Evaluator (`feature-evaluator.md`)
+**Model:** Opus | **Tools:** Read, Write, Grep, Glob, WebSearch, WebFetch
+
+The gate. Evaluates whether a proposed feature is worth building before the full pipeline commits resources. Scores features across 7 dimensions — necessity, impact, complexity cost, alternatives, alignment, risk, and timing — using a weighted Feature Viability Score (FVS). Necessity, Impact, and Alignment are weighted 2x because a feature that isn't needed, impactful, or aligned shouldn't be built regardless of how easy it is. Produces a GO/CONDITIONAL/NO-GO verdict. Advisory, not a veto — the user always has the final say. Searches for existing alternatives in the codebase and via web search. Prevents wasted pipeline effort on unnecessary, redundant, or misaligned features. Automatically invoked in workflow-new-feature before the Analyst. Does not gate bug fixes or improvements.
+
+**Output:** `docs/.workflow/feature-evaluation.md`
+
 ### 🔒 Role Auditor (`role-auditor.md`)
 **Model:** Opus | **Tools:** Read, Grep, Glob (read-only)
 
@@ -169,7 +178,7 @@ The enforcement layer for roles. Modeled directly on the C2C enforcement layer's
 | Command | Description | Agents Used |
 |---------|-------------|-------------|
 | `/workflow:new "idea"` | Build something from scratch | discovery → analyst → architect → test-writer → developer → QA → reviewer |
-| `/workflow:new-feature "feature"` | Add to existing project | (discovery) → analyst → architect → test-writer → developer → QA → reviewer |
+| `/workflow:new-feature "feature"` | Add to existing project | (discovery) → **feature-evaluator** → analyst → architect → test-writer → developer → QA → reviewer |
 | `/workflow:improve-functionality "improvement"` | Refactor, optimize, or enhance | analyst → test-writer → developer → QA → reviewer |
 | `/workflow:bugfix "bug"` | Fix a bug | analyst → test-writer → developer → QA → reviewer |
 | `/workflow:audit` | Full code + specs audit | Reviewer only |
@@ -301,7 +310,8 @@ your-project/
 │   │   ├── proto-auditor.md
 │   │   ├── proto-architect.md
 │   │   ├── role-creator.md
-│   │   └── role-auditor.md
+│   │   ├── role-auditor.md
+│   │   └── feature-evaluator.md
 │   └── commands/              ← Slash commands
 │       ├── workflow-new.md
 │       ├── workflow-new-feature.md
@@ -374,7 +384,7 @@ Step 9: Versioning → final commit, version tag, cleanup temp files
 
 ### `/workflow:new-feature` — Same as New, Context-Aware
 
-Same pipeline but every agent reads existing code first. Discovery is invoked when the feature description is vague; skipped for specific, well-scoped features. The analyst checks for specs drift and performs impact analysis. The test-writer matches existing test conventions. All previous tests must continue passing (regression).
+Same pipeline but every agent reads existing code first. Discovery is invoked when the feature description is vague; skipped for specific, well-scoped features. The **Feature Evaluator** always runs as a gate — scoring the proposed feature across 7 dimensions and producing a GO/CONDITIONAL/NO-GO verdict before the pipeline commits resources. The user always has the final say on whether to proceed. The analyst checks for specs drift and performs impact analysis. The test-writer matches existing test conventions. All previous tests must continue passing (regression).
 
 ### `/workflow:improve-functionality` — Refactor and Optimize
 
