@@ -124,9 +124,9 @@ The validator. Validates prerequisites (source code and tests must exist). Bridg
 ### 👁️ Reviewer (`reviewer.md`)
 **Model:** Opus | **Tools:** Read, Grep, Glob (read-only)
 
-The auditor. Validates prerequisites (source code must exist). Reviews all implemented code looking for bugs, security vulnerabilities, performance issues, technical debt, and specs/docs drift. Uses language-adaptive Grep patterns for cross-cutting scans (supports Rust, Python, TypeScript, Go, and others). Works module by module, saving findings incrementally. Brutally honest — doesn't approve out of courtesy. Can escalate architectural issues distinctly from code issues. Ensures output directories exist before writing reports.
+The auditor. Validates prerequisites (source code must exist). Reviews all implemented code looking for bugs, security vulnerabilities, performance issues, technical debt, and specs/docs drift. Uses language-adaptive Grep patterns for cross-cutting scans (supports Rust, Python, TypeScript, Go, and others). Works module by module, saving findings incrementally. Brutally honest — doesn't approve out of courtesy. Can escalate architectural issues distinctly from code issues. Ensures output directories exist before writing reports. Supports two output formats: standard (for code reviews and read-only audits) and structured P0-P3 (for `--fix` mode with AUDIT-PX-NNN IDs, location, category, suggested fix, and test strategy fields).
 
-**Output:** Review report with critical/minor findings, specs drift, and final verdict
+**Output:** Review report with critical/minor findings, specs drift, and final verdict (standard format), or structured P0-P3 audit report with AUDIT-PX-NNN IDs (when `--fix` is specified)
 
 ### 📊 Functionality Analyst (`functionality-analyst.md`)
 **Model:** Opus | **Tools:** Read, Grep, Glob (read-only)
@@ -199,7 +199,8 @@ The enforcement layer for roles. Modeled directly on the C2C enforcement layer's
 | `/workflow:new-feature "feature"` | Add to existing project | (discovery) → **feature-evaluator** → analyst → architect → test-writer → developer → QA → reviewer |
 | `/workflow:improve-functionality "improvement"` | Refactor, optimize, or enhance | analyst → test-writer → developer → QA → reviewer |
 | `/workflow:bugfix "bug"` | Fix a bug | analyst → test-writer → developer → QA → reviewer |
-| `/workflow:audit` | Full code + specs audit | Reviewer only |
+| `/workflow:audit` | Read-only code + specs audit | Reviewer only |
+| `/workflow:audit --fix` | Audit + auto-fix by priority (P0→P1→P2→P3) | Reviewer → Test Writer → Developer per priority |
 | `/workflow:docs` | Generate/update specs & docs | Architect only |
 | `/workflow:sync` | Fix drift between code and specs/docs | Architect only |
 | `/workflow:functionalities` | Map all codebase functionalities | Functionality Analyst only |
@@ -236,6 +237,9 @@ Every agent validates its upstream input before starting. If required input is m
 Multi-step commands enforce maximum iteration counts:
 - **QA ↔ Developer:** max 3 iterations
 - **Reviewer ↔ Developer:** max 2 iterations
+- **Audit --fix developer attempts:** max 5 per finding
+- **Audit --fix build/lint retries:** max 3 per priority pass
+- **Audit --fix verification iterations:** max 2 per priority pass
 
 If limits are reached, the workflow stops and reports remaining issues to the user.
 
@@ -438,9 +442,34 @@ Step 4: QA         → reproduces original scenario, validates root cause fix
 Step 5: Reviewer   → verifies root cause fix (not a patch), checks specs
 ```
 
-### `/workflow:audit` — Read-Only Analysis
+### `/workflow:audit` — Code Audit (Read-Only or Auto-Fix)
 
-Reviewer scans the codebase looking for security issues, performance problems, technical debt, dead code, missing tests, and documentation drift. On large codebases, works one milestone at a time with checkpoints. Produces a comprehensive report at `docs/audits/`.
+**Read-only mode** (default): Reviewer scans the codebase looking for security issues, performance problems, technical debt, dead code, missing tests, and documentation drift. On large codebases, works one milestone at a time with checkpoints. Produces a comprehensive report at `docs/audits/`.
+
+**Auto-fix mode** (`--fix`): After the audit, the pipeline automatically loops through findings by priority — writing regression tests, fixing issues, validating, and committing per priority pass.
+
+```
+Step 1:   Reviewer           → structured audit with P0/P1/P2/P3 findings (AUDIT-PX-NNN IDs)
+Step 1.5: Progress Tracker   → creates docs/.workflow/audit-fix-progress.md
+
+  ┌─── FOR EACH PRIORITY LEVEL (P0 → P1 → P2 → [P3]) ───────────────────┐
+  │ Step 2:   Test Writer    → regression tests proving issues exist       │
+  │ Step 3:   Developer      → fixes findings scoped to this priority     │
+  │ Step 3.5: Build & Lint   → full compilation + lint + test suite       │
+  │ Step 4:   Verification   → regression tests pass + no regressions     │
+  │ Step 4.5: Commit & Push  → git commit + push per priority pass        │
+  └───────────────────────────────────────────────────────────────────────┘
+
+Step 5:   Final Summary      → total fixes, escalated findings, cleanup
+```
+
+**Priority levels:**
+- **P0 (Critical):** Security vulns, data loss, broken core logic, crashes — all findings MUST be attempted
+- **P1 (Major):** Performance issues, significant bugs, major tech debt — all findings MUST be attempted
+- **P2 (Minor):** Code quality, moderate debt, edge cases — all findings SHOULD be attempted
+- **P3 (Suggestions):** Style, enhancements, docs gaps — SKIPPED by default (use `--include-p3` to include)
+
+Each finding gets a unique `AUDIT-PX-NNN` ID that flows through tests, fixes, and commits for full traceability. Findings that resist fixing after 5 attempts are escalated for human review. The audit report itself uses a structured format with Location, Category, Description, Impact, Suggested Fix, and Test Strategy fields.
 
 ### `/workflow:docs` — Documentation Generation
 

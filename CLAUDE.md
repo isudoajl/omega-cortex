@@ -24,7 +24,7 @@ The setup script (`scripts/setup.sh`) copies agents and commands into the curren
 - `test-writer.md` (claude-opus-4-6) — writes failing tests before code (TDD red phase), priority-driven (Must first), references requirement IDs for traceability. Flags specs inconsistencies when tests reveal undocumented behavior
 - `developer.md` (claude-opus-4-6) — implements minimum code to pass tests, commits per module. Updates relevant specs/docs when implementation changes documented behavior
 - `qa.md` (claude-opus-4-6) — end-to-end validation, acceptance criteria verification, traceability matrix completion, exploratory testing. Verifies specs/docs accuracy against actual behavior and flags drift
-- `reviewer.md` (claude-opus-4-6, read-only) — audits for bugs/security/performance/drift, outputs review reports
+- `reviewer.md` (claude-opus-4-6, read-only) — audits for bugs/security/performance/drift, outputs review reports; supports structured P0-P3 output with AUDIT-PX-NNN IDs for `--fix` mode
 - `functionality-analyst.md` (claude-opus-4-6, read-only) — maps what the codebase does, outputs structured functionality inventory
 - `codebase-expert.md` (claude-opus-4-6, read-only) — deep codebase comprehension: progressively explores projects of any size, builds holistic understanding (architecture, domain, data flows, patterns, risk). Outputs `docs/understanding/PROJECT-UNDERSTANDING.md`
 - `proto-auditor.md` (claude-opus-4-6, read-only) — audits protocol specifications across 12 dimensions at 3 levels (protocol, enforcement, self). Adversarial stance. Outputs structured audit findings to `c2c-protocol/audits/`
@@ -40,7 +40,7 @@ The setup script (`scripts/setup.sh`) copies agents and commands into the curren
 - `workflow-new-feature.md` — full chain for existing projects (discovery conditional on vague descriptions, feature-evaluator gate before analyst)
 - `workflow-improve-functionality.md` — no architect; analyst → test-writer → developer → QA → reviewer
 - `workflow-bugfix.md` — reduced chain with bug reproduction test + QA validation
-- `workflow-audit.md` — reviewer only (read-only analysis)
+- `workflow-audit.md` — reviewer only (read-only analysis); with `--fix`, auto-fix pipeline looping through P0→P1→P2→P3 findings using test-writer + developer per priority pass
 - `workflow-docs.md` — architect only (documentation generation)
 - `workflow-sync.md` — architect only (drift detection and fix)
 - `workflow-functionalities.md` — functionality-analyst only (codebase functionality inventory)
@@ -147,6 +147,9 @@ Every agent that receives upstream output verifies its input exists before proce
 Multi-step commands enforce maximum iteration counts to prevent infinite loops:
 - **QA ↔ Developer loops:** Maximum **3 iterations**
 - **Reviewer ↔ Developer loops:** Maximum **2 iterations**
+- **Audit --fix developer attempts:** Maximum **5** per finding (then escalated)
+- **Audit --fix build/lint retries:** Maximum **3** per priority pass
+- **Audit --fix verification iterations:** Maximum **2** per priority pass
 
 If the limit is reached, the workflow STOPS and reports remaining issues to the user for a human decision.
 
@@ -271,6 +274,12 @@ Reduced chain: analyst → test-writer (reproduces the bug) → developer → QA
 /workflow:audit [--scope="milestone or module"]
 ```
 Reviewer only: looks for vulnerabilities, technical debt, performance issues, and specs/docs drift.
+
+### Audit and auto-fix
+```
+/workflow:audit --fix [--scope="area"] [--include-p3]
+```
+Reviewer produces a prioritized report (P0/P1/P2/P3), then the pipeline auto-loops through each priority level: test-writer writes regression tests → developer fixes findings → build & lint validation → verification → commit per priority pass. P3 findings are skipped by default (use `--include-p3` to include). Findings that resist fixing after 5 attempts are escalated for human review.
 
 ### Document existing project
 ```
