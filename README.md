@@ -27,19 +27,23 @@ Your Idea
   ↓
 🔍 Analyst       → Questions your idea, defines requirements with acceptance criteria
   ↓
-🏗️ Architect     → Designs architecture with failure modes, security, performance budgets
+🏗️ Architect     → Designs architecture with failure modes, security, performance budgets, milestones
   ↓
-🧪 Test Writer   → Writes tests BEFORE code exists (TDD, priority-driven)
+┌─── Per Milestone (auto-loop) ───────────────────────────────────────────┐
+│ 🧪 Test Writer   → Writes tests BEFORE code exists (TDD, priority-driven) │
+│   ↓                                                                       │
+│ 💻 Developer     → Implements module by module until all tests pass       │
+│   ↓                                                                       │
+│ 🔨 Build & Lint  → cargo build/clippy/test (or language equivalent)       │
+│   ↓                                                                       │
+│ ✅ QA            → Validates end-to-end functionality and acceptance criteria │
+│   ↓                                                                       │
+│ 👁️ Reviewer      → Audits for bugs, security, performance, and docs drift │
+│   ↓                                                                       │
+│ 📦 Git           → Auto-commit and push per milestone                     │
+└─────────────────────────────────────────────────────────────────────────┘
   ↓
-💻 Developer     → Implements module by module until all tests pass
-  ↓
-🔨 Compiler      → Automatic validation
-  ↓
-✅ QA            → Validates end-to-end functionality and acceptance criteria
-  ↓
-👁️ Reviewer      → Audits for bugs, security, performance, and documentation drift
-  ↓
-📦 Git           → Conventional commits and versioning
+🏷️ Final Version  → Full test suite, version tag, push tags
 ```
 
 Each agent runs as a Claude Code subagent with its own isolated context window. The analyst's heavy reading doesn't eat into the developer's context. Work is scoped, incremental, and saved to disk at every step. Every agent validates its prerequisites before starting, and every multi-step command enforces iteration limits and inter-step output validation to prevent silent failures.
@@ -90,11 +94,11 @@ The business analyst. Validates prerequisites (idea brief must exist when invoke
 ### 🏗️ Architect (`architect.md`)
 **Model:** Opus | **Tools:** Read, Write, Edit, Grep, Glob
 
-The designer. Validates prerequisites (analyst requirements must exist). Takes the analyst's requirements and designs the system architecture before any code is written. Defines modules, interfaces, dependencies, and implementation order. Plans failure modes and recovery strategies. Identifies security considerations and trust boundaries. Sets performance budgets. Creates and updates spec files in `specs/` and documentation in `docs/`. Ensures output directories exist before writing.
+The designer. Validates prerequisites (analyst requirements must exist). Takes the analyst's requirements and designs the system architecture before any code is written. Defines modules, interfaces, dependencies, and implementation order. Plans failure modes and recovery strategies. Identifies security considerations and trust boundaries. Sets performance budgets. Creates and updates spec files in `specs/` and documentation in `docs/`. Ensures output directories exist before writing. When the project scope warrants it, defines **milestones** (M1, M2, M3...) with IDs, names, scoped modules/requirements, and dependency ordering — enabling the pipeline to auto-loop through milestones without user intervention.
 
 Also handles `/workflow:docs` and `/workflow:sync` — reading the codebase and bringing specs/docs back in sync. Handles missing specs/docs gracefully by creating them from scratch.
 
-**Output:** `specs/[domain]-architecture.md`, updated specs and docs
+**Output:** `specs/[domain]-architecture.md` (with optional Milestones table), updated specs and docs
 
 ### 🧪 Test Writer (`test-writer.md`)
 **Model:** Opus | **Tools:** Read, Write, Edit, Bash, Glob, Grep
@@ -106,9 +110,9 @@ The contract writer. Validates prerequisites (architect design and analyst requi
 ### 💻 Developer (`developer.md`)
 **Model:** Opus | **Tools:** Read, Write, Edit, Bash, Glob, Grep
 
-The builder. Validates prerequisites (tests, architect design, and analyst requirements must exist). Reads the analyst's requirements directly for traceability. Implements the minimum code needed to pass all tests, one module at a time in the order defined by the architect. Matches existing code conventions by grepping the codebase. Never advances to the next module until the current one's tests all pass. Updates the traceability matrix's "Implementation Module" column after each module. Updates relevant specs/ and docs/ when implementation changes documented behavior. Has a max retry limit of 5 attempts per test-fix cycle — escalates after that. Handles new project scaffolding. Commits after each module.
+The builder. Validates prerequisites (tests, architect design, and analyst requirements must exist). Reads the analyst's requirements directly for traceability. Implements the minimum code needed to pass all tests, one module at a time in the order defined by the architect. Matches existing code conventions by grepping the codebase. Never advances to the next module until the current one's tests all pass. Updates the traceability matrix's "Implementation Module" column after each module. Updates relevant specs/ and docs/ when implementation changes documented behavior. Has a max retry limit of 5 attempts per test-fix cycle — escalates after that. Handles new project scaffolding. Commits after each module. Includes mandatory **compilation & lint validation** before QA handoff — runs build, lint (e.g., `cargo clippy`, `eslint`), and full test suite for the project's detected language (Rust, Elixir, Node.js/TypeScript, or general pattern).
 
-**Cycle:** Red → Green → Refactor → Update Traceability → Sync Specs/Docs → Commit → Next
+**Cycle:** Red → Green → Refactor → Update Traceability → Sync Specs/Docs → Commit → Next → Compile & Lint Validation
 
 ### ✅ QA (`qa.md`)
 **Model:** Opus | **Tools:** Read, Write, Edit, Bash, Glob, Grep
@@ -389,20 +393,26 @@ If your project already has a `CLAUDE.md`, merge the workflow rules from this pr
 ### `/workflow:new` — Full Pipeline
 
 ```
-Step 1: Discovery  → explores and challenges the idea with the user, produces Idea Brief
-Step 2: Analyst    → questions user, generates requirements with IDs, priorities, acceptance criteria
-Step 3: Architect  → designs architecture with failure modes, security, performance budgets
-Step 4: Test Writer→ writes failing tests by priority (Must first), references requirement IDs
-Step 5: Developer  → implements module by module until green, commits each
-Step 6: QA         → validates acceptance criteria, runs end-to-end and exploratory tests
-Step 7: Reviewer   → audits code + specs drift, approves or sends back
-Step 8: Iteration  → developer fixes → reviewer re-reviews (scoped to fix only)
-Step 9: Versioning → final commit, version tag, cleanup temp files
+Step 1:   Discovery          → explores and challenges the idea with the user, produces Idea Brief
+Step 2:   Analyst            → questions user, generates requirements with IDs, priorities, acceptance criteria
+Step 3:   Architect          → designs architecture with failure modes, security, performance budgets, milestones
+Step 3.5: Milestone Extract  → parses architecture for milestones, creates progress tracker
+
+  ┌─── FOR EACH MILESTONE (auto-loop, no user intervention between milestones) ───┐
+  │ Step 4:   Test Writer    → writes failing tests scoped to this milestone       │
+  │ Step 5:   Developer      → implements module by module until green             │
+  │ Step 5.5: Build & Lint   → cargo build/clippy/test (or language equivalent)    │
+  │ Step 6-7: QA + Iteration → validates acceptance criteria (max 3 rounds)        │
+  │ Step 8-9: Review + Iter  → audits code + specs drift (max 2 rounds)            │
+  │ Step 9.5: Commit & Push  → git commit + push, update milestone progress        │
+  └────────────────────────────────────────────────────────────────────────────────┘
+
+Step 10:  Final Versioning   → full test suite, version tag, push tags, cleanup
 ```
 
 ### `/workflow:new-feature` — Same as New, Context-Aware
 
-Same pipeline but every agent reads existing code first. Discovery is invoked when the feature description is vague; skipped for specific, well-scoped features. The **Feature Evaluator** always runs as a gate — scoring the proposed feature across 7 dimensions and producing a GO/CONDITIONAL/NO-GO verdict before the pipeline commits resources. The user always has the final say on whether to proceed. The analyst checks for specs drift and performs impact analysis. The test-writer matches existing test conventions. All previous tests must continue passing (regression).
+Same pipeline but every agent reads existing code first. Discovery is invoked when the feature description is vague; skipped for specific, well-scoped features. The **Feature Evaluator** always runs as a gate — scoring the proposed feature across 7 dimensions and producing a GO/CONDITIONAL/NO-GO verdict before the pipeline commits resources. The user always has the final say on whether to proceed. The analyst checks for specs drift and performs impact analysis. The test-writer matches existing test conventions. All previous tests must continue passing (regression). Features that span multiple milestones use the same **auto-looping milestone pipeline** as `/workflow:new` — each milestone is built, validated, committed, and pushed before the next begins.
 
 ### `/workflow:improve-functionality` — Refactor and Optimize
 
