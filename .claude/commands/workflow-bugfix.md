@@ -21,7 +21,7 @@ Before starting the chain, verify the bug is reproducible:
 
 ### Inter-Step Output Validation
 Before invoking each agent, verify the previous agent produced its expected output:
-- Before Test Writer (Step 2): verify `specs/bugfixes/*-analysis.md` exists
+- Before Test Writer (Step 2): verify `docs/bugfixes/*-analysis.md` exists
 - Before Developer (Step 3): verify reproduction test file exists
 - Before QA (Step 4): verify code changes exist
 - Before Reviewer (Step 6): verify QA report exists in `docs/qa/`
@@ -47,7 +47,7 @@ Analyze the reported bug.
 6. Flag if the bug reveals a specs/docs drift
 7. Generate requirements with IDs, priorities, and acceptance criteria for the fix
 
-Save output to `specs/bugfixes/[name]-analysis.md`.
+Save output to `docs/bugfixes/[name]-analysis.md`.
 
 ## Step 2: Test Writer
 Write a test that REPRODUCES the bug (it must fail).

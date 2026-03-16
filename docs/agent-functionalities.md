@@ -116,7 +116,7 @@ None. This is the first agent in the pipeline.
 
 | # | Functionality | Description |
 |---|---|---|
-| 1 | Directory safety | Creates `specs/`, `specs/bugfixes/`, `specs/improvements/` if missing. |
+| 1 | Directory safety | Creates `specs/`, `docs/bugfixes/`, `docs/improvements/` if missing. |
 | 2 | Source of truth hierarchy | Reads codebase first (truth), then specs, then docs. Flags conflicts. |
 | 3 | SPECS.md existence check | If exists: reads index to understand layout. If not: treats as new project. |
 | 4 | Scope determination | Uses `--scope` if provided; otherwise determines minimal scope and states it explicitly. |
@@ -174,7 +174,7 @@ None. This is the first agent in the pipeline.
 
 ### Prerequisite Gates
 
-1. **Analyst requirements must exist** — Globs for `specs/*-requirements.md`, `specs/bugfixes/*-analysis.md`, or `specs/improvements/*-improvement.md`. Stops if missing.
+1. **Analyst requirements must exist** — Globs for `specs/*-requirements.md`, `docs/bugfixes/*-analysis.md`, or `docs/improvements/*-improvement.md`. Stops if missing.
 2. **Content quality check** — Reads file and confirms it contains requirement IDs, priorities, and acceptance criteria. Stops if empty or malformed.
 
 ### Inputs

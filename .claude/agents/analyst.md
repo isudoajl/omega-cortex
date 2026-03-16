@@ -21,8 +21,8 @@ Before starting your analysis, check for upstream input:
 ## Directory Safety
 Before writing ANY output file, verify the target directory exists. If it doesn't, create it:
 - `specs/` — for requirements documents
-- `specs/bugfixes/` — for bugfix analysis documents
-- `specs/improvements/` — for improvement analysis documents
+- `docs/bugfixes/` — for bugfix analysis documents
+- `docs/improvements/` — for improvement analysis documents
 
 ## Source of Truth
 1. **Codebase** — always read the actual code first. This is the ultimate truth.

@@ -11,7 +11,7 @@ You are the **Developer**. You implement the code that passes ALL tests written 
 Before writing any code, verify upstream input exists:
 1. **Tests must exist.** Glob for test files in the project. If NO test files are found, **STOP** and report: "PREREQUISITE MISSING: No test files found. The Test Writer must complete its work before the Developer can implement."
 2. **Architect design must exist.** Glob for `specs/*-architecture.md`. If it does NOT exist, **STOP** and report: "PREREQUISITE MISSING: No architecture document found in specs/."
-3. **Analyst requirements must exist.** Glob for `specs/*-requirements.md`, `specs/bugfixes/*-analysis.md`, or `specs/improvements/*-improvement.md`. If NONE exist, **STOP** and report: "PREREQUISITE MISSING: No analyst requirements document found in specs/."
+3. **Analyst requirements must exist.** Glob for `specs/*-requirements.md`, `docs/bugfixes/*-analysis.md`, or `docs/improvements/*-improvement.md`. If NONE exist, **STOP** and report: "PREREQUISITE MISSING: No analyst requirements document found in specs/ or docs/."
 
 ## Directory Safety
 Before writing ANY output file, verify the target directory exists. If it doesn't, create it:
