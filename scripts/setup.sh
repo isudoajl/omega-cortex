@@ -212,6 +212,73 @@ else
 fi
 
 # ============================================================
+# WORKFLOW RULES (CLAUDE.md)
+# ============================================================
+echo ""
+echo "  Configuring workflow rules..."
+
+# Extract the workflow rules section (everything from "# Claude Code Quality Workflow" onwards)
+WORKFLOW_RULES_FILE="$SCRIPT_DIR/CLAUDE.md"
+WORKFLOW_MARKER="# Claude Code Quality Workflow"
+
+if [ -f "$WORKFLOW_RULES_FILE" ]; then
+    if [ -f "./CLAUDE.md" ]; then
+        # Check if workflow rules are already appended
+        if grep -q "$WORKFLOW_MARKER" ./CLAUDE.md 2>/dev/null; then
+            # Remove old workflow rules (everything from the marker to EOF) and re-append
+            # Find the line number of the marker
+            MARKER_LINE=$(grep -n "$WORKFLOW_MARKER" ./CLAUDE.md | head -1 | cut -d: -f1)
+            if [ -n "$MARKER_LINE" ]; then
+                # Also remove the separator line before the marker (the --- line)
+                PREV_LINE=$((MARKER_LINE - 1))
+                PREV_CONTENT=$(sed -n "${PREV_LINE}p" ./CLAUDE.md)
+                if [ "$PREV_CONTENT" = "---" ]; then
+                    # Check if there's a blank line before the ---
+                    PREV_PREV_LINE=$((PREV_LINE - 1))
+                    PREV_PREV_CONTENT=$(sed -n "${PREV_PREV_LINE}p" ./CLAUDE.md)
+                    if [ -z "$PREV_PREV_CONTENT" ]; then
+                        CUT_LINE=$PREV_PREV_LINE
+                    else
+                        CUT_LINE=$PREV_LINE
+                    fi
+                else
+                    CUT_LINE=$MARKER_LINE
+                fi
+                # Keep everything before the cut line
+                head -n $((CUT_LINE - 1)) ./CLAUDE.md > ./CLAUDE.md.tmp
+                mv ./CLAUDE.md.tmp ./CLAUDE.md
+            fi
+            echo "   ~ Workflow rules updated (replaced existing rules)"
+        else
+            echo "   + Workflow rules appended to existing CLAUDE.md"
+        fi
+
+        # Append the workflow rules section
+        echo "" >> ./CLAUDE.md
+        echo "---" >> ./CLAUDE.md
+        echo "" >> ./CLAUDE.md
+        # Extract from "# Claude Code Quality Workflow" to end of file
+        sed -n "/$WORKFLOW_MARKER/,\$p" "$WORKFLOW_RULES_FILE" >> ./CLAUDE.md
+    else
+        # No CLAUDE.md exists — create one with just the workflow rules
+        echo "# CLAUDE.md" > ./CLAUDE.md
+        echo "" >> ./CLAUDE.md
+        echo "This file provides guidance to Claude Code when working with code in this repository." >> ./CLAUDE.md
+        echo "" >> ./CLAUDE.md
+        echo "## Project-Specific Rules" >> ./CLAUDE.md
+        echo "" >> ./CLAUDE.md
+        echo "_(Add your project-specific rules here.)_" >> ./CLAUDE.md
+        echo "" >> ./CLAUDE.md
+        echo "---" >> ./CLAUDE.md
+        echo "" >> ./CLAUDE.md
+        sed -n "/$WORKFLOW_MARKER/,\$p" "$WORKFLOW_RULES_FILE" >> ./CLAUDE.md
+        echo "   + CLAUDE.md created with workflow rules"
+    fi
+else
+    echo "   WARNING: Toolkit CLAUDE.md not found at $WORKFLOW_RULES_FILE — skipping"
+fi
+
+# ============================================================
 # INSTITUTIONAL MEMORY (SQLite)
 # ============================================================
 if [ "$SKIP_DB" = false ]; then
@@ -234,8 +301,9 @@ AGENT_COUNT=$(ls .claude/agents/*.md 2>/dev/null | wc -l | tr -d ' ')
 CMD_COUNT=$(ls .claude/commands/*.md 2>/dev/null | wc -l | tr -d ' ')
 
 echo "  Installed: $AGENT_COUNT agents, $CMD_COUNT commands"
+echo "  Workflow rules: CLAUDE.md (appended)"
 if [ "$SKIP_DB" = false ]; then
-    echo "  Memory DB: .claude/memory.db"
+    echo "  Memory DB: .claude/memory.db (with self-learning)"
 fi
 echo ""
 echo "  Core commands:"

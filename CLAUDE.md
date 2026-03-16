@@ -13,7 +13,7 @@ There is no build system, test suite, or runtime. To test changes:
 2. Deploy to a target project: `bash scripts/setup.sh [--ext=name]` (run from the target project directory)
 3. Run the workflow commands in the target project via Claude Code
 
-The setup script copies agents and commands into the target's `.claude/agents/` and `.claude/commands/` (flattened). It creates `specs/`, `docs/` scaffolding if missing, and initializes the SQLite institutional memory database at `.claude/memory.db`. It does **not** copy CLAUDE.md — each target project maintains its own.
+The setup script copies agents and commands into the target's `.claude/agents/` and `.claude/commands/` (flattened). It creates `specs/`, `docs/` scaffolding if missing, initializes the SQLite institutional memory database at `.claude/memory.db`, and **appends** the workflow rules section (everything below `# Claude Code Quality Workflow`) to the target project's CLAUDE.md — preserving any project-specific rules that already exist above the `---` separator.
 
 ### Repository Structure
 
@@ -157,6 +157,8 @@ bash scripts/setup.sh --ext=all                  # core + all extensions
 bash scripts/setup.sh --no-db                    # skip SQLite initialization
 bash scripts/setup.sh --list-ext                 # list available extensions
 ```
+
+The script deploys agents, commands, memory DB, **and** appends workflow rules to the target's CLAUDE.md (preserving project-specific rules). See `docs/setup-guide.md` for the complete deployment reference.
 
 ### Maintaining Documentation
 **Always update `docs/` and `README.md`** after ANY modification to the toolkit. This includes:

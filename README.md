@@ -169,51 +169,25 @@ Agent starts → briefing injects recent outcomes + active lessons
 
 ## Setup
 
-### Prerequisites
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed
-- `sqlite3` available (standard on macOS/Linux)
-- A git repository to install the workflow into
-
-### Install
-
-Navigate to your target project and run:
+Navigate to your **target project** and run:
 
 ```bash
-# Core only (13 agents, 13 commands, SQLite memory)
 bash /path/to/claude-workflow/scripts/setup.sh
+```
 
-# Core + blockchain extension
-bash /path/to/claude-workflow/scripts/setup.sh --ext=blockchain
+One command deploys everything: 13 agents, 13 commands, SQLite memory DB (with self-learning), query templates, scaffolding, and **appends** the workflow rules to your project's CLAUDE.md (preserving your project-specific rules).
 
-# Core + multiple extensions
+```bash
+# With extensions
 bash /path/to/claude-workflow/scripts/setup.sh --ext=blockchain,omega
 
-# Core + all extensions
+# All extensions
 bash /path/to/claude-workflow/scripts/setup.sh --ext=all
-
-# List available extensions
-bash /path/to/claude-workflow/scripts/setup.sh --list-ext
-
-# Skip SQLite initialization
-bash /path/to/claude-workflow/scripts/setup.sh --no-db
 ```
 
-This copies agents → `.claude/agents/`, commands → `.claude/commands/`, initializes `.claude/memory.db`, and creates `specs/` + `docs/` scaffolding if missing. It never overwrites CLAUDE.md — each project maintains its own.
+**Safe to re-run** — agents/commands update, CLAUDE.md workflow rules refresh, DB schema migrates, your data is preserved.
 
-### What gets deployed
-
-```
-your-project/
-├── .claude/
-│   ├── agents/           ← Core agents (+ extension agents if selected)
-│   ├── commands/         ← Core commands (+ extension commands if selected)
-│   ├── memory.db         ← Institutional memory (SQLite)
-│   └── db-queries/       ← Query reference files
-├── specs/
-│   └── SPECS.md          ← Master spec index (created if missing)
-└── docs/
-    └── DOCS.md           ← Master doc index (created if missing)
-```
+For the complete deployment reference (prerequisites, what gets deployed, CLAUDE.md handling, verification, troubleshooting), see **[docs/setup-guide.md](docs/setup-guide.md)**.
 
 ## Guardrails
 
