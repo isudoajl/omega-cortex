@@ -241,7 +241,9 @@ with open('$SETTINGS_FILE', 'r') as f:
     settings = json.load(f)
 settings['hooks'] = {
     'SessionStart': [{'matcher': '', 'hooks': [{'type': 'command', 'command': '.claude/hooks/briefing.sh', 'timeout': 30}]}],
-    'SessionEnd': [{'matcher': '', 'hooks': [{'type': 'command', 'command': '.claude/hooks/session-close.sh', 'timeout': 15}]}]
+    'SessionEnd': [{'matcher': '', 'hooks': [{'type': 'command', 'command': '.claude/hooks/session-close.sh', 'timeout': 15}]}],
+    'PreToolUse': [{'matcher': 'Bash', 'hooks': [{'type': 'command', 'command': '.claude/hooks/debrief-gate.sh', 'timeout': 5}]}],
+    'Stop': [{'matcher': '', 'hooks': [{'type': 'command', 'command': '.claude/hooks/debrief-nudge.sh', 'timeout': 5}]}]
 }
 with open('$SETTINGS_FILE', 'w') as f:
     json.dump(settings, f, indent=2)
@@ -277,6 +279,30 @@ with open('$SETTINGS_FILE', 'w') as f:
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/debrief-gate.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/debrief-nudge.sh",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }
@@ -308,6 +334,30 @@ else
             "type": "command",
             "command": ".claude/hooks/session-close.sh",
             "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/debrief-gate.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/debrief-nudge.sh",
+            "timeout": 5
           }
         ]
       }

@@ -97,7 +97,7 @@ Every target project gets `.claude/memory.db` — a persistent knowledge base th
 | `lessons` | Self-learning Tier 2: distilled patterns from outcomes | All pipeline agents | All agents (briefing) |
 | `decay_log` | Memory evolution audit trail | maintenance | maintenance |
 
-**Agent protocol**: Before work → query DB (briefing + learning context). After work → write back (debrief + self-score). **Briefing is automated via Claude Code hooks** — agents see institutional memory context at the start of every session without relying on AI compliance.
+**Agent protocol**: Before work → query DB (briefing + learning context). After work → write back (debrief + self-score). **Enforced via 4 Claude Code hooks**: briefing is auto-injected at session start, git commits are blocked without self-scoring, periodic nudges remind about debrief, and open runs are auto-closed at session end.
 
 ### Self-Learning Loop
 

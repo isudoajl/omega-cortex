@@ -37,13 +37,14 @@ The institutional memory eliminates this by giving every agent a queryable knowl
 
 The briefing/debrief protocol was originally voluntary — agents were told to run SQL queries, but nothing enforced it. This failed (the AI skips it under cognitive load). Two Claude Code hooks now automate the critical path:
 
-| Hook | Event | What it does | Automated? |
-|------|-------|-------------|-----------|
-| `briefing.sh` | SessionStart | Queries memory.db, outputs context to stdout → injected into conversation | **Fully** |
-| `session-close.sh` | SessionEnd | Closes open workflow_runs, promotes hotspot risk levels | **Fully** |
-| Debrief (self-scoring) | — | Self-score outcomes, distill lessons, log decisions | AI must do this (reminder injected by briefing hook) |
+| Hook | Event | What it does | Enforcement |
+|------|-------|-------------|------------|
+| `briefing.sh` | SessionStart | Queries memory.db, outputs context to stdout → injected into conversation | **Automatic** — AI sees it, can't skip it |
+| `session-close.sh` | SessionEnd | Closes open workflow_runs, promotes hotspot risk levels | **Automatic** — runs silently |
+| `debrief-gate.sh` | PreToolUse (Bash) | Blocks `git commit` unless outcomes have been logged | **Blocking** — AI cannot commit without debriefing |
+| `debrief-nudge.sh` | Stop | Reminds AI to debrief (every 5th response if no outcomes logged) | **Reminder** — periodic nudge |
 
-Hook scripts live in `.claude/hooks/` and are configured in `.claude/settings.json`. Both are deployed automatically by `setup.sh`.
+Hook scripts live in `.claude/hooks/` and are configured in `.claude/settings.json`. All are deployed automatically by `setup.sh`.
 
 ## Schema
 
@@ -421,7 +422,7 @@ SQLite binary files don't diff in git. Mitigations:
 ## Limitations and Future Work
 
 **Current limitations:**
-- Debrief self-scoring still requires AI cooperation (briefing is automated, debrief is not fully)
+- Debrief self-scoring requires AI cooperation, but git commits are blocked without it (enforced via PreToolUse hook)
 - Agents must manually construct SQL queries — no abstraction layer
 - No automated decay beyond hotspot promotion (maintenance queries must be run manually or by a scheduled workflow)
 - No cross-project memory (each project has its own DB)

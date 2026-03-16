@@ -147,8 +147,29 @@ Runs automatically when the session ends. It:
 - Closes any workflow_runs still marked as 'running' (sets status to 'partial')
 - Promotes hotspot risk levels based on touch counts
 
-### What hooks DON'T automate
-The debrief **self-scoring** (outcomes) and **lesson distillation** still require AI judgment. The briefing hook injects a reminder, but Claude must actually run the debrief SQL inserts. This is the one part that still relies on AI cooperation — but the reminder is injected automatically, so Claude can't claim it "forgot."
+### `debrief-gate.sh` (PreToolUse — Bash)
+Runs before every Bash tool call. For non-commit commands, exits instantly (no overhead). When it detects `git commit`:
+- Checks if any outcomes (self-scores) were logged today
+- If **no** → **blocks the commit** (exit 2) with instructions to debrief first
+- If **yes** → allows the commit through
+
+This is the hard enforcement. The AI cannot commit code without first self-scoring its work.
+
+### `debrief-nudge.sh` (Stop)
+Runs after every Claude response. Throttled to avoid noise:
+- Checks if any outcomes were logged today
+- If yes → silent
+- If no → reminds every 5th response (not every response)
+- Resets when debrief is completed
+
+### Enforcement summary
+
+| Hook | Event | Enforcement level |
+|------|-------|------------------|
+| `briefing.sh` | SessionStart | **Automatic** — context injected, AI can't miss it |
+| `session-close.sh` | SessionEnd | **Automatic** — runs silently |
+| `debrief-gate.sh` | PreToolUse (Bash) | **Blocking** — git commits fail without debrief |
+| `debrief-nudge.sh` | Stop | **Reminder** — periodic nudge every 5th response |
 
 ### Verifying hooks are active
 In Claude Code, run:

@@ -237,7 +237,16 @@ The original design relied on agents voluntarily running briefing queries and de
 | "MANDATORY" is aspirational text | Hook execution is infrastructure-level |
 | AI skips it under cognitive load | Hook runs regardless of what the AI is doing |
 
-Hooks don't solve everything — self-scoring and lesson distillation still require AI judgment. But the briefing (80% of the value) is now fully automated. The AI sees the institutional context whether it wants to or not.
+Four hooks cover the full lifecycle:
+
+| Hook | Enforcement |
+|-|-|
+| `briefing.sh` (SessionStart) | Automatic — context injected, can't miss it |
+| `session-close.sh` (SessionEnd) | Automatic — runs silently |
+| `debrief-gate.sh` (PreToolUse) | **Blocking** — git commits fail without self-scoring |
+| `debrief-nudge.sh` (Stop) | Reminder — periodic nudge every 5th response |
+
+Self-scoring and lesson distillation still require AI judgment, but the AI literally cannot commit code without doing it first. This is the closest analog to Omega's gateway — the infrastructure forces the protocol.
 
 ### Why Decay Mechanics
 
