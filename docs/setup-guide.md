@@ -132,8 +132,8 @@ To check the memory DB:
 ```bash
 sqlite3 .claude/memory.db ".tables"
 # Should show: bugs, changes, decay_log, decisions, dependencies,
-#              failed_approaches, findings, hotspots, patterns,
-#              requirements, workflow_runs
+#              failed_approaches, findings, hotspots, lessons, outcomes,
+#              patterns, requirements, workflow_runs
 ```
 
 ## Updating the Toolkit
