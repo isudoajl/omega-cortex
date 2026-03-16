@@ -212,6 +212,113 @@ else
 fi
 
 # ============================================================
+# HOOKS (automated briefing/debrief)
+# ============================================================
+echo ""
+echo "  Deploying automation hooks..."
+mkdir -p .claude/hooks
+for hook in "$SCRIPT_DIR/core/hooks/"*.sh; do
+    [ -f "$hook" ] || continue
+    name=$(basename "$hook")
+    cp "$hook" ".claude/hooks/$name"
+    chmod +x ".claude/hooks/$name"
+    echo "   + hook: $name"
+done
+
+# Configure hooks in settings.json (merge, don't overwrite)
+SETTINGS_FILE=".claude/settings.json"
+if [ -f "$SETTINGS_FILE" ]; then
+    # Check if hooks are already configured
+    if grep -q '"hooks"' "$SETTINGS_FILE" 2>/dev/null; then
+        echo "   = hooks already configured in settings.json (skipping)"
+        echo "   NOTE: To update hooks config, delete the 'hooks' key from $SETTINGS_FILE and re-run setup"
+    else
+        # Add hooks to existing settings using a temp file approach
+        # Remove the closing } and append hooks config
+        python3 -c "
+import json, sys
+with open('$SETTINGS_FILE', 'r') as f:
+    settings = json.load(f)
+settings['hooks'] = {
+    'SessionStart': [{'matcher': '', 'hooks': [{'type': 'command', 'command': '.claude/hooks/briefing.sh', 'timeout': 30}]}],
+    'SessionEnd': [{'matcher': '', 'hooks': [{'type': 'command', 'command': '.claude/hooks/session-close.sh', 'timeout': 15}]}]
+}
+with open('$SETTINGS_FILE', 'w') as f:
+    json.dump(settings, f, indent=2)
+    f.write('\n')
+" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo "   + hooks added to existing settings.json"
+        else
+            echo "   WARNING: Could not merge hooks into settings.json — creating fresh"
+            cat > "$SETTINGS_FILE" << 'HOOKEOF'
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/briefing.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-close.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
+HOOKEOF
+            echo "   + settings.json created with hooks"
+        fi
+    fi
+else
+    cat > "$SETTINGS_FILE" << 'HOOKEOF'
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/briefing.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-close.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
+HOOKEOF
+    echo "   + settings.json created with hooks"
+fi
+
+# ============================================================
 # WORKFLOW RULES (CLAUDE.md)
 # ============================================================
 echo ""
@@ -302,6 +409,7 @@ CMD_COUNT=$(ls .claude/commands/*.md 2>/dev/null | wc -l | tr -d ' ')
 
 echo "  Installed: $AGENT_COUNT agents, $CMD_COUNT commands"
 echo "  Workflow rules: CLAUDE.md (appended)"
+echo "  Hooks: SessionStart (auto-briefing), SessionEnd (auto-close)"
 if [ "$SKIP_DB" = false ]; then
     echo "  Memory DB: .claude/memory.db (with self-learning)"
 fi

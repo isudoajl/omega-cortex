@@ -48,12 +48,15 @@ claude-workflow/
 │   │   ├── workflow-wizard-ux.md
 │   │   ├── workflow-create-role.md
 │   │   └── workflow-audit-role.md
-│   └── db/                            # Institutional memory layer
-│       ├── schema.sql                 # SQLite schema (tables, views, indexes)
-│       └── queries/                   # Named query templates for agents
-│           ├── briefing.sql           # Pre-work queries
-│           ├── debrief.sql            # Post-work inserts/updates
-│           └── maintenance.sql        # Periodic cleanup and health checks
+│   ├── db/                            # Institutional memory layer
+│   │   ├── schema.sql                 # SQLite schema (tables, views, indexes)
+│   │   └── queries/                   # Named query templates for agents
+│   │       ├── briefing.sql           # Pre-work queries
+│   │       ├── debrief.sql            # Post-work inserts/updates
+│   │       └── maintenance.sql        # Periodic cleanup and health checks
+│   └── hooks/                         # Automation hooks (deployed to .claude/hooks/)
+│       ├── briefing.sh                # SessionStart: auto-injects memory context
+│       └── session-close.sh           # SessionEnd: closes open runs, promotes hotspots
 │
 ├── extensions/                        # Domain-specific packs (opt-in)
 │   ├── blockchain/

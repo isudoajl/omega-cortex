@@ -23,6 +23,8 @@ That's it. One command deploys everything:
 | 13 agents | `.claude/agents/` | Core pipeline agents |
 | 13 commands | `.claude/commands/` | Workflow orchestrators |
 | Workflow rules | `CLAUDE.md` | **Appended** to existing CLAUDE.md (never overwrites) |
+| Automation hooks | `.claude/hooks/` | SessionStart (auto-briefing), SessionEnd (auto-close) |
+| Hook config | `.claude/settings.json` | Registers hooks with Claude Code |
 | Memory DB | `.claude/memory.db` | SQLite with 14 tables, 7 views (incl. self-learning) |
 | Query references | `.claude/db-queries/` | Briefing, debrief, maintenance SQL templates |
 | Scaffolding | `specs/SPECS.md`, `docs/DOCS.md` | Only created if they don't exist |
@@ -111,17 +113,49 @@ your-project/
 │   │   ├── workflow-bugfix.md
 │   │   ├── ... (13 core commands)
 │   │   └── workflow-blockchain-network.md  (if --ext=blockchain)
+│   ├── hooks/                 ← Automation hooks
+│   │   ├── briefing.sh        ← SessionStart: injects memory context automatically
+│   │   └── session-close.sh   ← SessionEnd: closes open runs, promotes hotspots
+│   ├── settings.json          ← Hook configuration (registers hooks with Claude Code)
 │   ├── memory.db              ← Institutional memory + self-learning (SQLite)
 │   ├── db-queries/            ← Query reference files
 │   │   ├── briefing.sql       ← Includes self-learning queries
 │   │   ├── debrief.sql        ← Includes self-scoring + lesson distillation
 │   │   └── maintenance.sql    ← Includes lesson cap + confidence decay
-│   └── settings.local.json   ← (unchanged if exists)
+│   └── settings.local.json    ← (unchanged if exists)
 ├── specs/
 │   └── SPECS.md               ← Master spec index (created if missing)
 └── docs/
     └── DOCS.md                ← Master doc index (created if missing)
 ```
+
+## How Hooks Work (Automated Briefing/Debrief)
+
+The toolkit deploys two Claude Code hooks that automate the institutional memory protocol:
+
+### `briefing.sh` (SessionStart)
+Runs automatically at the start of every Claude Code session. It:
+- Queries `memory.db` for hotspots, failed approaches, open findings, decisions, patterns
+- Queries self-learning context (recent outcomes, active lessons)
+- Outputs everything to stdout, which Claude Code injects into the conversation context
+- Includes a **debrief obligation reminder** so Claude knows to write back before the session ends
+
+**This is what makes the system work without relying on AI memory.** Claude sees the institutional context automatically — no "remember to run briefing" needed.
+
+### `session-close.sh` (SessionEnd)
+Runs automatically when the session ends. It:
+- Closes any workflow_runs still marked as 'running' (sets status to 'partial')
+- Promotes hotspot risk levels based on touch counts
+
+### What hooks DON'T automate
+The debrief **self-scoring** (outcomes) and **lesson distillation** still require AI judgment. The briefing hook injects a reminder, but Claude must actually run the debrief SQL inserts. This is the one part that still relies on AI cooperation — but the reminder is injected automatically, so Claude can't claim it "forgot."
+
+### Verifying hooks are active
+In Claude Code, run:
+```
+/hooks
+```
+You should see `SessionStart` and `SessionEnd` listed.
 
 ## What Is NOT Deployed
 
@@ -138,6 +172,8 @@ The setup script is **safe to re-run** at any time:
 |-----------|-------------------|
 | Agents & commands | Overwritten with latest versions |
 | CLAUDE.md workflow rules | Replaced with latest (project rules preserved) |
+| Hook scripts | Overwritten with latest versions |
+| Hook config (settings.json) | Preserved if hooks key exists; added if missing |
 | `specs/SPECS.md`, `docs/DOCS.md` | NOT overwritten if they exist |
 | `memory.db` | Schema migrated (new tables added, existing data preserved) |
 | Query reference files | Overwritten with latest |

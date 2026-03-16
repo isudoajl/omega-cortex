@@ -27,12 +27,15 @@ claude-workflow/
 ├── core/                              # Universal foundation
 │   ├── agents/                        # 13 agents every project needs
 │   ├── commands/                      # 13 workflow orchestrators
-│   └── db/                            # Institutional memory layer
-│       ├── schema.sql                 # SQLite schema (tables, views, indexes)
-│       └── queries/                   # Named query templates
-│           ├── briefing.sql           # What agents run BEFORE work
-│           ├── debrief.sql            # What agents run AFTER work
-│           └── maintenance.sql        # Periodic cleanup & health
+│   ├── db/                            # Institutional memory layer
+│   │   ├── schema.sql                 # SQLite schema (tables, views, indexes)
+│   │   └── queries/                   # Named query templates
+│   │       ├── briefing.sql           # What agents run BEFORE work
+│   │       ├── debrief.sql            # What agents run AFTER work
+│   │       └── maintenance.sql        # Periodic cleanup & health
+│   └── hooks/                         # Claude Code automation hooks
+│       ├── briefing.sh                # SessionStart: auto-injects memory context
+│       └── session-close.sh           # SessionEnd: closes open runs
 │
 ├── extensions/                        # Domain-specific packs (opt-in)
 │   ├── blockchain/                    # 3 agents, 3 commands
@@ -222,6 +225,19 @@ The original institutional memory is a **ledger** — it records what happened f
 | Static knowledge | Confidence-tracked, decay-aware knowledge |
 
 The design choice to keep this as SQL tables (not a separate system) ensures it rides the existing briefing/debrief protocol with no new infrastructure.
+
+### Why Hooks (not voluntary compliance)
+
+The original design relied on agents voluntarily running briefing queries and debrief inserts. This failed immediately — the AI doesn't reliably execute the protocol, even when the documentation says "MANDATORY."
+
+| Voluntary compliance | Hooks |
+|-|-|
+| Agent must remember to run briefing | Briefing runs automatically on SessionStart |
+| Agent must remember to debrief | Debrief reminder injected into every session |
+| "MANDATORY" is aspirational text | Hook execution is infrastructure-level |
+| AI skips it under cognitive load | Hook runs regardless of what the AI is doing |
+
+Hooks don't solve everything — self-scoring and lesson distillation still require AI judgment. But the briefing (80% of the value) is now fully automated. The AI sees the institutional context whether it wants to or not.
 
 ### Why Decay Mechanics
 

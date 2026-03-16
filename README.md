@@ -97,7 +97,7 @@ Every target project gets `.claude/memory.db` — a persistent knowledge base th
 | `lessons` | Self-learning Tier 2: distilled patterns from outcomes | All pipeline agents | All agents (briefing) |
 | `decay_log` | Memory evolution audit trail | maintenance | maintenance |
 
-**Agent protocol**: Before work → query DB (briefing + learning context). After work → write back (debrief + self-score). No exceptions.
+**Agent protocol**: Before work → query DB (briefing + learning context). After work → write back (debrief + self-score). **Briefing is automated via Claude Code hooks** — agents see institutional memory context at the start of every session without relying on AI compliance.
 
 ### Self-Learning Loop
 
@@ -175,7 +175,7 @@ Navigate to your **target project** and run:
 bash /path/to/claude-workflow/scripts/setup.sh
 ```
 
-One command deploys everything: 13 agents, 13 commands, SQLite memory DB (with self-learning), query templates, scaffolding, and **appends** the workflow rules to your project's CLAUDE.md (preserving your project-specific rules).
+One command deploys everything: 13 agents, 13 commands, automation hooks (auto-briefing/debrief), SQLite memory DB (with self-learning), query templates, scaffolding, and **appends** the workflow rules to your project's CLAUDE.md (preserving your project-specific rules).
 
 ```bash
 # With extensions

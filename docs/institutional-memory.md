@@ -29,9 +29,21 @@ The institutional memory eliminates this by giving every agent a queryable knowl
 ```
 
 **Every agent, every time:**
-1. **Briefing** — queries the DB for context relevant to its scope (hotspots, failed approaches, open findings, decisions, patterns)
+1. **Briefing** — queries the DB for context relevant to its scope (hotspots, failed approaches, open findings, decisions, patterns, outcomes, lessons). **Automated via SessionStart hook** — the briefing runs automatically and injects context into every session without relying on AI compliance.
 2. **Work** — performs its normal job, informed by the briefing
-3. **Debrief** — writes back what it learned (changes, decisions, failures, bugs, findings, patterns)
+3. **Debrief** — writes back what it learned (changes, decisions, failures, bugs, findings, patterns, self-scores). The SessionStart hook injects a debrief reminder, but the AI must still execute the debrief SQL inserts (self-scoring requires judgment).
+
+### Automation via Hooks
+
+The briefing/debrief protocol was originally voluntary — agents were told to run SQL queries, but nothing enforced it. This failed (the AI skips it under cognitive load). Two Claude Code hooks now automate the critical path:
+
+| Hook | Event | What it does | Automated? |
+|------|-------|-------------|-----------|
+| `briefing.sh` | SessionStart | Queries memory.db, outputs context to stdout → injected into conversation | **Fully** |
+| `session-close.sh` | SessionEnd | Closes open workflow_runs, promotes hotspot risk levels | **Fully** |
+| Debrief (self-scoring) | — | Self-score outcomes, distill lessons, log decisions | AI must do this (reminder injected by briefing hook) |
+
+Hook scripts live in `.claude/hooks/` and are configured in `.claude/settings.json`. Both are deployed automatically by `setup.sh`.
 
 ## Schema
 
@@ -409,8 +421,9 @@ SQLite binary files don't diff in git. Mitigations:
 ## Limitations and Future Work
 
 **Current limitations:**
+- Debrief self-scoring still requires AI cooperation (briefing is automated, debrief is not fully)
 - Agents must manually construct SQL queries — no abstraction layer
-- No automated decay (maintenance queries must be run manually or by a scheduled workflow)
+- No automated decay beyond hotspot promotion (maintenance queries must be run manually or by a scheduled workflow)
 - No cross-project memory (each project has its own DB)
 - `$RUN_ID` passing relies on orchestrator convention, not enforcement
 
