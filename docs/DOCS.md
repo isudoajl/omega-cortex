@@ -11,6 +11,15 @@
 - [Institutional Memory](institutional-memory.md) — SQLite layer: schema, briefing/debrief protocol, self-learning loop, query patterns, decay mechanics
 - [Setup Guide](setup-guide.md) — Deploying the toolkit to target projects via `omg` CLI or `setup.sh`, hook installation, DB initialization
 
+## Protocol References
+
+On-demand protocol files loaded by agents when needed (deployed to `.claude/protocols/` in target projects):
+
+- `core/protocols/memory-protocol.md` — Full institutional memory protocol: briefing queries, incremental logging templates, close-out, self-learning
+- `core/protocols/fail-safes.md` — Prerequisite gates, iteration limits, error recovery
+- `core/protocols/context-budget.md` — 60% budget, scoping strategy, heuristics
+- `core/protocols/identity.md` — Experience levels, communication styles, override hierarchy
+
 ## Agent Reference
 
 - [Agent Inventory](agent-inventory.md) — All agents (core + extensions): roles, inputs, outputs, tools, memory protocol

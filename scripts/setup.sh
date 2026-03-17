@@ -161,6 +161,32 @@ if [ "$VERBOSE" = false ] && [ "$SECTION_UNCHANGED" -gt 0 ]; then
 fi
 
 # ============================================================
+# CORE PROTOCOLS (on-demand reference files)
+# ============================================================
+echo ""
+echo "  Copying protocol references..."
+mkdir -p .claude/protocols
+SECTION_UNCHANGED=0
+for proto in "$SCRIPT_DIR/core/protocols/"*.md; do
+    [ -f "$proto" ] || continue
+    name=$(basename "$proto")
+    copy_if_changed "$proto" ".claude/protocols/$name"
+    case "$COPY_STATUS" in
+        new)       echo "   + $name" ;;
+        updated)   echo "   ~ $name" ;;
+        unchanged)
+            SECTION_UNCHANGED=$((SECTION_UNCHANGED + 1))
+            if [ "$VERBOSE" = true ]; then
+                echo "   = $name"
+            fi
+            ;;
+    esac
+done
+if [ "$VERBOSE" = false ] && [ "$SECTION_UNCHANGED" -gt 0 ]; then
+    echo "   ($SECTION_UNCHANGED unchanged)"
+fi
+
+# ============================================================
 # EXTENSIONS
 # ============================================================
 if [ -n "$EXTENSIONS" ]; then
@@ -608,6 +634,7 @@ else
 fi
 
 echo "  Workflow rules: CLAUDE.md ($CLAUDE_MD_STATUS)"
+echo "  Protocols: .claude/protocols/ (on-demand reference files)"
 echo "  Hooks: SessionStart (auto-briefing), SessionEnd (auto-close)"
 if [ "$SKIP_DB" = false ]; then
     echo "  Memory DB: .claude/memory.db (with self-learning)"

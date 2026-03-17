@@ -33,6 +33,11 @@ omega/
 │   │       ├── briefing.sql           # What agents run BEFORE work
 │   │       ├── debrief.sql            # What agents run AFTER work
 │   │       └── maintenance.sql        # Periodic cleanup & health
+│   ├── protocols/                     # On-demand protocol reference files
+│   │   ├── memory-protocol.md        # Full institutional memory protocol
+│   │   ├── fail-safes.md             # Iteration limits, prerequisite gates
+│   │   ├── context-budget.md         # 60% budget, scoping strategy
+│   │   └── identity.md               # Experience levels, communication styles
 │   └── hooks/                         # Claude Code automation hooks
 │       ├── briefing.sh                # UserPromptSubmit: auto-injects memory context
 │       ├── debrief-gate.sh            # PreToolUse: blocks git commit without outcomes

@@ -38,39 +38,15 @@ You DO:
 - **Write the final fix** once (and only once) the root cause is confirmed
 - **Talk to the user** — they have runtime observations, domain knowledge, and intuition you don't have
 
-## Institutional Memory — Briefing (MANDATORY)
+## Institutional Memory Protocol
+**Read and follow `.claude/protocols/memory-protocol.md`** for the complete briefing, incremental logging, and close-out protocol. This is mandatory.
 
-Before doing ANYTHING, query `.claude/memory.db`. For the Diagnostician, the briefing is not just context — **it's your primary evidence source**. Failed approaches are not warnings to avoid; they are **clues about where the bug is**.
+- **Briefing**: Before starting work, run the 6 briefing queries (hotspots, failed approaches, findings, decisions, patterns, bugs) with `$SCOPE` set to your working area.
+- **Incremental logging**: After each significant action (file change, decision, failed approach, bug fix), immediately INSERT to memory.db. Never batch.
+- **Self-scoring**: After each significant action, INSERT an outcome with score (-1/0/+1).
+- **Close-out**: When done, verify completeness, distill lessons from 3+ similar outcomes.
 
-```bash
-# 1. ALL failed approaches in scope — THIS IS YOUR GOLD MINE
-# Read every single one. Each failure eliminates hypotheses.
-sqlite3 .claude/memory.db "SELECT id, problem, approach, failure_reason, file_paths FROM failed_approaches WHERE domain LIKE '%\$SCOPE%' ORDER BY id DESC LIMIT 20;"
-
-# 2. ALL bug reports in scope — symptoms are diagnostic data
-sqlite3 .claude/memory.db "SELECT description, symptoms, root_cause, fix_description, affected_files FROM bugs WHERE affected_files LIKE '%\$SCOPE%' ORDER BY id DESC LIMIT 10;"
-
-# 3. Hotspots — files with high churn may be masking the real issue
-sqlite3 .claude/memory.db "SELECT file_path, risk_level, times_touched, description FROM hotspots WHERE file_path LIKE '%\$SCOPE%' ORDER BY times_touched DESC LIMIT 10;"
-
-# 4. Component dependencies — the bug may be in the interaction, not the component
-sqlite3 .claude/memory.db "SELECT source_file, target_file, relationship FROM dependencies WHERE source_file LIKE '%\$SCOPE%' OR target_file LIKE '%\$SCOPE%';"
-
-# 5. Active decisions — an architectural decision may BE the root cause
-sqlite3 .claude/memory.db "SELECT decision, rationale, alternatives FROM decisions WHERE domain LIKE '%\$SCOPE%' AND status='active' ORDER BY id DESC LIMIT 10;"
-
-# 6. Changes timeline — what changed recently? Bugs often follow changes
-sqlite3 .claude/memory.db "SELECT file_path, change_type, description, agent, created_at FROM changes WHERE file_path LIKE '%\$SCOPE%' ORDER BY id DESC LIMIT 15;"
-
-# 7. Patterns — existing patterns may have hidden assumptions
-sqlite3 .claude/memory.db "SELECT name, description FROM patterns WHERE domain LIKE '%\$SCOPE%';"
-
-# 8. SELF-LEARNING: Previous diagnostic outcomes
-sqlite3 .claude/memory.db "SELECT agent, score, action, lesson FROM outcomes WHERE domain LIKE '%\$SCOPE%' ORDER BY id DESC LIMIT 15;"
-
-# 9. SELF-LEARNING: Active lessons
-sqlite3 .claude/memory.db "SELECT content, occurrences, confidence FROM lessons WHERE domain LIKE '%\$SCOPE%' AND status='active' ORDER BY confidence DESC;"
-```
+**Diagnostician-specific**: For the Diagnostician, memory.db briefing is not just context -- it is your primary evidence source. Failed approaches are not warnings to avoid; they are clues about where the bug is. Read ALL failed approaches and use them to build your constraint table (see below).
 
 ### How to Read Failed Approaches as Evidence
 
@@ -377,50 +353,6 @@ System runs out of something. Check:
    - Save your constraint table, surviving hypotheses, and reasoning trace to `docs/.workflow/diagnosis-progress.md`
    - The next session can resume from this state
    - Never lose diagnostic reasoning — it's the most expensive thing to regenerate
-
-## Institutional Memory — Incremental Logging (MANDATORY)
-Log to memory.db **immediately** as diagnostic reasoning proceeds — do not batch for the end. Diagnostic reasoning is expensive to regenerate; incremental logging preserves it even if context compacts.
-
-**After each hypothesis is eliminated — log immediately:**
-```bash
-sqlite3 .claude/memory.db "INSERT INTO failed_approaches (run_id, domain, problem, approach, failure_reason, file_paths) VALUES (\$RUN_ID, 'domain', 'Investigating hypothesis: HYPOTHESIS', 'Diagnostic test: WHAT_WAS_TESTED', 'Result: WHAT_WAS_OBSERVED — hypothesis eliminated', '[\"files\"]');"
-```
-
-**After each diagnostic test result — self-score immediately:**
-```bash
-sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'diagnostician', SCORE, 'domain', 'Diagnosed using TECHNIQUE', 'LESSON_LEARNED');"
-```
-
-**After discovering dependencies — log immediately:**
-```bash
-sqlite3 .claude/memory.db "INSERT OR IGNORE INTO dependencies (source_file, target_file, relationship, discovered_run) VALUES ('component_a', 'component_b', 'interacts-via-STATE', \$RUN_ID);"
-```
-
-**After adding diagnostic instrumentation to a file — log immediately:**
-```bash
-sqlite3 .claude/memory.db "INSERT INTO changes (run_id, file_path, change_type, description, agent) VALUES (\$RUN_ID, 'path/to/file', 'modified', 'What was added/changed for diagnosis', 'diagnostician');"
-sqlite3 .claude/memory.db "INSERT INTO hotspots (file_path, times_touched, description) VALUES ('path', 1, 'Diagnosed: ROOT_CAUSE') ON CONFLICT(file_path) DO UPDATE SET times_touched = times_touched + 1, last_updated = datetime('now');"
-```
-
-## Institutional Memory — Close-Out (MANDATORY)
-After diagnosis (whether or not you found the root cause):
-
-1. **Verify completeness** — all eliminated hypotheses logged as failed approaches? All files touched logged?
-2. **Log confirmed root cause** (if found):
-```bash
-sqlite3 .claude/memory.db "INSERT INTO bugs (run_id, description, symptoms, root_cause, fix_description, affected_files) VALUES (\$RUN_ID, 'Bug description', 'Precise symptoms', 'Confirmed root cause with evidence', 'Fix description', '[\"affected_files\"]');"
-sqlite3 .claude/memory.db "INSERT INTO decisions (run_id, domain, decision, rationale, alternatives, confidence) VALUES (\$RUN_ID, 'domain', 'Root cause: DESCRIPTION', 'Evidence: WHAT_CONFIRMED_IT', '[\"Eliminated: H1 because...\", \"Eliminated: H2 because...\"]', 0.95);"
-sqlite3 .claude/memory.db "INSERT INTO changes (run_id, file_path, change_type, description, agent) VALUES (\$RUN_ID, 'docs/.workflow/diagnosis-report.md', 'created', 'Diagnostic report for: DESCRIPTION', 'diagnostician');"
-```
-3. **Lesson distillation** (3+ outcomes with same theme):
-```bash
-sqlite3 .claude/memory.db "INSERT INTO lessons (domain, content, source_agent) VALUES ('domain', 'Diagnostic pattern: DESCRIPTION', 'diagnostician') ON CONFLICT(domain, content) DO UPDATE SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now');"
-```
-
-**Special rules for the Diagnostician:**
-- Log **every eliminated hypothesis** as a failed approach — this prevents future sessions from re-investigating dead ends
-- Log the **causal chain** in the bug entry, not just the root cause — future sessions need to understand the mechanism
-- Log **discovered dependencies** between components — these interaction paths are where bugs hide
 
 ## Integration
 

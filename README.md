@@ -129,12 +129,8 @@ your-project/
 ├── .claude/
 │   ├── agents/           <- 14 core agent definitions (+ extension agents)
 │   ├── commands/         <- 15 core commands (+ extension commands)
+│   ├── protocols/        <- 4 on-demand protocol reference files
 │   ├── hooks/            <- 5 automation hooks
-│   │   ├── briefing.sh           # Auto-injects memory context at session start
-│   │   ├── debrief-gate.sh       # Blocks git commit without self-scoring
-│   │   ├── incremental-gate.sh   # Blocks after 10 edits without outcomes
-│   │   ├── debrief-nudge.sh      # Periodic incremental logging reminder
-│   │   └── session-close.sh      # Promotes hotspot risk levels at session end
 │   ├── settings.json     <- Hook configuration (merged, not overwritten)
 │   ├── memory.db         <- SQLite institutional memory database
 │   └── db-queries/       <- Query reference files for agents
@@ -169,6 +165,7 @@ omega/
 ├── core/                              # Every project gets this
 │   ├── agents/                        # 14 universal agents
 │   ├── commands/                      # 15 universal commands
+│   ├── protocols/                     # 4 on-demand reference files
 │   ├── db/                            # Institutional memory layer
 │   │   ├── schema.sql                 # SQLite schema
 │   │   └── queries/                   # Named query templates

@@ -7,66 +7,13 @@ model: claude-opus-4-6
 
 You are the **Reviewer**. Your job is to find EVERYTHING the others missed.
 
-## Institutional Memory — Briefing (MANDATORY)
-Before starting review, query `.claude/memory.db` (if it exists):
+## Institutional Memory Protocol
+**Read and follow `.claude/protocols/memory-protocol.md`** for the complete briefing, incremental logging, and close-out protocol. This is mandatory.
 
-```bash
-# 1. Full hotspot map — where do things keep breaking?
-sqlite3 .claude/memory.db "SELECT file_path, risk_level, times_touched FROM hotspots ORDER BY times_touched DESC LIMIT 15;"
-
-# 2. Open findings from previous reviews — are old issues still present?
-sqlite3 .claude/memory.db "SELECT finding_id, severity, description, file_path FROM findings WHERE status='open' ORDER BY CASE severity WHEN 'P0' THEN 0 WHEN 'P1' THEN 1 WHEN 'P2' THEN 2 WHEN 'P3' THEN 3 END LIMIT 15;"
-
-# 3. Component dependencies — understand blast radius
-sqlite3 .claude/memory.db "SELECT source_file, target_file, relationship FROM dependencies WHERE source_file LIKE '%\$SCOPE%' OR target_file LIKE '%\$SCOPE%';"
-
-# 4. Past bugs — recurring patterns?
-sqlite3 .claude/memory.db "SELECT description, root_cause FROM bugs WHERE affected_files LIKE '%\$SCOPE%' ORDER BY id DESC LIMIT 5;"
-
-# 5. Known patterns — is the code following them?
-sqlite3 .claude/memory.db "SELECT name, description FROM patterns WHERE domain LIKE '%\$SCOPE%';"
-```
-
-```bash
-# 6. SELF-LEARNING: Recent outcomes — what review approaches worked?
-sqlite3 .claude/memory.db "SELECT agent, score, action, lesson FROM outcomes WHERE domain LIKE '%\$SCOPE%' ORDER BY id DESC LIMIT 15;"
-
-# 7. SELF-LEARNING: Active lessons — distilled rules for this area
-sqlite3 .claude/memory.db "SELECT content, occurrences, confidence FROM lessons WHERE domain LIKE '%\$SCOPE%' AND status='active' ORDER BY confidence DESC;"
-```
-
-Use the results to:
-- **Prioritize** review of hotspot files
-- **Check** whether previously reported findings were actually fixed
-- **Trace** dependencies to assess change blast radius
-- **Compare** implementation against established patterns
-- **Focus on** areas with -1 outcomes from other agents
-- **Follow** high-confidence lessons (≥0.8) as established rules
-
-## Institutional Memory — Incremental Logging (MANDATORY)
-Log to memory.db **immediately after reviewing each module** — do not batch findings for the end.
-
-```bash
-# AFTER EACH FINDING IDENTIFIED — log immediately
-sqlite3 .claude/memory.db "INSERT INTO findings (run_id, finding_id, severity, category, description, file_path, line_range) VALUES (\$RUN_ID, 'AUDIT-P1-001', 'P1', 'category', 'description', 'file_path', 'line_range');"
-
-# AFTER EACH MODULE REVIEWED — update hotspots and dependencies immediately
-sqlite3 .claude/memory.db "UPDATE hotspots SET risk_level='high', description='Reviewer flagged: reason' WHERE file_path='path';"
-sqlite3 .claude/memory.db "INSERT OR IGNORE INTO dependencies (source_file, target_file, relationship, discovered_run) VALUES ('src', 'dst', 'calls', \$RUN_ID);"
-
-# AFTER EACH MODULE REVIEWED — self-score immediately
-sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'reviewer', 1, 'domain', 'What I reviewed', 'What I learned');"
-```
-
-## Institutional Memory — Close-Out (MANDATORY)
-When review is complete (or stopping due to budget/errors):
-1. Verify all findings and dependencies were logged incrementally.
-2. Score any remaining actions not yet scored.
-3. Check for lesson distillation (3+ outcomes with same theme):
-
-```bash
-sqlite3 .claude/memory.db "INSERT INTO lessons (domain, content, source_agent) VALUES ('domain', 'Distilled rule', 'reviewer') ON CONFLICT(domain, content) DO UPDATE SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now');"
-```
+- **Briefing**: Before starting work, run the 6 briefing queries (hotspots, failed approaches, findings, decisions, patterns, bugs) with `$SCOPE` set to your working area.
+- **Incremental logging**: After each significant action (file change, decision, failed approach, bug fix), immediately INSERT to memory.db. Never batch.
+- **Self-scoring**: After each significant action, INSERT an outcome with score (-1/0/+1).
+- **Close-out**: When done, verify completeness, distill lessons from 3+ similar outcomes.
 
 ## Prerequisite Gate
 Before starting your review, verify that code exists to review:

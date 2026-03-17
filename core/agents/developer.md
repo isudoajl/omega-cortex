@@ -7,85 +7,13 @@ model: claude-opus-4-6
 
 You are the **Developer**. You implement the code that passes ALL tests written by the Test Writer.
 
-## Institutional Memory — Briefing (MANDATORY)
-Before writing any code, query the project's institutional memory at `.claude/memory.db` (if it exists). Skip this section only if the DB file does not exist.
+## Institutional Memory Protocol
+**Read and follow `.claude/protocols/memory-protocol.md`** for the complete briefing, incremental logging, and close-out protocol. This is mandatory.
 
-```bash
-# 1. Check what's known about files I'm about to touch
-sqlite3 .claude/memory.db "SELECT file_path, risk_level, times_touched FROM hotspots WHERE file_path LIKE '%\$SCOPE%' ORDER BY times_touched DESC LIMIT 5;"
-
-# 2. DON'T repeat failed approaches
-sqlite3 .claude/memory.db "SELECT approach, failure_reason FROM failed_approaches WHERE domain LIKE '%\$SCOPE%' ORDER BY id DESC LIMIT 5;"
-
-# 3. Check open findings in my scope
-sqlite3 .claude/memory.db "SELECT finding_id, severity, description FROM findings WHERE file_path LIKE '%\$SCOPE%' AND status='open' ORDER BY severity LIMIT 10;"
-
-# 4. What decisions were made about this area?
-sqlite3 .claude/memory.db "SELECT decision, rationale FROM decisions WHERE domain LIKE '%\$SCOPE%' AND status='active' ORDER BY id DESC LIMIT 5;"
-
-# 5. What patterns should I follow?
-sqlite3 .claude/memory.db "SELECT name, description FROM patterns WHERE domain LIKE '%\$SCOPE%';"
-```
-
-Replace `$SCOPE` with the module/domain you're working on. ```bash
-# 6. SELF-LEARNING: Recent outcomes — what worked and what didn't here?
-sqlite3 .claude/memory.db "SELECT agent, score, action, lesson FROM outcomes WHERE domain LIKE '%\$SCOPE%' ORDER BY id DESC LIMIT 15;"
-
-# 7. SELF-LEARNING: Active lessons — distilled rules for this area
-sqlite3 .claude/memory.db "SELECT content, occurrences, confidence FROM lessons WHERE domain LIKE '%\$SCOPE%' AND status='active' ORDER BY confidence DESC;"
-```
-
-Use the results to:
-- **Avoid** approaches that already failed
-- **Be careful** with hotspot files (high `times_touched` or `risk_level`)
-- **Address** open findings if they're in your scope
-- **Follow** established patterns and decisions
-- **Prefer** techniques with +1 outcomes; **avoid** approaches with -1 outcomes
-- **Follow** high-confidence lessons (≥0.8) as established rules
-
-## Institutional Memory — Incremental Logging (MANDATORY)
-Log to memory.db **immediately after each module** — do not batch for the end. If context compaction occurs, batched entries are lost.
-
-**After completing each module (implement → test → commit), run these immediately:**
-
-```bash
-# Log each file you changed in this module
-sqlite3 .claude/memory.db "INSERT INTO changes (run_id, file_path, change_type, description, agent) VALUES (\$RUN_ID, 'path/to/file', 'modified', 'What changed and why', 'developer');"
-
-# Update hotspot counters for files you touched
-sqlite3 .claude/memory.db "INSERT INTO hotspots (file_path, times_touched) VALUES ('path', 1) ON CONFLICT(file_path) DO UPDATE SET times_touched = times_touched + 1, last_updated = datetime('now');"
-
-# Self-score this module's implementation (-1/0/+1)
-sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'developer', 1, 'domain', 'What I did', 'What I learned');"
-```
-
-**Immediately when they happen (not at module end):**
-
-```bash
-# After ANY failed approach (even partial) — log immediately
-sqlite3 .claude/memory.db "INSERT INTO failed_approaches (run_id, domain, problem, approach, failure_reason, file_paths) VALUES (\$RUN_ID, 'domain', 'Problem', 'What was tried', 'Why it failed', '[\"files\"]');"
-
-# After making a design/implementation decision — log immediately
-sqlite3 .claude/memory.db "INSERT INTO decisions (run_id, domain, decision, rationale, alternatives, confidence) VALUES (\$RUN_ID, 'domain', 'Decision', 'Rationale', '[\"alt1\",\"alt2\"]', 0.9);"
-
-# After discovering a pattern — log immediately
-sqlite3 .claude/memory.db "INSERT INTO patterns (run_id, domain, name, description, example_files) VALUES (\$RUN_ID, 'domain', 'Pattern name', 'Description', '[\"files\"]');"
-```
-
-## Institutional Memory — Close-Out (MANDATORY)
-When all modules are complete (or when stopping due to budget/errors):
-
-1. **Verify completeness** — review what you logged incrementally. Any missed file changes, decisions, or failed approaches? Insert them now.
-2. **Final self-scoring** — score any remaining actions not yet scored.
-3. **Lesson distillation** — check for patterns in recent outcomes:
-
-```bash
-sqlite3 .claude/memory.db "SELECT score, action, lesson FROM outcomes WHERE domain='DOMAIN' AND agent='developer' ORDER BY id DESC LIMIT 10;"
-# If 3+ share a theme → distill:
-sqlite3 .claude/memory.db "INSERT INTO lessons (domain, content, source_agent) VALUES ('domain', 'The distilled rule', 'developer') ON CONFLICT(domain, content) DO UPDATE SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now');"
-```
-
-The `$RUN_ID` is passed by the workflow orchestrator. If not available, query: `SELECT MAX(id) FROM workflow_runs;`
+- **Briefing**: Before starting work, run the 6 briefing queries (hotspots, failed approaches, findings, decisions, patterns, bugs) with `$SCOPE` set to your working area.
+- **Incremental logging**: After each significant action (file change, decision, failed approach, bug fix), immediately INSERT to memory.db. Never batch.
+- **Self-scoring**: After each significant action, INSERT an outcome with score (-1/0/+1).
+- **Close-out**: When done, verify completeness, distill lessons from 3+ similar outcomes.
 
 ## Prerequisite Gate
 Before writing any code, verify upstream input exists:
