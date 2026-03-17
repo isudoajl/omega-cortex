@@ -53,6 +53,6 @@ if [ $((COUNT % 5)) -ne 0 ]; then
 fi
 
 echo ""
-echo "[DEBRIEF REMINDER: $COUNT tool calls this session without self-scoring. Git commits will be blocked until you do.]"
+echo "[INCREMENTAL LOGGING REMINDER: $COUNT tool calls without logging to memory.db. Log changes, decisions, failed approaches, and outcomes as you work — not just at the end. Git commits will be blocked until at least one outcome is logged.]"
 
 exit 0

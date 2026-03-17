@@ -115,14 +115,15 @@ your-project/
 │   │   └── workflow-blockchain-network.md  (if --ext=blockchain)
 │   ├── hooks/                 ← Automation hooks
 │   │   ├── briefing.sh        ← UserPromptSubmit: injects memory context on first prompt
-│   │   ├── debrief-gate.sh   ← PreToolUse (Bash): blocks git commit without debrief
-│   │   ├── debrief-nudge.sh  ← PostToolUse: periodic debrief reminder
+│   │   ├── debrief-gate.sh   ← PreToolUse (Bash): blocks git commit without outcomes
+│   │   ├── incremental-gate.sh ← PreToolUse (Write/Edit): blocks after 10 edits without outcomes
+│   │   ├── debrief-nudge.sh  ← PostToolUse: periodic incremental logging reminder
 │   │   └── session-close.sh   ← Notification: promotes hotspot risk levels
 │   ├── settings.json          ← Hook configuration (registers hooks with Claude Code)
 │   ├── memory.db              ← Institutional memory + self-learning (SQLite)
 │   ├── db-queries/            ← Query reference files
 │   │   ├── briefing.sql       ← Includes self-learning queries
-│   │   ├── debrief.sql        ← Includes self-scoring + lesson distillation
+│   │   ├── debrief.sql        ← Incremental logging + close-out templates
 │   │   └── maintenance.sql    ← Includes lesson cap + confidence decay
 │   └── settings.local.json    ← (unchanged if exists)
 ├── specs/
@@ -131,16 +132,16 @@ your-project/
     └── DOCS.md                ← Master doc index (created if missing)
 ```
 
-## How Hooks Work (Automated Briefing/Debrief)
+## How Hooks Work (Automated Briefing/Incremental Logging Enforcement)
 
-The toolkit deploys two Claude Code hooks that automate the institutional memory protocol:
+The toolkit deploys five Claude Code hooks that automate and enforce the institutional memory protocol:
 
 ### `briefing.sh` (UserPromptSubmit)
 Runs on the first user prompt of each session (uses session_id to fire only once). It:
 - Queries `memory.db` for hotspots, failed approaches, open findings, decisions, patterns
 - Queries self-learning context (recent outcomes, active lessons)
 - Outputs everything to stdout, which Claude Code injects into the conversation context
-- Includes a **debrief obligation reminder** so Claude knows to write back before the session ends
+- Includes an **incremental logging reminder** so Claude knows to log to memory.db during work
 
 **This is what makes the system work without relying on AI memory.** Claude sees the institutional context automatically — no "remember to run briefing" needed.
 
@@ -152,24 +153,34 @@ Runs on notifications. It:
 Runs before every Bash tool call. For non-commit commands, exits instantly (no overhead). When it detects `git commit`:
 - Reads the briefing timestamp from `.briefing_done` (set by briefing.sh at session start)
 - Checks if any outcomes (self-scores) were logged **after** that timestamp (this session only)
-- If **no** → **blocks the commit** (exit 2) with instructions to debrief first
+- If **no** → **blocks the commit** (exit 2) with instructions to log outcomes first
 - If **yes** → allows the commit through
 
-This is the hard enforcement. Each session must debrief independently — outcomes from previous sessions don't count.
+This is the hard enforcement for commits. Each session must log outcomes independently — outcomes from previous sessions don't count.
+
+### `incremental-gate.sh` (PreToolUse — Write, Edit)
+Runs before every Write and Edit tool call. Counts file modifications per session:
+- If outcomes have been logged since session start → resets counter, allows edit
+- If no outcomes logged → increments counter
+- After **10 file modifications** without any outcomes → **blocks the edit** (exit 2) with instructions to log to memory.db first
+- Resets counter when outcomes are detected
+
+This enforces incremental logging even when the agent never reaches a git commit — catching manual work sessions that accumulate changes without recording them.
 
 ### `debrief-nudge.sh` (PostToolUse)
 Runs after every tool execution. Throttled to avoid noise:
 - Checks if any outcomes were logged since this session's briefing timestamp
 - If yes → silent
 - If no → reminds every 5th tool call (not every one)
-- Resets when debrief is completed
+- Resets when outcomes are logged
 
 ### Enforcement summary
 
 | Hook | Event | Enforcement level |
 |------|-------|------------------|
 | `briefing.sh` | UserPromptSubmit | **Automatic** — context injected on first prompt per session |
-| `debrief-gate.sh` | PreToolUse (Bash) | **Blocking** — git commits fail without this session's debrief |
+| `debrief-gate.sh` | PreToolUse (Bash) | **Blocking** — git commits fail without this session's outcomes |
+| `incremental-gate.sh` | PreToolUse (Write/Edit) | **Blocking** — file edits blocked after 10 modifications without outcomes |
 | `debrief-nudge.sh` | PostToolUse | **Reminder** — periodic nudge every 5th tool call |
 | `session-close.sh` | Notification | **Automatic** — promotes hotspot risk levels |
 

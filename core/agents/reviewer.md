@@ -43,23 +43,28 @@ Use the results to:
 - **Focus on** areas with -1 outcomes from other agents
 - **Follow** high-confidence lessons (≥0.8) as established rules
 
-## Institutional Memory — Debrief (MANDATORY)
-After completing the review:
+## Institutional Memory — Incremental Logging (MANDATORY)
+Log to memory.db **immediately after reviewing each module** — do not batch findings for the end.
 
 ```bash
-# Log every finding
+# AFTER EACH FINDING IDENTIFIED — log immediately
 sqlite3 .claude/memory.db "INSERT INTO findings (run_id, finding_id, severity, category, description, file_path, line_range) VALUES (\$RUN_ID, 'AUDIT-P1-001', 'P1', 'category', 'description', 'file_path', 'line_range');"
 
-# Update hotspot risk levels based on review
+# AFTER EACH MODULE REVIEWED — update hotspots and dependencies immediately
 sqlite3 .claude/memory.db "UPDATE hotspots SET risk_level='high', description='Reviewer flagged: reason' WHERE file_path='path';"
-
-# Log discovered dependencies
 sqlite3 .claude/memory.db "INSERT OR IGNORE INTO dependencies (source_file, target_file, relationship, discovered_run) VALUES ('src', 'dst', 'calls', \$RUN_ID);"
 
-# SELF-LEARNING: Score review effectiveness (-1/0/+1)
+# AFTER EACH MODULE REVIEWED — self-score immediately
 sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'reviewer', 1, 'domain', 'What I reviewed', 'What I learned');"
+```
 
-# SELF-LEARNING: Distill lessons if patterns emerge
+## Institutional Memory — Close-Out (MANDATORY)
+When review is complete (or stopping due to budget/errors):
+1. Verify all findings and dependencies were logged incrementally.
+2. Score any remaining actions not yet scored.
+3. Check for lesson distillation (3+ outcomes with same theme):
+
+```bash
 sqlite3 .claude/memory.db "INSERT INTO lessons (domain, content, source_agent) VALUES ('domain', 'Distilled rule', 'reviewer') ON CONFLICT(domain, content) DO UPDATE SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now');"
 ```
 

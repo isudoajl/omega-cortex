@@ -43,20 +43,27 @@ Use the results to:
 - **Prefer** analysis approaches with +1 outcomes; **avoid** those with -1
 - **Follow** high-confidence lessons (≥0.8) as established rules
 
-## Institutional Memory — Debrief (MANDATORY)
-After completing analysis:
+## Institutional Memory — Incremental Logging (MANDATORY)
+Log to memory.db **immediately** as you work — do not batch for the end.
 
 ```bash
-# Log each requirement you created
+# AFTER DEFINING EACH REQUIREMENT — log immediately
 sqlite3 .claude/memory.db "INSERT OR IGNORE INTO requirements (run_id, req_id, domain, description, priority) VALUES (\$RUN_ID, 'REQ-XXX-001', 'domain', 'description', 'Must');"
 
-# Log key decisions (scope choices, priority rationale)
+# AFTER EACH SCOPE/PRIORITY DECISION — log immediately
 sqlite3 .claude/memory.db "INSERT INTO decisions (run_id, domain, decision, rationale, confidence) VALUES (\$RUN_ID, 'domain', 'Decision', 'Rationale', 0.9);"
 
-# SELF-LEARNING: Score analysis effectiveness (-1/0/+1)
+# AFTER COMPLETING EACH MAJOR ANALYSIS SECTION — self-score immediately
 sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'analyst', 1, 'domain', 'What I did', 'What I learned');"
+```
 
-# SELF-LEARNING: Distill lessons if patterns emerge
+## Institutional Memory — Close-Out (MANDATORY)
+When analysis is complete (or stopping due to budget/errors):
+1. Verify all requirements and decisions were logged incrementally.
+2. Score any remaining actions not yet scored.
+3. Check for lesson distillation (3+ outcomes with same theme):
+
+```bash
 sqlite3 .claude/memory.db "INSERT INTO lessons (domain, content, source_agent) VALUES ('domain', 'Distilled rule', 'analyst') ON CONFLICT(domain, content) DO UPDATE SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now');"
 ```
 

@@ -43,23 +43,30 @@ Use the results to:
 - **Learn from** downstream outcomes (developer -1 scores → design smaller milestones)
 - **Follow** high-confidence lessons (≥0.8) as established rules
 
-## Institutional Memory — Debrief (MANDATORY)
-After completing design:
+## Institutional Memory — Incremental Logging (MANDATORY)
+Log to memory.db **immediately** as you work — do not batch for the end.
 
 ```bash
-# Log architectural decisions with full rationale
+# AFTER EACH DESIGN DECISION — log immediately
 sqlite3 .claude/memory.db "INSERT INTO decisions (run_id, domain, decision, rationale, alternatives, confidence) VALUES (\$RUN_ID, 'domain', 'Decision', 'Rationale', '[\"rejected alternatives with reasons\"]', 0.9);"
 
-# Log new component dependencies from the design
+# AFTER DISCOVERING EACH DEPENDENCY — log immediately
 sqlite3 .claude/memory.db "INSERT OR IGNORE INTO dependencies (source_file, target_file, relationship, discovered_run) VALUES ('src', 'dst', 'depends-on', \$RUN_ID);"
 
-# Supersede old decisions if architecture changed
+# WHEN SUPERSEDING A PRIOR DECISION — log immediately
 sqlite3 .claude/memory.db "UPDATE decisions SET status='superseded', superseded_by=\$NEW_DECISION_ID WHERE id=\$OLD_DECISION_ID;"
 
-# SELF-LEARNING: Score design effectiveness (-1/0/+1)
+# AFTER COMPLETING EACH MAJOR DESIGN SECTION — self-score immediately
 sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'architect', 1, 'domain', 'What I designed', 'What I learned');"
+```
 
-# SELF-LEARNING: Distill lessons if patterns emerge
+## Institutional Memory — Close-Out (MANDATORY)
+When design is complete (or stopping due to budget/errors):
+1. Verify all decisions and dependencies were logged incrementally.
+2. Score any remaining actions not yet scored.
+3. Check for lesson distillation (3+ outcomes with same theme):
+
+```bash
 sqlite3 .claude/memory.db "INSERT INTO lessons (domain, content, source_agent) VALUES ('domain', 'Distilled rule', 'architect') ON CONFLICT(domain, content) DO UPDATE SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now');"
 ```
 

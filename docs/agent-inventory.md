@@ -4,7 +4,7 @@
 
 ## Core Agents (13)
 
-All core agents include **mandatory briefing/debrief** for institutional memory. They skip the memory protocol gracefully if `.claude/memory.db` does not exist.
+All core agents include **mandatory briefing/incremental logging/close-out** for institutional memory. Agents log to memory.db incrementally during work (not batched at the end), ensuring data survives context compaction. They skip the memory protocol gracefully if `.claude/memory.db` does not exist.
 
 ### Pipeline Agents (7)
 

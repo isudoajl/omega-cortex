@@ -43,32 +43,45 @@ Use the results to:
 - **Prefer** techniques with +1 outcomes; **avoid** approaches with -1 outcomes
 - **Follow** high-confidence lessons (≥0.8) as established rules
 
-## Institutional Memory — Debrief (MANDATORY)
-After completing ALL work (or when stopping due to budget/errors), write back to the DB:
+## Institutional Memory — Incremental Logging (MANDATORY)
+Log to memory.db **immediately after each module** — do not batch for the end. If context compaction occurs, batched entries are lost.
+
+**After completing each module (implement → test → commit), run these immediately:**
 
 ```bash
-# Log each file you changed
+# Log each file you changed in this module
 sqlite3 .claude/memory.db "INSERT INTO changes (run_id, file_path, change_type, description, agent) VALUES (\$RUN_ID, 'path/to/file', 'modified', 'What changed and why', 'developer');"
-
-# Log any decisions you made
-sqlite3 .claude/memory.db "INSERT INTO decisions (run_id, domain, decision, rationale, alternatives, confidence) VALUES (\$RUN_ID, 'domain', 'Decision', 'Rationale', '[\"alt1\",\"alt2\"]', 0.9);"
-
-# Log ANY failed approaches (even partial failures — this is the gold mine)
-sqlite3 .claude/memory.db "INSERT INTO failed_approaches (run_id, domain, problem, approach, failure_reason, file_paths) VALUES (\$RUN_ID, 'domain', 'Problem', 'What was tried', 'Why it failed', '[\"files\"]');"
 
 # Update hotspot counters for files you touched
 sqlite3 .claude/memory.db "INSERT INTO hotspots (file_path, times_touched) VALUES ('path', 1) ON CONFLICT(file_path) DO UPDATE SET times_touched = times_touched + 1, last_updated = datetime('now');"
 
-# Log patterns you discovered or followed
-sqlite3 .claude/memory.db "INSERT INTO patterns (run_id, domain, name, description, example_files) VALUES (\$RUN_ID, 'domain', 'Pattern name', 'Description', '[\"files\"]');"
-
-# SELF-LEARNING: Score every significant action (-1/0/+1)
+# Self-score this module's implementation (-1/0/+1)
 sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'developer', 1, 'domain', 'What I did', 'What I learned');"
-# Score: +1 (succeeded cleanly), 0 (worked, unremarkable), -1 (failed/excessive iteration)
+```
 
-# SELF-LEARNING: Check for lesson distillation (3+ outcomes with same theme?)
+**Immediately when they happen (not at module end):**
+
+```bash
+# After ANY failed approach (even partial) — log immediately
+sqlite3 .claude/memory.db "INSERT INTO failed_approaches (run_id, domain, problem, approach, failure_reason, file_paths) VALUES (\$RUN_ID, 'domain', 'Problem', 'What was tried', 'Why it failed', '[\"files\"]');"
+
+# After making a design/implementation decision — log immediately
+sqlite3 .claude/memory.db "INSERT INTO decisions (run_id, domain, decision, rationale, alternatives, confidence) VALUES (\$RUN_ID, 'domain', 'Decision', 'Rationale', '[\"alt1\",\"alt2\"]', 0.9);"
+
+# After discovering a pattern — log immediately
+sqlite3 .claude/memory.db "INSERT INTO patterns (run_id, domain, name, description, example_files) VALUES (\$RUN_ID, 'domain', 'Pattern name', 'Description', '[\"files\"]');"
+```
+
+## Institutional Memory — Close-Out (MANDATORY)
+When all modules are complete (or when stopping due to budget/errors):
+
+1. **Verify completeness** — review what you logged incrementally. Any missed file changes, decisions, or failed approaches? Insert them now.
+2. **Final self-scoring** — score any remaining actions not yet scored.
+3. **Lesson distillation** — check for patterns in recent outcomes:
+
+```bash
 sqlite3 .claude/memory.db "SELECT score, action, lesson FROM outcomes WHERE domain='DOMAIN' AND agent='developer' ORDER BY id DESC LIMIT 10;"
-# If pattern found, distill:
+# If 3+ share a theme → distill:
 sqlite3 .claude/memory.db "INSERT INTO lessons (domain, content, source_agent) VALUES ('domain', 'The distilled rule', 'developer') ON CONFLICT(domain, content) DO UPDATE SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now');"
 ```
 
@@ -156,8 +169,8 @@ For EACH module (in the order defined by the Architect):
 2. Read the tests for that module
 3. Implement the minimum code to pass the tests
 4. Run the tests from the relevant directory (`backend/` or `frontend/`)
-5. If they fail → fix → repeat
-6. If they pass → refactor if needed → **commit** → next module
+5. If they fail → fix → repeat (log failed approaches to memory.db immediately)
+6. If they pass → refactor if needed → **log to memory.db** → **commit** → next module
 7. At the end: run ALL tests together
 
 ## Compilation & Lint Validation
@@ -220,6 +233,7 @@ Red → Green → Refactor → Sync Specs/Docs → Commit → Next
 - [ ] No compiler warnings
 - [ ] Code matches project conventions
 - [ ] Relevant specs/docs updated (if behavior changed)
+- [ ] Changes, decisions, outcomes logged to memory.db
 - [ ] Code written to disk
 - [ ] Commit done
 - [ ] Ready for next module (context is manageable)

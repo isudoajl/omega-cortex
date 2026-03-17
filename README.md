@@ -17,7 +17,7 @@ This workflow solves all of that.
 
 ## How It Works
 
-Thirteen core agents execute in chain or standalone, each with a single responsibility. Every agent has **mandatory briefing/debrief** phases — querying institutional memory before starting and writing findings back after completing.
+Thirteen core agents execute in chain or standalone, each with a single responsibility. Every agent has **mandatory briefing/incremental logging/close-out** phases — querying institutional memory before starting, writing to memory.db continuously during work, and verifying completeness after finishing.
 
 ```
 Your Idea
@@ -40,7 +40,7 @@ Architect     → Designs architecture with failure modes, security, performance
 │ Reviewer      → Audits for bugs, security, performance, specs/docs drift     │
 └─────────────────────────────────────────────────────────────────────────────┘
   ↓
-[Pipeline completes, memory.db updated with all decisions, findings, patterns]
+[Pipeline completes, memory.db already populated incrementally throughout]
 ```
 
 ## Architecture
@@ -58,7 +58,7 @@ claude-workflow/
 │       ├── schema.sql                 # SQLite schema
 │       └── queries/                   # Named query templates
 │           ├── briefing.sql           # Pre-work queries
-│           ├── debrief.sql            # Post-work inserts/updates
+│           ├── debrief.sql            # Incremental logging + close-out templates
 │           └── maintenance.sql        # Periodic cleanup
 │
 ├── extensions/                        # Opt-in per project
@@ -97,7 +97,7 @@ Every target project gets `.claude/memory.db` — a persistent knowledge base th
 | `lessons` | Self-learning Tier 2: distilled patterns from outcomes | All pipeline agents | All agents (briefing) |
 | `decay_log` | Memory evolution audit trail | maintenance | maintenance |
 
-**Agent protocol**: Before work → query DB (briefing + learning context). After work → write back (debrief + self-score). **Enforced via 4 Claude Code hooks**: briefing is auto-injected at session start, git commits are blocked without self-scoring, periodic nudges remind about debrief, and open runs are auto-closed at session end.
+**Agent protocol**: Before work → query DB (briefing + learning context). During work → log incrementally (changes, decisions, failures, outcomes as they happen). After work → close-out (verify completeness, distill lessons). **Enforced via 5 Claude Code hooks**: briefing is auto-injected at session start, git commits are blocked without self-scoring, file edits are blocked after 10 modifications without outcomes, periodic nudges remind about incremental logging, and hotspot risk levels are promoted at session end.
 
 ### Self-Learning Loop
 
@@ -105,14 +105,15 @@ Agents don't just record what happened — they evaluate *how well it worked* an
 
 ```
 Agent starts → briefing injects recent outcomes + active lessons
-  → Agent works (confirms or contradicts existing lessons)
-  → Agent debriefs: scores outcomes (-1/0/+1), distills new lessons
+  → Agent works → logs changes, decisions, failures, outcomes INCREMENTALLY
+  → Agent close-out: verifies completeness, distills lessons
   → Next agent/session gets updated learning context
 ```
 
-- **Tier 1 (Outcomes)**: After every significant action, the agent self-scores: +1 (helpful), 0 (neutral), -1 (unhelpful). The 15 most recent outcomes for the scope are injected into every future briefing.
-- **Tier 2 (Lessons)**: When patterns emerge from 3+ repeated outcomes, agents distill them into permanent rules with content-based deduplication, confidence tracking, and a cap of 10 active lessons per domain.
+- **Tier 1 (Outcomes)**: Immediately after every significant action, the agent self-scores: +1 (helpful), 0 (neutral), -1 (unhelpful). Scored incrementally during work, not batched at the end. The 15 most recent outcomes for the scope are injected into every future briefing.
+- **Tier 2 (Lessons)**: At close-out, when patterns emerge from 3+ repeated outcomes, agents distill them into permanent rules with content-based deduplication, confidence tracking, and a cap of 10 active lessons per domain.
 - **Cross-agent learning**: The developer's -1 score on a retry-heavy module informs the architect to design smaller milestones next time. The test-writer's +1 on edge-case-first testing reinforces that approach across sessions.
+- **Context-compaction resilient**: Because entries are logged incrementally (not batched), institutional memory data survives context window compaction — the most common cause of lost debrief data.
 
 **Why this matters**: Without institutional memory, every session is a fresh hire. The developer wastes cycles on approaches that already failed. The reviewer misses that a file was flagged fragile three sessions ago. The analyst re-specifies requirements that already exist. The DB eliminates this.
 

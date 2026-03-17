@@ -18,20 +18,28 @@ The institutional memory eliminates this by giving every agent a queryable knowl
 ```
 .claude/memory.db (SQLite)
          │
-    ┌────┴────┐
-    │         │
- BRIEFING   DEBRIEF
- (before)   (after)
-    │         │
-    ▼         ▼
-  Agent reads    Agent writes
-  what's known   what it learned
+    ┌────┼────────────┐
+    │    │             │
+BRIEFING │         CLOSE-OUT
+(before) │          (after)
+    │    │             │
+    ▼    ▼             ▼
+  Agent   Agent logs    Agent verifies
+  reads   incrementally completeness,
+  what's  during work   distills lessons
+  known
 ```
 
 **Every agent, every time:**
 1. **Briefing** — queries the DB for context relevant to its scope (hotspots, failed approaches, open findings, decisions, patterns, outcomes, lessons). **Automated via UserPromptSubmit hook** — the briefing runs automatically and injects context into every session without relying on AI compliance.
-2. **Work** — performs its normal job, informed by the briefing
-3. **Debrief** — writes back what it learned (changes, decisions, failures, bugs, findings, patterns, self-scores). The briefing hook injects a debrief reminder, and git commits are **blocked** until at least one outcome is logged. The AI must still execute the debrief SQL inserts (self-scoring requires judgment), but it cannot ship code without doing so.
+2. **Work + Incremental Logging** — performs its normal job, logging to memory.db **immediately after each significant action** (file changes, decisions, failed approaches, outcomes). This is the primary data capture mechanism — it ensures data reaches the DB even if context compaction occurs mid-work.
+3. **Close-Out** — lightweight verification step: checks that all incremental entries were logged, scores remaining actions, distills lessons from outcome patterns. Git commits are **blocked** until at least one outcome is logged. The close-out can be minimal if context is tight — the important data was already logged incrementally.
+
+### Why Incremental Logging (not batched debrief)
+
+The original protocol batched all writes at the end of each agent's work ("Debrief"). This failed when context compaction occurred mid-work: the agent lost the details of what it did, and the debrief degraded to vague summaries or was skipped entirely. The most valuable entries (failed approaches, decisions with rationale, specific outcomes) were lost because they only existed in the agent's working memory.
+
+Incremental logging fixes this: each INSERT happens within seconds of the action it describes. If context compacts, the data is already in the DB. The close-out step becomes a verification pass, not a data dump.
 
 ### Automation via Hooks
 
@@ -40,8 +48,9 @@ The briefing/debrief protocol was originally voluntary — agents were told to r
 | Hook | Event | What it does | Enforcement |
 |------|-------|-------------|------------|
 | `briefing.sh` | UserPromptSubmit | Queries memory.db, injects context on first prompt per session (uses session_id) | **Automatic** — AI sees it, can't skip it |
-| `debrief-gate.sh` | PreToolUse (Bash) | Blocks `git commit` unless outcomes logged since session start (uses briefing timestamp) | **Blocking** — AI cannot commit without debriefing |
-| `debrief-nudge.sh` | PostToolUse | Reminds AI to debrief (every 5th tool call if no outcomes logged this session) | **Reminder** — periodic nudge |
+| `debrief-gate.sh` | PreToolUse (Bash) | Blocks `git commit` unless outcomes logged since session start (uses briefing timestamp) | **Blocking** — AI cannot commit without logging outcomes |
+| `incremental-gate.sh` | PreToolUse (Write/Edit) | Blocks file modifications after 10 edits without outcomes logged | **Blocking** — enforces incremental logging even without commits |
+| `debrief-nudge.sh` | PostToolUse | Reminds AI to log incrementally (every 5th tool call if no outcomes logged this session) | **Reminder** — periodic nudge |
 | `session-close.sh` | Notification | Promotes hotspot risk levels based on touch counts | **Automatic** — runs silently |
 
 Hook scripts live in `.claude/hooks/` and are configured in `.claude/settings.json`. All are deployed automatically by `setup.sh`.
@@ -310,44 +319,46 @@ FROM v_domain_learning WHERE domain LIKE '%scheduler%';
 - Lessons with confidence <0.5 → emerging patterns, consider but don't blindly follow
 - Negative average domain score → slow down, be extra careful
 
-## Debrief Templates
+## Incremental Logging Templates
 
-### Developer debrief
+All entries are logged **immediately after the action**, not batched at the end.
+
+### Developer — after each module
 ```sql
--- Log file change
+-- Log file change — immediately after modifying
 INSERT INTO changes (run_id, file_path, change_type, description, agent)
 VALUES (42, 'src/scheduler.rs', 'modified', 'Added null check for empty queue', 'developer');
 
--- Log failed approach (THE MOST IMPORTANT DEBRIEF)
+-- Log failed approach — immediately after failure (THE MOST VALUABLE ENTRY)
 INSERT INTO failed_approaches (run_id, domain, problem, approach, failure_reason, file_paths)
 VALUES (42, 'scheduler', 'Empty queue crash', '.is_empty() guard before .pop()',
   'Race condition: queue empties between check and pop in concurrent context',
   '["src/scheduler.rs"]');
 
--- Update hotspot
+-- Update hotspot — immediately after modifying
 INSERT INTO hotspots (file_path, times_touched) VALUES ('src/scheduler.rs', 1)
 ON CONFLICT(file_path) DO UPDATE SET times_touched = times_touched + 1, last_updated = datetime('now');
-```
 
-### Reviewer debrief
-```sql
--- Log finding
-INSERT INTO findings (run_id, finding_id, severity, category, description, file_path, line_range)
-VALUES (42, 'AUDIT-P1-003', 'P1', 'bug', 'Race condition in dequeue', 'src/scheduler.rs', '140-155');
-
--- Promote hotspot risk
-UPDATE hotspots SET risk_level='high', description='Race condition under concurrent access'
-WHERE file_path='src/scheduler.rs';
-```
-
-### Self-learning debrief (all agents)
-```sql
--- Score every significant action (-1 unhelpful, 0 neutral, +1 helpful)
+-- Self-score module — immediately after module passes tests
 INSERT INTO outcomes (run_id, agent, score, domain, action, lesson)
 VALUES (42, 'developer', 1, 'scheduler',
   'Used Option<T> for queue access',
   'Option<T> pattern avoided unwrap panic in concurrent context');
+```
 
+### Reviewer — after each module reviewed
+```sql
+-- Log finding — immediately after identifying
+INSERT INTO findings (run_id, finding_id, severity, category, description, file_path, line_range)
+VALUES (42, 'AUDIT-P1-003', 'P1', 'bug', 'Race condition in dequeue', 'src/scheduler.rs', '140-155');
+
+-- Promote hotspot risk — immediately after flagging
+UPDATE hotspots SET risk_level='high', description='Race condition under concurrent access'
+WHERE file_path='src/scheduler.rs';
+```
+
+### Close-Out — lesson distillation (all agents)
+```sql
 -- Check for lesson distillation opportunity (3+ outcomes with same theme?)
 SELECT score, action, lesson FROM outcomes
 WHERE domain = 'scheduler' AND agent = 'developer' ORDER BY id DESC LIMIT 10;
@@ -377,12 +388,12 @@ WHERE domain = 'scheduler' AND content LIKE '%outdated pattern%';
 
 ```
 Agent starts → briefing injects recent outcomes + active lessons
-  → Agent works (confirms or contradicts existing lessons)
-  → Agent debriefs: scores outcomes (-1/0/+1), distills new lessons
+  → Agent works → logs changes, decisions, failures, outcomes INCREMENTALLY
+  → Agent close-out: verifies completeness, distills lessons, reinforces/supersedes
   → Next agent/session gets updated learning context
 ```
 
-Unlike `failed_approaches` (which only captures failures), the self-learning system captures **what works** and **how well it works**. Over time, high-confidence lessons become established rules that agents follow automatically, while low-confidence lessons decay and get archived.
+Unlike `failed_approaches` (which only captures failures), the self-learning system captures **what works** and **how well it works**. Outcomes are scored incrementally during work (not batched), so the learning data survives context compaction. At close-out, agents distill patterns from accumulated outcomes into permanent lessons. Over time, high-confidence lessons become established rules that agents follow automatically, while low-confidence lessons decay and get archived.
 
 **Cross-agent learning**: The developer's -1 score on a retry-heavy module informs the architect to design smaller milestones next time. The test-writer's +1 on edge-case-first testing reinforces that approach project-wide.
 
@@ -422,7 +433,7 @@ SQLite binary files don't diff in git. Mitigations:
 ## Limitations and Future Work
 
 **Current limitations:**
-- Debrief self-scoring requires AI cooperation, but git commits are blocked without it (enforced via PreToolUse hook)
+- Incremental logging requires AI cooperation, but git commits are blocked without at least one outcome (enforced via PreToolUse hook)
 - Agents must manually construct SQL queries — no abstraction layer
 - No automated decay beyond hotspot promotion (maintenance queries must be run manually or by a scheduled workflow)
 - No cross-project memory (each project has its own DB)

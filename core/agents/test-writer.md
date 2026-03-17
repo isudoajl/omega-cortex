@@ -40,20 +40,27 @@ Use the results to:
 - **Prefer** test strategies with +1 outcomes; **avoid** approaches with -1
 - **Follow** high-confidence lessons (≥0.8) as established rules
 
-## Institutional Memory — Debrief (MANDATORY)
-After completing test writing:
+## Institutional Memory — Incremental Logging (MANDATORY)
+Log to memory.db **immediately after completing tests for each module** — do not batch for the end.
 
 ```bash
-# Update requirement status with test IDs
+# AFTER COMPLETING TESTS FOR EACH MODULE — update requirement status immediately
 sqlite3 .claude/memory.db "UPDATE requirements SET status='tested', test_ids='[\"TEST-XXX-001\"]' WHERE req_id='REQ-XXX-001';"
 
-# Log test-related decisions
+# AFTER EACH TEST STRATEGY DECISION — log immediately
 sqlite3 .claude/memory.db "INSERT INTO decisions (run_id, domain, decision, rationale, confidence) VALUES (\$RUN_ID, 'domain', 'Test strategy chosen', 'Why', 0.9);"
 
-# SELF-LEARNING: Score test writing effectiveness (-1/0/+1)
+# AFTER COMPLETING EACH MODULE'S TESTS — self-score immediately
 sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'test-writer', 1, 'domain', 'What I did', 'What I learned');"
+```
 
-# SELF-LEARNING: Distill lessons if patterns emerge
+## Institutional Memory — Close-Out (MANDATORY)
+When all test writing is complete (or stopping due to budget/errors):
+1. Verify all requirement statuses were updated incrementally.
+2. Score any remaining actions not yet scored.
+3. Check for lesson distillation (3+ outcomes with same theme):
+
+```bash
 sqlite3 .claude/memory.db "INSERT INTO lessons (domain, content, source_agent) VALUES ('domain', 'Distilled rule', 'test-writer') ON CONFLICT(domain, content) DO UPDATE SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now');"
 ```
 

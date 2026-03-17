@@ -15,7 +15,7 @@ It is **not** an application. It is a set of agent definitions, command orchestr
 | Flat `.claude/agents/` and `.claude/commands/` | `core/` + `extensions/` source organization |
 | All 20 agents copied to every project | Core (13) always; extensions opt-in via `--ext=` |
 | No cross-session memory | SQLite `.claude/memory.db` with 14 tables + 7 views |
-| Agents act independently | Mandatory briefing/debrief + self-learning — agents score their own work and distill patterns |
+| Agents act independently | Mandatory briefing/incremental logging/close-out + self-learning — agents log as they work and distill patterns |
 | `workflow-feature.md` + `workflow-new-feature.md` (duplicate) | Consolidated: only `workflow-new-feature.md` |
 | `workflow-improve.md` + `workflow-improve-functionality.md` (duplicate) | Consolidated: only `workflow-improve.md` |
 | `setup.sh` copies everything blindly | `setup.sh --ext=blockchain,omega` — selective deployment |
@@ -35,8 +35,9 @@ claude-workflow/
 │   │       └── maintenance.sql        # Periodic cleanup & health
 │   └── hooks/                         # Claude Code automation hooks
 │       ├── briefing.sh                # UserPromptSubmit: auto-injects memory context
-│       ├── debrief-gate.sh            # PreToolUse: blocks git commit without debrief
-│       ├── debrief-nudge.sh           # PostToolUse: periodic debrief reminder
+│       ├── debrief-gate.sh            # PreToolUse: blocks git commit without outcomes
+│       ├── incremental-gate.sh        # PreToolUse: blocks edits after 10 modifications without outcomes
+│       ├── debrief-nudge.sh           # PostToolUse: periodic incremental logging reminder
 │       └── session-close.sh           # Notification: promotes hotspot risk levels
 │
 ├── extensions/                        # Domain-specific packs (opt-in)
@@ -92,46 +93,53 @@ User invokes /workflow:new-feature "add retry logic" --scope="scheduler"
     │
     ├─ Analyst
     │   ├─ Briefing: past bugs, open findings, hotspots, existing requirements
-    │   ├─ Work: requirements, MoSCoW, traceability → specs/scheduler-requirements.md
-    │   └─ Debrief: INSERT requirements, decisions into memory.db
+    │   ├─ Work + Incremental Logging: requirements, MoSCoW, traceability → specs/scheduler-requirements.md
+    │   │   (logs requirements, decisions to memory.db as they are defined)
+    │   └─ Close-Out: verify completeness, distill lessons
     │
     ├─ Architect
     │   ├─ Briefing: failed approaches, dependencies, hotspots, active decisions
-    │   ├─ Work: design, milestones → specs/scheduler-architecture.md
-    │   └─ Debrief: INSERT decisions, dependencies into memory.db
+    │   ├─ Work + Incremental Logging: design, milestones → specs/scheduler-architecture.md
+    │   │   (logs decisions, dependencies to memory.db as they are made)
+    │   └─ Close-Out: verify completeness, distill lessons
     │
     ├─ [Per Milestone Loop]
     │   ├─ Test Writer
     │   │   ├─ Briefing: past bugs, open findings, requirement status
-    │   │   ├─ Work: TDD tests → test files
-    │   │   └─ Debrief: UPDATE requirements status to 'tested'
+    │   │   ├─ Work + Incremental Logging: TDD tests → test files
+    │   │   │   (logs requirement status updates, decisions after each module)
+    │   │   └─ Close-Out: verify completeness, distill lessons
     │   │
     │   ├─ Developer
     │   │   ├─ Briefing: hotspots, failed approaches, open findings, decisions, patterns
-    │   │   ├─ Work: implement → source code
-    │   │   └─ Debrief: INSERT changes, decisions, failed_approaches, hotspot updates
+    │   │   ├─ Work + Incremental Logging: implement → source code
+    │   │   │   (logs changes, decisions, failed_approaches, outcomes after each module)
+    │   │   └─ Close-Out: verify completeness, distill lessons
     │   │
     │   ├─ QA
     │   │   ├─ Briefing: past bugs, hotspots, open findings, dependencies
-    │   │   ├─ Work: end-to-end validation → qa-report.md
-    │   │   └─ Debrief: INSERT bugs, UPDATE hotspot risk levels, UPDATE requirement status
+    │   │   ├─ Work + Incremental Logging: end-to-end validation → qa-report.md
+    │   │   │   (logs bugs, hotspot updates, requirement verifications as found)
+    │   │   └─ Close-Out: verify completeness, distill lessons
     │   │
     │   └─ Reviewer
     │       ├─ Briefing: hotspot map, open findings, dependencies, past bugs, patterns
-    │       ├─ Work: code review → review.md
-    │       └─ Debrief: INSERT findings, UPDATE hotspot risk, INSERT dependencies
+    │       ├─ Work + Incremental Logging: code review → review.md
+    │       │   (logs findings, hotspot updates, dependencies as identified)
+    │       └─ Close-Out: verify completeness, distill lessons
     │
     └─ Orchestrator closes workflow_run (status=completed, git_commits=[...])
 ```
 
 ### Self-Learning Layer
 
-Every briefing and debrief now includes a self-learning phase:
+Every briefing and close-out includes a self-learning phase:
 
-- **Briefing addition**: Inject the 15 most recent outcomes + all active lessons for the scope
-- **Debrief addition**: Score every significant action (-1/0/+1), check for lesson distillation opportunity, reinforce/supersede existing lessons
+- **Briefing**: Inject the 15 most recent outcomes + all active lessons for the scope
+- **During work (incremental)**: Score every significant action (-1/0/+1) immediately after completing it
+- **Close-out**: Check for lesson distillation opportunity (3+ outcomes with same theme), reinforce/supersede existing lessons
 
-This creates a feedback loop on top of the existing memory protocol. The `failed_approaches` table captures *what didn't work*. The `outcomes` + `lessons` tables capture *what worked, how well, and why* — turning passive record-keeping into active learning.
+This creates a feedback loop on top of the existing memory protocol. The `failed_approaches` table captures *what didn't work*. The `outcomes` + `lessons` tables capture *what worked, how well, and why* — turning passive record-keeping into active learning. Because outcomes are scored incrementally, the learning data survives context compaction.
 
 ### Cross-Session Memory Accumulation
 
@@ -200,9 +208,9 @@ Then `setup.sh --ext=my-domain` deploys it. The `--list-ext` flag auto-discovers
 
 Claude Code loads agents from `.claude/agents/` — it does not recurse into subdirectories. The source repo organizes by category (`core/`, `extensions/`) for human comprehension, but the setup script must flatten everything into the target's `.claude/agents/` and `.claude/commands/`.
 
-### Why Mandatory Briefing/Debrief
+### Why Mandatory Briefing/Incremental Logging/Close-Out
 
-Without it, agents are memoryless. The institutional memory DB exists but is useless if agents don't read from or write to it. Making briefing/debrief mandatory in every agent definition ensures the protocol is followed — it's not optional behavior that can be skipped under time pressure.
+Without it, agents are memoryless. The institutional memory DB exists but is useless if agents don't read from or write to it. The protocol evolved from a two-phase (briefing/debrief) to three-phase (briefing/incremental logging/close-out) model because the original batched debrief failed under context compaction — agents lost the details of what they did, producing vague or empty debriefs. Incremental logging ensures data reaches the DB as it is produced, making the protocol resilient to context window limits.
 
 ### Why Separate Briefing Queries per Agent
 
@@ -245,7 +253,8 @@ Four hooks cover the full lifecycle:
 |-|-|
 | `briefing.sh` (UserPromptSubmit) | Automatic — context injected on first prompt per session |
 | `debrief-gate.sh` (PreToolUse/Bash) | **Blocking** — git commits fail without this session's self-scoring |
-| `debrief-nudge.sh` (PostToolUse) | Reminder — periodic nudge every 5th tool call |
+| `incremental-gate.sh` (PreToolUse/Write,Edit) | **Blocking** — file modifications blocked after 10 edits without outcomes |
+| `debrief-nudge.sh` (PostToolUse) | Reminder — periodic nudge to log incrementally every 5th tool call |
 | `session-close.sh` (Notification) | Automatic — promotes hotspot risk levels |
 
 Self-scoring and lesson distillation still require AI judgment, but the AI literally cannot commit code without doing it first. This is the closest analog to Omega's gateway — the infrastructure forces the protocol.

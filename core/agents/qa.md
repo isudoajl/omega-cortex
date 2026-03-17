@@ -40,23 +40,28 @@ Use the results to:
 - **Prefer** QA techniques with +1 outcomes; **avoid** approaches with -1
 - **Follow** high-confidence lessons (≥0.8) as established rules
 
-## Institutional Memory — Debrief (MANDATORY)
-After completing QA:
+## Institutional Memory — Incremental Logging (MANDATORY)
+Log to memory.db **immediately** as you find things — do not batch for the end.
 
 ```bash
-# Log any new bugs found
+# AFTER EACH BUG FOUND — log immediately
 sqlite3 .claude/memory.db "INSERT INTO bugs (run_id, description, symptoms, root_cause, fix_description, affected_files) VALUES (\$RUN_ID, 'description', 'symptoms', 'root_cause', 'fix or N/A', '[\"files\"]');"
 
-# Update hotspot risk levels based on QA findings
+# AFTER EACH MODULE VALIDATED — update hotspot and requirement status immediately
 sqlite3 .claude/memory.db "INSERT INTO hotspots (file_path, risk_level, times_touched, description) VALUES ('path', 'medium', 1, 'QA found issues') ON CONFLICT(file_path) DO UPDATE SET risk_level = CASE WHEN excluded.risk_level > risk_level THEN excluded.risk_level ELSE risk_level END, times_touched = times_touched + 1, last_updated = datetime('now');"
-
-# Update requirement verification status
 sqlite3 .claude/memory.db "UPDATE requirements SET status='verified' WHERE req_id='REQ-XXX-001';"
 
-# SELF-LEARNING: Score QA effectiveness (-1/0/+1)
+# AFTER EACH VALIDATION STEP — self-score immediately
 sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'qa', 1, 'domain', 'What I validated', 'What I learned');"
+```
 
-# SELF-LEARNING: Distill lessons if patterns emerge
+## Institutional Memory — Close-Out (MANDATORY)
+When QA is complete (or stopping due to budget/errors):
+1. Verify all bugs and requirement verifications were logged incrementally.
+2. Score any remaining actions not yet scored.
+3. Check for lesson distillation (3+ outcomes with same theme):
+
+```bash
 sqlite3 .claude/memory.db "INSERT INTO lessons (domain, content, source_agent) VALUES ('domain', 'Distilled rule', 'qa') ON CONFLICT(domain, content) DO UPDATE SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now');"
 ```
 

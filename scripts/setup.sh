@@ -257,6 +257,26 @@ generate_hooks_json() {
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ABS_PATH}/.claude/hooks/incremental-gate.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ABS_PATH}/.claude/hooks/incremental-gate.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUse": [

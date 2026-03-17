@@ -54,12 +54,13 @@ claude-workflow/
 │   │   ├── schema.sql                 # SQLite schema (tables, views, indexes)
 │   │   └── queries/                   # Named query templates for agents
 │   │       ├── briefing.sql           # Pre-work queries
-│   │       ├── debrief.sql            # Post-work inserts/updates
+│   │       ├── debrief.sql            # Incremental logging + close-out templates
 │   │       └── maintenance.sql        # Periodic cleanup and health checks
 │   └── hooks/                         # Automation hooks (deployed to .claude/hooks/)
 │       ├── briefing.sh                # UserPromptSubmit: auto-injects memory context (once per session)
-│       ├── debrief-gate.sh            # PreToolUse (Bash): blocks git commit without this session's debrief
-│       ├── debrief-nudge.sh           # PostToolUse: periodic debrief reminder every 5th tool call
+│       ├── debrief-gate.sh            # PreToolUse (Bash): blocks git commit without session outcomes
+│       ├── incremental-gate.sh        # PreToolUse (Write/Edit): blocks after 10 edits without outcomes
+│       ├── debrief-nudge.sh           # PostToolUse: periodic incremental logging reminder
 │       └── session-close.sh           # Notification: promotes hotspot risk levels
 │
 ├── extensions/                        # Domain-specific packs (opt-in)
@@ -88,7 +89,7 @@ claude-workflow/
 
 ### Core Agents
 
-All agents use `claude-opus-4-6` and include mandatory **briefing/debrief** protocol for institutional memory.
+All agents use `claude-opus-4-6` and include mandatory **briefing/incremental logging/close-out** protocol for institutional memory.
 
 | Agent | Role | Outputs |
 |-------|------|---------|
@@ -152,7 +153,7 @@ Every target project gets `.claude/memory.db` — a SQLite database that accumul
 - **lessons** — Tier 2 self-learning: distilled patterns from outcomes (content-deduped, capped per domain, confidence-tracked)
 - **decay_log** — tracks how the memory evolves (archival, confidence changes)
 
-**Agent protocol**: Every agent has a mandatory briefing (query DB before work) and debrief (write back after work) phase. No agent acts without checking institutional memory first. No agent finishes without contributing to it.
+**Agent protocol**: Every agent has mandatory briefing (query DB before work), incremental logging (write to DB during work), and close-out (verify completeness after work). No agent acts without checking institutional memory first. No agent finishes without contributing to it.
 
 **Query references**: Agents use `sqlite3` CLI commands. Templates are in `core/db/queries/`.
 
@@ -269,45 +270,70 @@ sqlite3 .claude/memory.db "SELECT description, root_cause, fix_description FROM 
 - If `decisions` exist → **respect them** unless you have a strong reason to supersede (and document why).
 - If `patterns` exist → **follow them** for consistency.
 
-### Debrief (MANDATORY — after every agent completes or stops)
-After completing work (or when stopping due to context budget / errors), write back what was learned:
+### Incremental Logging (MANDATORY — during work)
+Log to memory.db **immediately after each significant action**. Do NOT batch entries for the end of your work — if context compaction occurs, batched entries are lost forever. Incremental logging IS the checkpoint mechanism.
+
+**When to log** (within seconds of the action, not later):
+
+| Trigger | What to INSERT |
+|---------|---------------|
+| After modifying a file | `changes` + `hotspots` upsert |
+| After making a design/implementation decision | `decisions` |
+| After an approach fails (even partially) | `failed_approaches` |
+| After discovering a bug | `bugs` |
+| After completing a discrete unit of work | `outcomes` (self-score) |
+| After discovering a reusable pattern | `patterns` |
+| After discovering a component dependency | `dependencies` |
+| After defining a requirement (analyst) | `requirements` |
+| After identifying a finding (reviewer/QA) | `findings` |
 
 ```bash
-# 1. LOG FILE CHANGES — every file you touched
+# AFTER MODIFYING A FILE — log immediately
 sqlite3 .claude/memory.db "INSERT INTO changes (run_id, file_path, change_type, description, agent) VALUES ($RUN_ID, 'path/to/file.rs', 'modified', 'What changed and WHY', 'developer');"
-
-# 2. LOG DECISIONS — any design/implementation choice you made
-sqlite3 .claude/memory.db "INSERT INTO decisions (run_id, domain, decision, rationale, alternatives, confidence) VALUES ($RUN_ID, 'module-name', 'What was decided', 'Why this choice', '[\"rejected alternative 1: reason\", \"rejected alternative 2: reason\"]', 0.9);"
-
-# 3. LOG FAILED APPROACHES — THE MOST IMPORTANT DEBRIEF
-# Even partial failures. Even "it almost worked but...". This prevents future sessions from wasting time.
-sqlite3 .claude/memory.db "INSERT INTO failed_approaches (run_id, domain, problem, approach, failure_reason, file_paths) VALUES ($RUN_ID, 'module-name', 'What I was trying to solve', 'What I tried', 'Why it did not work', '[\"file1.rs\", \"file2.rs\"]');"
-
-# 4. LOG BUGS FOUND
-sqlite3 .claude/memory.db "INSERT INTO bugs (run_id, description, symptoms, root_cause, fix_description, affected_files) VALUES ($RUN_ID, 'Bug description', 'Error messages or behavior seen', 'Root cause', 'How it was fixed', '[\"files\"]');"
-
-# 5. UPDATE HOTSPOT COUNTERS — every file you touched
 sqlite3 .claude/memory.db "INSERT INTO hotspots (file_path, times_touched, description) VALUES ('path/to/file.rs', 1, 'Why it was touched') ON CONFLICT(file_path) DO UPDATE SET times_touched = times_touched + 1, last_updated = datetime('now');"
 
-# 6. LOG FINDINGS (reviewer/QA only)
+# AFTER A DECISION — log immediately
+sqlite3 .claude/memory.db "INSERT INTO decisions (run_id, domain, decision, rationale, alternatives, confidence) VALUES ($RUN_ID, 'module-name', 'What was decided', 'Why this choice', '[\"rejected alternative 1: reason\", \"rejected alternative 2: reason\"]', 0.9);"
+
+# AFTER A FAILED APPROACH — log immediately (THE MOST VALUABLE ENTRY)
+sqlite3 .claude/memory.db "INSERT INTO failed_approaches (run_id, domain, problem, approach, failure_reason, file_paths) VALUES ($RUN_ID, 'module-name', 'What I was trying to solve', 'What I tried', 'Why it did not work', '[\"file1.rs\", \"file2.rs\"]');"
+
+# AFTER FINDING A BUG — log immediately
+sqlite3 .claude/memory.db "INSERT INTO bugs (run_id, description, symptoms, root_cause, fix_description, affected_files) VALUES ($RUN_ID, 'Bug description', 'Error messages or behavior seen', 'Root cause', 'How it was fixed', '[\"files\"]');"
+
+# AFTER COMPLETING A UNIT OF WORK — self-score immediately
+sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES ($RUN_ID, 'AGENT_NAME', SCORE, 'domain', 'What I did', 'What I learned');"
+
+# AFTER IDENTIFYING A FINDING (reviewer/QA) — log immediately
 sqlite3 .claude/memory.db "INSERT INTO findings (run_id, finding_id, severity, category, description, file_path, line_range) VALUES ($RUN_ID, 'AUDIT-P1-001', 'P1', 'bug', 'Description', 'file_path', '42-58');"
 
-# 7. LOG REQUIREMENTS (analyst only)
+# AFTER DEFINING A REQUIREMENT (analyst) — log immediately
 sqlite3 .claude/memory.db "INSERT OR IGNORE INTO requirements (run_id, req_id, domain, description, priority) VALUES ($RUN_ID, 'REQ-XXX-001', 'domain', 'Requirement description', 'Must');"
 
-# 8. LOG PATTERNS DISCOVERED
+# AFTER DISCOVERING A PATTERN — log immediately
 sqlite3 .claude/memory.db "INSERT INTO patterns (run_id, domain, name, description, example_files) VALUES ($RUN_ID, 'domain', 'Pattern name', 'When and how to use it', '[\"example_files\"]');"
 
-# 9. LOG DEPENDENCIES DISCOVERED
+# AFTER DISCOVERING A DEPENDENCY — log immediately
 sqlite3 .claude/memory.db "INSERT OR IGNORE INTO dependencies (source_file, target_file, relationship, discovered_run) VALUES ('caller.rs', 'callee.rs', 'calls', $RUN_ID);"
 ```
 
-**Rules for debrief:**
+**Rules for incremental logging:**
+- Log **immediately** — each INSERT happens within seconds of the action it describes
 - Log **every** file change, not just the important ones
 - Log **every** failed approach, even small ones — these are the most valuable entries in the entire DB
 - Log decisions with the **alternatives you rejected and why** — future sessions need to know what was considered
-- Update hotspot counters for **every** file you modified
+- If a DB write fails, **log the error and continue working** — never block work for a failed INSERT
 - If you don't have a `$RUN_ID`, get it: `sqlite3 .claude/memory.db "SELECT MAX(id) FROM workflow_runs;"`
+
+### Close-Out (MANDATORY — when agent completes or stops)
+When your work is complete (or when stopping due to context budget / errors), run a lightweight verification:
+
+1. **Verify completeness** — review what you logged incrementally. Are there any file changes, decisions, or failed approaches you forgot to log? Insert them now.
+2. **Final self-scoring** — score any remaining significant actions you haven't yet scored.
+3. **Check for lesson distillation** — do 3+ recent outcomes share a theme? If so, distill a lesson (see Self-Learning below).
+4. **Reinforce/supersede lessons** — if you confirmed an existing lesson, reinforce it. If one no longer applies, supersede it.
+
+If context is tight, the close-out can be minimal — the important data was already logged incrementally. At minimum, ensure at least one outcome is logged (required for git commits).
 
 ### Pipeline End (orchestrator responsibility)
 When the workflow completes or fails:
@@ -333,7 +359,7 @@ When working **outside** a formal `/workflow:*` command (e.g., user asks for a q
 ```bash
 sqlite3 .claude/memory.db "INSERT INTO workflow_runs (type, description) VALUES ('manual', 'Quick fix for X');"
 RUN_ID=$(sqlite3 .claude/memory.db "SELECT last_insert_rowid();")
-# ... do work, run briefing, run debrief ...
+# ... do work, run briefing, log incrementally, close out ...
 sqlite3 .claude/memory.db "UPDATE workflow_runs SET status='completed', completed_at=datetime('now') WHERE id=$RUN_ID;"
 ```
 
@@ -343,7 +369,7 @@ The institutional memory doesn't just record *what happened* — it evaluates *h
 
 #### Tier 1: Outcomes (Working Memory)
 
-After every **significant action** (module implementation, test creation, design decision, bug fix, approach selection), the agent self-scores:
+**Immediately after** every significant action (module implementation, test creation, design decision, bug fix, approach selection), the agent self-scores — do not batch these for the end:
 
 ```bash
 sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'AGENT_NAME', SCORE, 'DOMAIN', 'What I did', 'What I learned from doing it');"
@@ -407,30 +433,36 @@ sqlite3 .claude/memory.db "SELECT content, occurrences, confidence FROM lessons 
 
 ```
 Agent starts → briefing injects outcomes + lessons
-  → Agent works (may confirm/contradict existing lessons)
-  → Agent debriefs: scores outcomes, distills new lessons, reinforces existing ones
+  → Agent works → logs changes, decisions, failures, outcomes INCREMENTALLY to memory.db
+  → Agent close-out: verifies completeness, distills lessons, reinforces/supersedes
   → Next agent (or next session) gets updated context
 ```
 
-#### Self-Learning in Debrief (additions to mandatory debrief)
+#### Self-Learning During Work (incremental)
 
-After the standard debrief entries (changes, decisions, failed approaches, etc.), every agent adds:
+Self-scoring happens **immediately after each significant action**, not batched at the end:
 
 ```bash
-# 1. SELF-SCORE — rate every significant action
+# IMMEDIATELY AFTER each significant action — self-score
 sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, action, lesson) VALUES (\$RUN_ID, 'AGENT', 1, 'domain', 'What I did', 'What I learned');"
+```
 
-# 2. CHECK FOR DISTILLATION — do recent outcomes suggest a pattern?
+#### Self-Learning at Close-Out (lesson distillation)
+
+During the close-out phase, check for patterns and distill lessons:
+
+```bash
+# 1. CHECK FOR DISTILLATION — do recent outcomes suggest a pattern?
 sqlite3 .claude/memory.db "SELECT score, action, lesson FROM outcomes WHERE domain='DOMAIN' AND agent='AGENT' ORDER BY id DESC LIMIT 10;"
 # If 3+ share a theme → distill:
 
-# 3. DISTILL LESSON (only if pattern detected)
+# 2. DISTILL LESSON (only if pattern detected)
 sqlite3 .claude/memory.db "INSERT INTO lessons (domain, content, source_agent) VALUES ('domain', 'The pattern rule', 'agent') ON CONFLICT(domain, content) DO UPDATE SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now');"
 
-# 4. REINFORCE existing lessons you confirmed during work
+# 3. REINFORCE existing lessons you confirmed during work
 sqlite3 .claude/memory.db "UPDATE lessons SET occurrences = occurrences + 1, confidence = MIN(1.0, confidence + 0.1), last_reinforced = datetime('now') WHERE domain='domain' AND content LIKE '%pattern%';"
 
-# 5. SUPERSEDE lessons that no longer apply
+# 4. SUPERSEDE lessons that no longer apply
 sqlite3 .claude/memory.db "UPDATE lessons SET status='superseded' WHERE domain='domain' AND content LIKE '%outdated pattern%';"
 ```
 
@@ -479,8 +511,8 @@ All IDs are also stored in the `requirements` table in memory.db for cross-sessi
 10. **Every requirement is traceable** — from ID through tests to implementation
 11. **60% context budget** — every agent must complete its work within 60% of the context window
 12. **Briefing before action** — every agent queries memory.db before starting work
-13. **Debrief after action** — every agent writes findings back to memory.db after completing work
-14. **Self-score every action** — every agent rates its own significant actions (-1/0/+1) during debrief
+13. **Log incrementally during work** — every agent writes to memory.db immediately after each significant action, not batched at the end
+14. **Self-score every action** — every agent rates its own significant actions (-1/0/+1) immediately after completing them
 15. **Distill lessons from patterns** — when 3+ outcomes share a theme, distill into a permanent lesson
 
 ## Fail-Safe Controls
