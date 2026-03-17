@@ -5,6 +5,9 @@
 # Runs on notifications (closest event to session lifecycle).
 # ============================================================
 
+# Consume stdin (hook receives JSON input)
+cat > /dev/null
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 DB_PATH="$PROJECT_DIR/.claude/memory.db"
 

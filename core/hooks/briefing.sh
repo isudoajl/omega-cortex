@@ -11,14 +11,21 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 DB_PATH="$PROJECT_DIR/.claude/memory.db"
 BRIEFING_FLAG="$PROJECT_DIR/.claude/hooks/.briefing_done"
 
-# Only brief once per session — skip if flag exists
+# Read session_id from stdin JSON to detect new sessions
+INPUT=$(cat)
+CURRENT_SESSION=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('session_id',''))" 2>/dev/null || echo "")
+
+# Only brief once per session — skip if same session already briefed
 if [ -f "$BRIEFING_FLAG" ]; then
-    exit 0
+    STORED_SESSION=$(cat "$BRIEFING_FLAG" 2>/dev/null || echo "")
+    if [ "$CURRENT_SESSION" = "$STORED_SESSION" ] && [ -n "$CURRENT_SESSION" ]; then
+        exit 0
+    fi
 fi
 
-# Create the flag so we don't brief again
+# New session — store session_id and proceed with briefing
 mkdir -p "$(dirname "$BRIEFING_FLAG")"
-echo "$(date -u +%Y-%m-%dT%H:%M:%S)" > "$BRIEFING_FLAG"
+echo "$CURRENT_SESSION" > "$BRIEFING_FLAG"
 
 # Graceful exit if no DB
 if [ ! -f "$DB_PATH" ]; then

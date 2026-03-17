@@ -5,6 +5,9 @@
 # Throttled: only reminds every 5th tool call to avoid noise.
 # ============================================================
 
+# Consume stdin (hook receives JSON input)
+cat > /dev/null
+
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 DB_PATH="$PROJECT_DIR/.claude/memory.db"
 COUNTER_FILE="$PROJECT_DIR/.claude/hooks/.nudge_counter"
