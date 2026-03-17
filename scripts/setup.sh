@@ -8,6 +8,7 @@
 #   bash setup.sh --ext=all                 # core + all extensions
 #   bash setup.sh --no-db                   # skip SQLite initialization
 #   bash setup.sh --list-ext                # list available extensions
+#   bash setup.sh --verbose                 # show unchanged files individually
 #
 # Run from the TARGET project directory, or pass the path:
 #   bash /path/to/claude-workflow/scripts/setup.sh
@@ -21,6 +22,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXTENSIONS=""
 SKIP_DB=false
 LIST_EXT=false
+VERBOSE=false
 
 for arg in "$@"; do
     case $arg in
@@ -33,13 +35,17 @@ for arg in "$@"; do
         --list-ext)
             LIST_EXT=true
             ;;
+        --verbose)
+            VERBOSE=true
+            ;;
         --help|-h)
-            echo "Usage: bash setup.sh [--ext=name1,name2] [--no-db] [--list-ext]"
+            echo "Usage: bash setup.sh [--ext=name1,name2] [--no-db] [--list-ext] [--verbose]"
             echo ""
             echo "Options:"
             echo "  --ext=EXT     Install extensions (comma-separated, or 'all')"
             echo "  --no-db       Skip SQLite institutional memory initialization"
             echo "  --list-ext    List available extensions and exit"
+            echo "  --verbose     Show unchanged files individually (default: summary count)"
             echo "  --help        Show this help"
             exit 0
             ;;
@@ -62,6 +68,30 @@ if [ "$LIST_EXT" = true ]; then
     done
     exit 0
 fi
+
+# ============================================================
+# CHANGE DETECTION HELPERS
+# ============================================================
+TOTAL_NEW=0
+TOTAL_UPDATED=0
+TOTAL_UNCHANGED=0
+
+copy_if_changed() {
+    local src="$1"
+    local dest="$2"
+    if [ ! -f "$dest" ]; then
+        cp "$src" "$dest"
+        COPY_STATUS="new"
+        TOTAL_NEW=$((TOTAL_NEW + 1))
+    elif ! cmp -s "$src" "$dest"; then
+        cp "$src" "$dest"
+        COPY_STATUS="updated"
+        TOTAL_UPDATED=$((TOTAL_UPDATED + 1))
+    else
+        COPY_STATUS="unchanged"
+        TOTAL_UNCHANGED=$((TOTAL_UNCHANGED + 1))
+    fi
+}
 
 echo "Setting up Claude Code Quality Workflow..."
 echo ""
@@ -86,11 +116,24 @@ fi
 # ============================================================
 echo "  Copying core agents..."
 mkdir -p .claude/agents
+SECTION_UNCHANGED=0
 for agent in "$SCRIPT_DIR/core/agents/"*.md; do
     name=$(basename "$agent")
-    cp "$agent" ".claude/agents/$name"
-    echo "   + $name"
+    copy_if_changed "$agent" ".claude/agents/$name"
+    case "$COPY_STATUS" in
+        new)       echo "   + $name" ;;
+        updated)   echo "   ~ $name" ;;
+        unchanged)
+            SECTION_UNCHANGED=$((SECTION_UNCHANGED + 1))
+            if [ "$VERBOSE" = true ]; then
+                echo "   = $name"
+            fi
+            ;;
+    esac
 done
+if [ "$VERBOSE" = false ] && [ "$SECTION_UNCHANGED" -gt 0 ]; then
+    echo "   ($SECTION_UNCHANGED unchanged)"
+fi
 
 # ============================================================
 # CORE COMMANDS
@@ -98,11 +141,24 @@ done
 echo ""
 echo "  Copying core commands..."
 mkdir -p .claude/commands
+SECTION_UNCHANGED=0
 for cmd in "$SCRIPT_DIR/core/commands/"*.md; do
     name=$(basename "$cmd")
-    cp "$cmd" ".claude/commands/$name"
-    echo "   + ${name%.md}"
+    copy_if_changed "$cmd" ".claude/commands/$name"
+    case "$COPY_STATUS" in
+        new)       echo "   + ${name%.md}" ;;
+        updated)   echo "   ~ ${name%.md}" ;;
+        unchanged)
+            SECTION_UNCHANGED=$((SECTION_UNCHANGED + 1))
+            if [ "$VERBOSE" = true ]; then
+                echo "   = ${name%.md}"
+            fi
+            ;;
+    esac
 done
+if [ "$VERBOSE" = false ] && [ "$SECTION_UNCHANGED" -gt 0 ]; then
+    echo "   ($SECTION_UNCHANGED unchanged)"
+fi
 
 # ============================================================
 # EXTENSIONS
@@ -140,22 +196,48 @@ if [ -n "$EXTENSIONS" ]; then
 
         # Copy extension agents
         if [ -d "$ext_path/agents" ]; then
+            SECTION_UNCHANGED=0
             for agent in "$ext_path/agents/"*.md; do
                 [ -f "$agent" ] || continue
                 name=$(basename "$agent")
-                cp "$agent" ".claude/agents/$name"
-                echo "    + agent: $name"
+                copy_if_changed "$agent" ".claude/agents/$name"
+                case "$COPY_STATUS" in
+                    new)       echo "    + agent: $name" ;;
+                    updated)   echo "    ~ agent: $name" ;;
+                    unchanged)
+                        SECTION_UNCHANGED=$((SECTION_UNCHANGED + 1))
+                        if [ "$VERBOSE" = true ]; then
+                            echo "    = agent: $name"
+                        fi
+                        ;;
+                esac
             done
+            if [ "$VERBOSE" = false ] && [ "$SECTION_UNCHANGED" -gt 0 ]; then
+                echo "    ($SECTION_UNCHANGED agents unchanged)"
+            fi
         fi
 
         # Copy extension commands
         if [ -d "$ext_path/commands" ]; then
+            SECTION_UNCHANGED=0
             for cmd in "$ext_path/commands/"*.md; do
                 [ -f "$cmd" ] || continue
                 name=$(basename "$cmd")
-                cp "$cmd" ".claude/commands/$name"
-                echo "    + command: ${name%.md}"
+                copy_if_changed "$cmd" ".claude/commands/$name"
+                case "$COPY_STATUS" in
+                    new)       echo "    + command: ${name%.md}" ;;
+                    updated)   echo "    ~ command: ${name%.md}" ;;
+                    unchanged)
+                        SECTION_UNCHANGED=$((SECTION_UNCHANGED + 1))
+                        if [ "$VERBOSE" = true ]; then
+                            echo "    = command: ${name%.md}"
+                        fi
+                        ;;
+                esac
             done
+            if [ "$VERBOSE" = false ] && [ "$SECTION_UNCHANGED" -gt 0 ]; then
+                echo "    ($SECTION_UNCHANGED commands unchanged)"
+            fi
         fi
     done
 fi
@@ -217,13 +299,27 @@ fi
 echo ""
 echo "  Deploying automation hooks..."
 mkdir -p .claude/hooks
+SECTION_UNCHANGED=0
 for hook in "$SCRIPT_DIR/core/hooks/"*.sh; do
     [ -f "$hook" ] || continue
     name=$(basename "$hook")
-    cp "$hook" ".claude/hooks/$name"
+    copy_if_changed "$hook" ".claude/hooks/$name"
+    # Always enforce executable permission regardless of copy status
     chmod +x ".claude/hooks/$name"
-    echo "   + hook: $name"
+    case "$COPY_STATUS" in
+        new)       echo "   + hook: $name" ;;
+        updated)   echo "   ~ hook: $name" ;;
+        unchanged)
+            SECTION_UNCHANGED=$((SECTION_UNCHANGED + 1))
+            if [ "$VERBOSE" = true ]; then
+                echo "   = hook: $name"
+            fi
+            ;;
+    esac
 done
+if [ "$VERBOSE" = false ] && [ "$SECTION_UNCHANGED" -gt 0 ]; then
+    echo "   ($SECTION_UNCHANGED unchanged)"
+fi
 
 # Configure hooks in settings.json (merge, don't overwrite)
 # Use absolute path — $CLAUDE_PROJECT_DIR doesn't reliably expand at runtime
@@ -309,23 +405,52 @@ EOF
 }
 
 if [ -f "$SETTINGS_FILE" ]; then
-    # Merge/update hooks into existing settings (preserves non-hook settings)
-    python3 -c "
+    # Check if hooks have actually changed before writing
+    HOOKS_CHANGED=true
+    GENERATED_HOOKS=$(generate_hooks_json)
+    HOOKS_COMPARE_RESULT=$(python3 -c "
 import json, sys
-with open('$SETTINGS_FILE', 'r') as f:
-    settings = json.load(f)
+try:
+    with open('$SETTINGS_FILE', 'r') as f:
+        settings = json.load(f)
+    new_hooks = json.loads(sys.stdin.read())
+    if 'hooks' in settings and settings['hooks'] == new_hooks['hooks']:
+        print('unchanged')
+    else:
+        print('changed')
+except (json.JSONDecodeError, ValueError, KeyError):
+    print('error')
+" <<< "$GENERATED_HOOKS" 2>/dev/null || echo "error")
+
+    if [ "$HOOKS_COMPARE_RESULT" = "unchanged" ]; then
+        HOOKS_CHANGED=false
+        echo "   = hooks already configured"
+    elif [ "$HOOKS_COMPARE_RESULT" = "error" ]; then
+        # Existing file is malformed or unreadable -- overwrite it
+        generate_hooks_json > "$SETTINGS_FILE"
+        echo "   + settings.json created with hooks"
+    else
+        # Hooks changed -- merge them into existing settings
+        python3 -c "
+import json, sys
+try:
+    with open('$SETTINGS_FILE', 'r') as f:
+        settings = json.load(f)
+except (json.JSONDecodeError, ValueError):
+    settings = {}
 hooks = json.loads(sys.stdin.read())
 settings['hooks'] = hooks['hooks']
 with open('$SETTINGS_FILE', 'w') as f:
     json.dump(settings, f, indent=2)
     f.write('\n')
-" <<< "$(generate_hooks_json)" 2>/dev/null
-    if [ $? -eq 0 ]; then
-        echo "   + hooks configured in settings.json (merged with existing settings)"
-    else
-        echo "   WARNING: Could not merge hooks — overwriting settings.json"
-        generate_hooks_json > "$SETTINGS_FILE"
-        echo "   + settings.json created with hooks"
+" <<< "$GENERATED_HOOKS" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo "   ~ hooks updated in settings.json"
+        else
+            echo "   WARNING: Could not merge hooks — overwriting settings.json"
+            generate_hooks_json > "$SETTINGS_FILE"
+            echo "   + settings.json created with hooks"
+        fi
     fi
 else
     generate_hooks_json > "$SETTINGS_FILE"
@@ -343,43 +468,60 @@ WORKFLOW_RULES_FILE="$SCRIPT_DIR/CLAUDE.md"
 WORKFLOW_MARKER="# Claude Code Quality Workflow"
 
 if [ -f "$WORKFLOW_RULES_FILE" ]; then
+    # Extract the source workflow rules for comparison
+    SOURCE_RULES=$(sed -n "/$WORKFLOW_MARKER/,\$p" "$WORKFLOW_RULES_FILE")
+
     if [ -f "./CLAUDE.md" ]; then
         # Check if workflow rules are already appended
         if grep -q "$WORKFLOW_MARKER" ./CLAUDE.md 2>/dev/null; then
-            # Remove old workflow rules (everything from the marker to EOF) and re-append
-            # Find the line number of the marker
-            MARKER_LINE=$(grep -n "$WORKFLOW_MARKER" ./CLAUDE.md | head -1 | cut -d: -f1)
-            if [ -n "$MARKER_LINE" ]; then
-                # Also remove the separator line before the marker (the --- line)
-                PREV_LINE=$((MARKER_LINE - 1))
-                PREV_CONTENT=$(sed -n "${PREV_LINE}p" ./CLAUDE.md)
-                if [ "$PREV_CONTENT" = "---" ]; then
-                    # Check if there's a blank line before the ---
-                    PREV_PREV_LINE=$((PREV_LINE - 1))
-                    PREV_PREV_CONTENT=$(sed -n "${PREV_PREV_LINE}p" ./CLAUDE.md)
-                    if [ -z "$PREV_PREV_CONTENT" ]; then
-                        CUT_LINE=$PREV_PREV_LINE
+            # Extract current workflow rules from target for comparison
+            CURRENT_RULES=$(sed -n "/$WORKFLOW_MARKER/,\$p" ./CLAUDE.md)
+
+            if [ "$CURRENT_RULES" = "$SOURCE_RULES" ]; then
+                # Rules are identical -- skip rewriting
+                echo "   = Workflow rules already current"
+            else
+                # Rules differ -- replace them
+                # Remove old workflow rules (everything from the marker to EOF) and re-append
+                # Find the line number of the marker
+                MARKER_LINE=$(grep -n "$WORKFLOW_MARKER" ./CLAUDE.md | head -1 | cut -d: -f1)
+                if [ -n "$MARKER_LINE" ]; then
+                    # Also remove the separator line before the marker (the --- line)
+                    PREV_LINE=$((MARKER_LINE - 1))
+                    PREV_CONTENT=$(sed -n "${PREV_LINE}p" ./CLAUDE.md)
+                    if [ "$PREV_CONTENT" = "---" ]; then
+                        # Check if there's a blank line before the ---
+                        PREV_PREV_LINE=$((PREV_LINE - 1))
+                        PREV_PREV_CONTENT=$(sed -n "${PREV_PREV_LINE}p" ./CLAUDE.md)
+                        if [ -z "$PREV_PREV_CONTENT" ]; then
+                            CUT_LINE=$PREV_PREV_LINE
+                        else
+                            CUT_LINE=$PREV_LINE
+                        fi
                     else
-                        CUT_LINE=$PREV_LINE
+                        CUT_LINE=$MARKER_LINE
                     fi
-                else
-                    CUT_LINE=$MARKER_LINE
+                    # Keep everything before the cut line
+                    head -n $((CUT_LINE - 1)) ./CLAUDE.md > ./CLAUDE.md.tmp
+                    mv ./CLAUDE.md.tmp ./CLAUDE.md
                 fi
-                # Keep everything before the cut line
-                head -n $((CUT_LINE - 1)) ./CLAUDE.md > ./CLAUDE.md.tmp
-                mv ./CLAUDE.md.tmp ./CLAUDE.md
+
+                # Append the updated workflow rules section
+                echo "" >> ./CLAUDE.md
+                echo "---" >> ./CLAUDE.md
+                echo "" >> ./CLAUDE.md
+                sed -n "/$WORKFLOW_MARKER/,\$p" "$WORKFLOW_RULES_FILE" >> ./CLAUDE.md
+                echo "   ~ Workflow rules updated (replaced existing rules)"
             fi
-            echo "   ~ Workflow rules updated (replaced existing rules)"
         else
             echo "   + Workflow rules appended to existing CLAUDE.md"
-        fi
 
-        # Append the workflow rules section
-        echo "" >> ./CLAUDE.md
-        echo "---" >> ./CLAUDE.md
-        echo "" >> ./CLAUDE.md
-        # Extract from "# Claude Code Quality Workflow" to end of file
-        sed -n "/$WORKFLOW_MARKER/,\$p" "$WORKFLOW_RULES_FILE" >> ./CLAUDE.md
+            # Append the workflow rules section
+            echo "" >> ./CLAUDE.md
+            echo "---" >> ./CLAUDE.md
+            echo "" >> ./CLAUDE.md
+            sed -n "/$WORKFLOW_MARKER/,\$p" "$WORKFLOW_RULES_FILE" >> ./CLAUDE.md
+        fi
     else
         # No CLAUDE.md exists — create one with just the workflow rules
         echo "# CLAUDE.md" > ./CLAUDE.md
@@ -421,7 +563,33 @@ echo ""
 AGENT_COUNT=$(ls .claude/agents/*.md 2>/dev/null | wc -l | tr -d ' ')
 CMD_COUNT=$(ls .claude/commands/*.md 2>/dev/null | wc -l | tr -d ' ')
 
-echo "  Installed: $AGENT_COUNT agents, $CMD_COUNT commands"
+# Build summary with change counts
+if [ "$TOTAL_NEW" -eq 0 ] && [ "$TOTAL_UPDATED" -eq 0 ]; then
+    echo "  Nothing changed — already up to date"
+    echo "  Installed: $AGENT_COUNT agents, $CMD_COUNT commands"
+else
+    # Build a detailed summary line
+    SUMMARY_PARTS=""
+    if [ "$TOTAL_NEW" -gt 0 ]; then
+        SUMMARY_PARTS="$TOTAL_NEW new"
+    fi
+    if [ "$TOTAL_UPDATED" -gt 0 ]; then
+        if [ -n "$SUMMARY_PARTS" ]; then
+            SUMMARY_PARTS="$SUMMARY_PARTS, $TOTAL_UPDATED updated"
+        else
+            SUMMARY_PARTS="$TOTAL_UPDATED updated"
+        fi
+    fi
+    if [ "$TOTAL_UNCHANGED" -gt 0 ]; then
+        if [ -n "$SUMMARY_PARTS" ]; then
+            SUMMARY_PARTS="$SUMMARY_PARTS, $TOTAL_UNCHANGED unchanged"
+        else
+            SUMMARY_PARTS="$TOTAL_UNCHANGED unchanged"
+        fi
+    fi
+    echo "  Installed: $AGENT_COUNT agents, $CMD_COUNT commands ($SUMMARY_PARTS)"
+fi
+
 echo "  Workflow rules: CLAUDE.md (appended)"
 echo "  Hooks: SessionStart (auto-briefing), SessionEnd (auto-close)"
 if [ "$SKIP_DB" = false ]; then
