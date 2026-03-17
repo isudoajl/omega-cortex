@@ -20,7 +20,7 @@ The setup script copies agents and commands into the target's `.claude/agents/` 
 ```
 claude-workflow/
 ├── core/                              # Universal foundation (every project)
-│   ├── agents/                        # 13 core agents
+│   ├── agents/                        # 14 core agents
 │   │   ├── discovery.md
 │   │   ├── analyst.md
 │   │   ├── architect.md
@@ -33,8 +33,9 @@ claude-workflow/
 │   │   ├── codebase-expert.md
 │   │   ├── wizard-ux.md
 │   │   ├── role-creator.md
-│   │   └── role-auditor.md
-│   ├── commands/                      # 13 core commands
+│   │   ├── role-auditor.md
+│   │   └── diagnostician.md
+│   ├── commands/                      # 14 core commands
 │   │   ├── workflow-new.md
 │   │   ├── workflow-new-feature.md
 │   │   ├── workflow-improve.md
@@ -47,7 +48,8 @@ claude-workflow/
 │   │   ├── workflow-resume.md
 │   │   ├── workflow-wizard-ux.md
 │   │   ├── workflow-create-role.md
-│   │   └── workflow-audit-role.md
+│   │   ├── workflow-audit-role.md
+│   │   └── workflow-diagnose.md
 │   ├── db/                            # Institutional memory layer
 │   │   ├── schema.sql                 # SQLite schema (tables, views, indexes)
 │   │   └── queries/                   # Named query templates for agents
@@ -103,6 +105,7 @@ All agents use `claude-opus-4-6` and include mandatory **briefing/debrief** prot
 | `wizard-ux` | Wizard/setup flow design for TUI/GUI/Web/CLI | `specs/[domain]-wizard-flow.md` |
 | `role-creator` | Meta-agent: designs new agent role definitions | `.claude/agents/[name].md` |
 | `role-auditor` | Meta-agent: adversarial audit of role definitions (read-only) | `docs/.workflow/role-audit-*.md` |
+| `diagnostician` | Deep diagnostic reasoning: hypothesis-driven root cause analysis for hard bugs | `docs/.workflow/diagnosis-report.md` |
 
 ### Extension Packs
 
@@ -129,6 +132,7 @@ All agents use `claude-opus-4-6` and include mandatory **briefing/debrief** prot
 | `workflow:wizard-ux` | wizard-ux only | Wizard/setup flow design |
 | `workflow:create-role` | role-creator → role-auditor → auto-remediation | Design agent role |
 | `workflow:audit-role` | role-auditor only | Audit agent role definition |
+| `workflow:diagnose` | diagnostician; with `--fix`: diagnostician → test-writer → developer → QA → reviewer | Deep root cause diagnosis for hard bugs |
 
 ### Institutional Memory (SQLite)
 
@@ -686,6 +690,12 @@ Reduced chain: analyst → test-writer (reproduces the bug) → developer → QA
 ### Design a wizard or setup flow
 ```
 /workflow:wizard-ux "description of wizard" [--scope="medium"]
+```
+
+### Diagnose a hard bug
+```
+/workflow:diagnose "description of the bug" [--scope="subsystem"]
+/workflow:diagnose "description of the bug" --fix [--scope="subsystem"]
 ```
 
 ## Conventions
