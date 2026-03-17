@@ -404,9 +404,10 @@ generate_hooks_json() {
 EOF
 }
 
+CLAUDE_MD_STATUS="unchanged"
+
 if [ -f "$SETTINGS_FILE" ]; then
     # Check if hooks have actually changed before writing
-    HOOKS_CHANGED=true
     GENERATED_HOOKS=$(generate_hooks_json)
     HOOKS_COMPARE_RESULT=$(python3 -c "
 import json, sys
@@ -423,15 +424,15 @@ except (json.JSONDecodeError, ValueError, KeyError):
 " <<< "$GENERATED_HOOKS" 2>/dev/null || echo "error")
 
     if [ "$HOOKS_COMPARE_RESULT" = "unchanged" ]; then
-        HOOKS_CHANGED=false
         echo "   = hooks already configured"
     elif [ "$HOOKS_COMPARE_RESULT" = "error" ]; then
         # Existing file is malformed or unreadable -- overwrite it
         generate_hooks_json > "$SETTINGS_FILE"
         echo "   + settings.json created with hooks"
+        TOTAL_UPDATED=$((TOTAL_UPDATED + 1))
     else
         # Hooks changed -- merge them into existing settings
-        python3 -c "
+        if python3 -c "
 import json, sys
 try:
     with open('$SETTINGS_FILE', 'r') as f:
@@ -443,18 +444,20 @@ settings['hooks'] = hooks['hooks']
 with open('$SETTINGS_FILE', 'w') as f:
     json.dump(settings, f, indent=2)
     f.write('\n')
-" <<< "$GENERATED_HOOKS" 2>/dev/null
-        if [ $? -eq 0 ]; then
+" <<< "$GENERATED_HOOKS" 2>/dev/null; then
             echo "   ~ hooks updated in settings.json"
+            TOTAL_UPDATED=$((TOTAL_UPDATED + 1))
         else
             echo "   WARNING: Could not merge hooks — overwriting settings.json"
             generate_hooks_json > "$SETTINGS_FILE"
             echo "   + settings.json created with hooks"
+            TOTAL_NEW=$((TOTAL_NEW + 1))
         fi
     fi
 else
     generate_hooks_json > "$SETTINGS_FILE"
     echo "   + settings.json created with hooks"
+    TOTAL_NEW=$((TOTAL_NEW + 1))
 fi
 
 # ============================================================
@@ -512,9 +515,13 @@ if [ -f "$WORKFLOW_RULES_FILE" ]; then
                 echo "" >> ./CLAUDE.md
                 sed -n "/$WORKFLOW_MARKER/,\$p" "$WORKFLOW_RULES_FILE" >> ./CLAUDE.md
                 echo "   ~ Workflow rules updated (replaced existing rules)"
+                TOTAL_UPDATED=$((TOTAL_UPDATED + 1))
+                CLAUDE_MD_STATUS="updated"
             fi
         else
             echo "   + Workflow rules appended to existing CLAUDE.md"
+            TOTAL_NEW=$((TOTAL_NEW + 1))
+            CLAUDE_MD_STATUS="appended"
 
             # Append the workflow rules section
             echo "" >> ./CLAUDE.md
@@ -536,6 +543,8 @@ if [ -f "$WORKFLOW_RULES_FILE" ]; then
         echo "" >> ./CLAUDE.md
         sed -n "/$WORKFLOW_MARKER/,\$p" "$WORKFLOW_RULES_FILE" >> ./CLAUDE.md
         echo "   + CLAUDE.md created with workflow rules"
+        TOTAL_NEW=$((TOTAL_NEW + 1))
+        CLAUDE_MD_STATUS="created"
     fi
 else
     echo "   WARNING: Toolkit CLAUDE.md not found at $WORKFLOW_RULES_FILE — skipping"
@@ -590,7 +599,7 @@ else
     echo "  Installed: $AGENT_COUNT agents, $CMD_COUNT commands ($SUMMARY_PARTS)"
 fi
 
-echo "  Workflow rules: CLAUDE.md (appended)"
+echo "  Workflow rules: CLAUDE.md ($CLAUDE_MD_STATUS)"
 echo "  Hooks: SessionStart (auto-briefing), SessionEnd (auto-close)"
 if [ "$SKIP_DB" = false ]; then
     echo "  Memory DB: .claude/memory.db (with self-learning)"
