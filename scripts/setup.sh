@@ -226,145 +226,95 @@ for hook in "$SCRIPT_DIR/core/hooks/"*.sh; do
 done
 
 # Configure hooks in settings.json (merge, don't overwrite)
+# Use absolute path — $CLAUDE_PROJECT_DIR doesn't reliably expand at runtime
 SETTINGS_FILE=".claude/settings.json"
+PROJECT_ABS_PATH="$(pwd)"
+
+# Generate hooks JSON with absolute paths
+generate_hooks_json() {
+    cat << EOF
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ABS_PATH}/.claude/hooks/briefing.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ABS_PATH}/.claude/hooks/debrief-gate.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ABS_PATH}/.claude/hooks/debrief-nudge.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${PROJECT_ABS_PATH}/.claude/hooks/session-close.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+EOF
+}
+
 if [ -f "$SETTINGS_FILE" ]; then
     # Check if hooks are already configured
     if grep -q '"hooks"' "$SETTINGS_FILE" 2>/dev/null; then
         echo "   = hooks already configured in settings.json (skipping)"
         echo "   NOTE: To update hooks config, delete the 'hooks' key from $SETTINGS_FILE and re-run setup"
     else
-        # Add hooks to existing settings using a temp file approach
-        # Remove the closing } and append hooks config
+        # Merge hooks into existing settings
         python3 -c "
 import json, sys
 with open('$SETTINGS_FILE', 'r') as f:
     settings = json.load(f)
-settings['hooks'] = {
-    'UserPromptSubmit': [{'matcher': '', 'hooks': [{'type': 'command', 'command': '\"\\$CLAUDE_PROJECT_DIR\"/.claude/hooks/briefing.sh', 'timeout': 30}]}],
-    'PreToolUse': [{'matcher': 'Bash', 'hooks': [{'type': 'command', 'command': '\"\\$CLAUDE_PROJECT_DIR\"/.claude/hooks/debrief-gate.sh', 'timeout': 5}]}],
-    'PostToolUse': [{'matcher': '', 'hooks': [{'type': 'command', 'command': '\"\\$CLAUDE_PROJECT_DIR\"/.claude/hooks/debrief-nudge.sh', 'timeout': 5}]}],
-    'Notification': [{'matcher': '', 'hooks': [{'type': 'command', 'command': '\"\\$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-close.sh', 'timeout': 10}]}]
-}
+hooks = json.loads(sys.stdin.read())
+settings['hooks'] = hooks['hooks']
 with open('$SETTINGS_FILE', 'w') as f:
     json.dump(settings, f, indent=2)
     f.write('\n')
-" 2>/dev/null
+" <<< "$(generate_hooks_json)" 2>/dev/null
         if [ $? -eq 0 ]; then
             echo "   + hooks added to existing settings.json"
         else
-            echo "   WARNING: Could not merge hooks into settings.json — creating fresh"
-            cat > "$SETTINGS_FILE" << 'HOOKEOF'
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/briefing.sh",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/debrief-gate.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/debrief-nudge.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-close.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  }
-}
-HOOKEOF
+            echo "   WARNING: Could not merge hooks — creating fresh settings.json"
+            generate_hooks_json > "$SETTINGS_FILE"
             echo "   + settings.json created with hooks"
         fi
     fi
 else
-    cat > "$SETTINGS_FILE" << 'HOOKEOF'
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/briefing.sh",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/debrief-gate.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/debrief-nudge.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-close.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  }
-}
-HOOKEOF
+    generate_hooks_json > "$SETTINGS_FILE"
     echo "   + settings.json created with hooks"
 fi
 
