@@ -145,6 +145,51 @@ Every briefing and close-out includes a self-learning phase:
 
 This creates a feedback loop on top of the existing memory protocol. The `failed_approaches` table captures *what didn't work*. The `outcomes` + `lessons` tables capture *what worked, how well, and why* — turning passive record-keeping into active learning. Because outcomes are scored incrementally, the learning data survives context compaction.
 
+### Specialist Routing Flow
+
+```
+User invokes /workflow:consult "help me with HIPAA compliance"
+    │
+    ├─ Orchestrator creates workflow_run (type='consult') in memory.db
+    │
+    ├─ omega-router agent
+    │   ├─ Classify: domain=compliance/HIPAA, complexity=medium, type=audit
+    │   ├─ Search: grep .claude/agents/*.md descriptions for HIPAA/compliance
+    │   ├─ Check memory.db: any past routing decisions for this domain?
+    │   └─ Decision → docs/.workflow/routing-decision.md
+    │       ├─ MATCH? → Tier 2: delegate-existing (route to specialist)
+    │       └─ NO MATCH? → Tier 2: create-then-delegate
+    │
+    ├─ [If creating specialist]
+    │   ├─ role-creator builds .claude/agents/hipaa-specialist.md
+    │   ├─ Structural validation (Phase 6) — no adversarial audit for speed
+    │   └─ Agent file saved, ready for immediate use
+    │
+    ├─ Specialist agent invoked with original request
+    │   ├─ Briefing: reads memory.db for context
+    │   ├─ Work: domain-specific analysis/output
+    │   └─ Close-out: logs outcomes, decisions
+    │
+    └─ Orchestrator presents output, closes workflow_run
+```
+
+For **Tier 3 (critical)**, the router assembles a pipeline of existing core agents + specialist:
+
+```
+/workflow:consult --critical "should we migrate to microservices?"
+    │
+    ├─ Router classifies: Tier 3 (high-stakes architectural decision)
+    │
+    ├─ Pipeline: discovery → architect → reviewer
+    │   ├─ discovery: explores options boldly (Explorer role)
+    │   ├─ architect: evaluates migration architecture
+    │   └─ reviewer: attacks the proposal (Skeptic role)
+    │
+    └─ Output: multi-perspective analysis with agreements and disagreements
+```
+
+Specialists accumulate per project — the first request creates them, subsequent requests reuse them. Routing decisions are logged to memory.db so the router improves over time.
+
 ### Cross-Session Memory Accumulation
 
 ```

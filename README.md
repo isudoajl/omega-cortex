@@ -270,6 +270,51 @@ Five hooks enforce the memory protocol automatically:
 | `/workflow:diagnose "bug" [--scope] [--fix]` | Deep root cause diagnosis for hard bugs |
 | `/workflow:onboard [--update]` | Set up your OMEGA identity profile |
 
+## Intelligent Specialist Routing
+
+OMEGA ships with 15 agents that cover software development. But real projects need expertise in hundreds of domains — marketing, compliance, database optimization, DevOps, security hardening, content writing, etc.
+
+`/workflow:consult` is the catch-all for domain expertise that doesn't fit the structured development commands:
+
+```bash
+/workflow:consult "help me design a HIPAA-compliant data flow"
+/workflow:consult "optimize my PostgreSQL queries for 10M rows"
+/workflow:consult "write SEO-optimized copy for my landing page"
+/workflow:consult --critical "should we migrate to microservices?"
+```
+
+### How It Works
+
+The **omega-router** agent classifies every request into one of three tiers:
+
+| Tier | When | What happens |
+|------|------|--------------|
+| **1 — Simple** | General knowledge, quick answer | Handled directly, no specialist |
+| **2 — Specialist** | Domain expertise needed | Finds existing specialist OR creates one via role-creator, then delegates |
+| **3 — Critical** | High-stakes, needs adversarial review | Assembles a multi-agent pipeline (e.g., discovery → specialist → reviewer) |
+
+### Self-Growing Expertise
+
+The first time you ask about a domain, the router creates a specialist agent (saved to `.claude/agents/`). The second time, that specialist already exists — routing is instant.
+
+```
+Session 1: "help with HIPAA compliance" → creates hipaa-specialist.md → analyzes your code
+Session 5: "check this new endpoint for HIPAA" → hipaa-specialist exists → routes directly
+```
+
+Over time, your project accumulates the exact specialists it needs. A fintech project might grow `hipaa-specialist.md`, `dba-optimizer.md`, `tokenomics-designer.md`. A SaaS project might grow `seo-specialist.md`, `pricing-strategist.md`.
+
+### When to Use What
+
+| Your task | Use this, not /workflow:consult |
+|---|---|
+| Fix a bug | `/workflow:bugfix` |
+| Add a feature | `/workflow:new-feature` |
+| Refactor code | `/workflow:improve` |
+| Code review | `/workflow:audit` |
+| Hard bug, unknown cause | `/workflow:diagnose` |
+| **Domain expertise outside development** | **`/workflow:consult`** |
+
 ## Extension Packs
 
 ### Blockchain (3 agents, 3 commands)
