@@ -79,22 +79,6 @@ Claude Code reads agents from `.claude/agents/` (OMEGA flattens them there) and 
 
 ## Data Flow
 
-### Intent Routing
-
-Users can invoke workflows explicitly (`/workflow:bugfix "..."`) or describe their intent in natural language. CLAUDE.md contains an **Intent Routing** rule that maps natural language to workflow commands:
-
-| User says | Routed to |
-|-----------|-----------|
-| Bug report, crash, error, "X is broken" | `workflow:bugfix` |
-| New capability, "add support for..." | `workflow:new-feature` |
-| Explain, understand, "how does X work" | `workflow:understand` |
-| Refactor, optimize, clean up | `workflow:improve` |
-| Mysterious bug, flaky, root cause unknown | `workflow:diagnose` |
-| Audit, review, security check | `workflow:audit` |
-| Docs/specs outdated | `workflow:sync` |
-
-Quick questions and clarifications bypass routing and get direct responses.
-
 ### Single Pipeline Execution
 
 ```

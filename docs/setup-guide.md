@@ -262,12 +262,10 @@ After setup, start Claude Code in your project:
 claude
 ```
 
-Verify agents are available (either slash command or natural language):
+Verify agents are available:
 ```
-/workflow:new "test"                              # Explicit invocation
-/workflow:audit                                   # Explicit invocation
-"there's a bug in the login flow"                 # Natural language → routes to workflow:bugfix
-"add support for email notifications"             # Natural language → routes to workflow:new-feature
+/workflow:new "test"        # Should invoke the discovery agent
+/workflow:audit             # Should invoke the reviewer agent
 ```
 
 Check the memory DB:

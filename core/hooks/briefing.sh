@@ -159,15 +159,6 @@ if query_has_results "SELECT 1 FROM workflow_runs ORDER BY id DESC LIMIT 1;"; th
     echo ""
 fi
 
-# --- INTENT ROUTING ---
-echo "⚡ INTENT ROUTING (ENFORCED): If the user's message describes work (bug, feature, refactor, etc.),"
-echo "   invoke the matching /workflow:* skill BEFORE doing any ad-hoc work."
-echo "   bug/crash/error/broken → workflow:bugfix | new capability/add support → workflow:new-feature"
-echo "   explain/understand → workflow:understand | refactor/optimize → workflow:improve"
-echo "   mysterious/flaky → workflow:diagnose | audit/review → workflow:audit | docs outdated → workflow:sync"
-echo "   Quick questions or clarifications → respond directly (no workflow needed)."
-echo ""
-
 # --- DEBRIEF OBLIGATION ---
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "DEBRIEF OBLIGATION: Before this session ends, you MUST:"

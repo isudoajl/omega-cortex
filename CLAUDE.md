@@ -137,9 +137,6 @@ root-project/
     └── db-queries/       ← Query reference files
 ```
 
-## Intent Routing (ENFORCED)
-When a user describes work matching a workflow command, **invoke it via Skill tool instead of working ad-hoc.** Workflows enforce TDD, memory, and quality gates that ad-hoc work bypasses. Key mappings: bug/crash/error/broken → `workflow:bugfix`, new capability/add support → `workflow:new-feature`, explain/how does/understand → `workflow:understand`, refactor/optimize/clean up → `workflow:improve`, mysterious/flaky/root cause unknown → `workflow:diagnose`, audit/review/security → `workflow:audit`, docs/specs outdated → `workflow:sync`. For quick questions or clarifications, respond directly.
-
 ## Conventions
 - Preferred language: Rust (or whatever the user defines)
 - Tests: alongside code or in `backend/tests/` (or `frontend/tests/`)
