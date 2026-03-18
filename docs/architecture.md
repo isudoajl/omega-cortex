@@ -14,7 +14,7 @@ OMEGA is **not** an application. It is a set of agent definitions, command orche
 |----|-----|
 | Flat `.claude/agents/` and `.claude/commands/` | `core/` + `extensions/` source organization |
 | All 20 agents copied to every project | Core (15) always; extensions opt-in via `--ext=` |
-| No cross-session memory | SQLite `.claude/memory.db` with 14 tables + 7 views |
+| No cross-session memory | SQLite `.claude/memory.db` with 17 tables + 10 views |
 | Agents act independently | Mandatory briefing/incremental logging/close-out + self-learning — agents log as they work and distill patterns |
 | `workflow-feature.md` + `workflow-new-feature.md` (duplicate) | Consolidated: only `workflow-new-feature.md` |
 | `workflow-improve.md` + `workflow-improve-functionality.md` (duplicate) | Consolidated: only `workflow-improve.md` |
@@ -35,6 +35,7 @@ omega/
 │   │       └── maintenance.sql        # Periodic cleanup & health
 │   ├── protocols/                     # On-demand protocol reference files
 │   │   ├── memory-protocol.md        # Full institutional memory protocol
+│   │   ├── incident-protocol.md      # Bug tracking with INC-NNN tickets
 │   │   ├── fail-safes.md             # Iteration limits, prerequisite gates
 │   │   ├── context-budget.md         # 60% budget, scoping strategy
 │   │   └── identity.md               # Experience levels, communication styles
@@ -135,15 +136,26 @@ User invokes /workflow:new-feature "add retry logic" --scope="scheduler"
     └─ Orchestrator closes workflow_run (status=completed, git_commits=[...])
 ```
 
-### Self-Learning Layer
+### Learning Layer (Three Tiers)
 
-Every briefing and close-out includes a self-learning phase:
+Learning operates at three tiers, each with different scope and injection timing:
 
-- **Briefing**: Inject the 15 most recent outcomes + all active lessons for the scope
-- **During work (incremental)**: Score every significant action (-1/0/+1) immediately after completing it
-- **Close-out**: Check for lesson distillation opportunity (3+ outcomes with same theme), reinforce/supersede existing lessons
+| Tier | What | When Injected |
+|------|------|---------------|
+| **Behavioral Learnings** | Cross-domain meta-cognitive rules ("verify before claiming") | Session start — every session |
+| **Lessons** | Domain-specific patterns ("use Option<T> for concurrent access") | Agent briefing — scope-specific |
+| **Outcomes** | Raw self-scored actions (+1/-1) | Never — feeds lesson distillation |
 
-This creates a feedback loop on top of the existing memory protocol. The `failed_approaches` table captures *what didn't work*. The `outcomes` + `lessons` tables capture *what worked, how well, and why* — turning passive record-keeping into active learning. Because outcomes are scored incrementally, the learning data survives context compaction.
+- **Session briefing**: Behavioral learnings + active decisions + open incidents (lean, focused)
+- **Agent briefing**: Scope-specific queries (hotspots, failed approaches, findings, patterns, lessons)
+- **During work (incremental)**: Score actions, log incidents (INC-NNN), track attempts
+- **Close-out**: Distill lessons, extract behavioral learnings, resolve incidents
+
+Behavioral learnings make Claude **progressively smarter across sessions**. They are extracted from user corrections, incident resolutions, and self-reflection. Unlike outcomes and lessons, they are about HOW Claude should think, not domain-specific patterns.
+
+### Incident Tracking
+
+Bugs are tracked as **incidents** (INC-NNN). Each incident has a structured timeline of attempts, discoveries, clues, hypotheses, and resolution. On resolution, agents extract behavioral learnings if the incident revealed a flaw in Claude's reasoning. Full protocol: `.claude/protocols/incident-protocol.md`.
 
 ### Specialist Routing Flow
 
@@ -198,16 +210,16 @@ Session 1: /workflow:new-feature "add scheduler"
     files touched, dependencies discovered
 
 Session 2: /workflow:bugfix "scheduler crash on empty queue"
-  → Developer briefing reveals: "scheduler.rs is a hotspot (touched 3x),
-    approach X failed before because of race condition,
-    AUDIT-P1-003 is still open in this file"
-  → Developer avoids the failed approach, addresses the open finding,
-    commits fix → debrief updates memory.db
+  → Session briefing: behavioral learnings + any related open incidents
+  → Agent briefing: "scheduler.rs is a hotspot (touched 3x),
+    approach X failed before because of race condition"
+  → Bug tracked as INC-001, all attempts logged as entries
+  → On resolution, behavioral learning extracted:
+    "Always enumerate shared state access points before modifying concurrent code"
 
-Session 3: /workflow:audit --scope="scheduler"
-  → Reviewer briefing shows: full history of scheduler changes, bug clusters,
-    which findings were fixed vs deferred
-  → Review is informed by accumulated context, not starting fresh
+Session 3: New session starts
+  → Briefing injects: "[0.8] Always enumerate shared state access points..."
+  → Claude is now smarter — applies the rule before touching any concurrent code
 ```
 
 ## Core vs Extension Boundary
@@ -300,7 +312,7 @@ Four hooks cover the full lifecycle:
 
 | Hook | Enforcement |
 |-|-|
-| `briefing.sh` (UserPromptSubmit) | Automatic — context injected on first prompt per session |
+| `briefing.sh` (UserPromptSubmit) | Automatic — behavioral learnings + decisions + incidents injected on first prompt per session |
 | `debrief-gate.sh` (PreToolUse/Bash) | **Blocking** — git commits fail without this session's self-scoring |
 | `incremental-gate.sh` (PreToolUse/Write,Edit) | **Blocking** — file modifications blocked after 10 edits without outcomes |
 | `debrief-nudge.sh` (PostToolUse) | Reminder — periodic nudge to log incrementally every 5th tool call |

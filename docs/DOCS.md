@@ -15,7 +15,8 @@
 
 On-demand protocol files loaded by agents when needed (deployed to `.claude/protocols/` in target projects):
 
-- `core/protocols/memory-protocol.md` — Full institutional memory protocol: briefing queries, incremental logging templates, close-out, self-learning
+- `core/protocols/memory-protocol.md` — Full institutional memory protocol: briefing queries, incremental logging templates, close-out, self-learning, behavioral learnings
+- `core/protocols/incident-protocol.md` — Bug tracking with INC-NNN tickets: create, update, resolve, query, extract behavioral learnings
 - `core/protocols/fail-safes.md` — Prerequisite gates, iteration limits, error recovery
 - `core/protocols/context-budget.md` — 60% budget, scoping strategy, heuristics
 - `core/protocols/identity.md` — Experience levels, communication styles, override hierarchy

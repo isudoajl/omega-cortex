@@ -30,10 +30,15 @@ BRIEFING │         CLOSE-OUT
   known
 ```
 
+**Two levels of briefing:**
+1. **Session briefing** (automatic, via UserPromptSubmit hook) — injects **behavioral learnings** (meta-cognitive rules that make Claude smarter), active decisions, and open incidents. Does NOT inject bug details, hotspots, outcomes, or patterns — those are noise at session start.
+2. **Agent briefing** (per agent, on-demand) — each agent queries the DB for scope-specific context (hotspots, failed approaches, findings, decisions, patterns). This is targeted and relevant to the agent's current work.
+
 **Every agent, every time:**
-1. **Briefing** — queries the DB for context relevant to its scope (hotspots, failed approaches, open findings, decisions, patterns, outcomes, lessons). **Automated via UserPromptSubmit hook** — the briefing runs automatically and injects context into every session without relying on AI compliance.
-2. **Work + Incremental Logging** — performs its normal job, logging to memory.db **immediately after each significant action** (file changes, decisions, failed approaches, outcomes). This is the primary data capture mechanism — it ensures data reaches the DB even if context compaction occurs mid-work.
-3. **Close-Out** — lightweight verification step: checks that all incremental entries were logged, scores remaining actions, distills lessons from outcome patterns. Git commits are **blocked** until at least one outcome is logged. The close-out can be minimal if context is tight — the important data was already logged incrementally.
+1. **Session Briefing** — behavioral learnings + active decisions + open incidents injected automatically. **Automated via UserPromptSubmit hook.**
+2. **Agent Briefing** — agent queries memory.db for scope-specific context before starting work (hotspots, failed approaches, findings, patterns).
+3. **Work + Incremental Logging** — performs its normal job, logging to memory.db **immediately after each significant action** (file changes, decisions, failed approaches, outcomes). This is the primary data capture mechanism — it ensures data reaches the DB even if context compaction occurs mid-work.
+4. **Close-Out** — lightweight verification step: checks that all incremental entries were logged, scores remaining actions, distills lessons, extracts behavioral learnings, tracks bugs as incidents. Git commits are **blocked** until at least one outcome is logged.
 
 ### Why Incremental Logging (not batched debrief)
 
@@ -210,6 +215,52 @@ Written by: all pipeline agents. Read by: all agents (briefing).
 
 When patterns emerge from 3+ repeated outcomes, agents distill them into permanent rules. Content-based deduplication means identical lessons bump `occurrences` instead of creating duplicates. Confidence grows with reinforcement (+0.1 per confirmation) and decays without it (-0.1 every 30 days unreinforced). Capped at 10 active lessons per domain — oldest pruned during maintenance.
 
+#### `behavioral_learnings` — Cross-domain meta-cognitive rules
+Written by: all agents (from user corrections, incident resolution, self-reflection). Read by: `briefing.sh` (session start).
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `rule` | TEXT UNIQUE | The behavioral rule itself (actionable, imperative) |
+| `context` | TEXT | What situation/incident taught this rule |
+| `source_project` | TEXT | Which project this was learned in |
+| `confidence` | REAL | 0.0–1.0 — grows with reinforcement, decays without it |
+| `occurrences` | INTEGER | How many times reinforced |
+| `status` | TEXT | active → superseded \| archived |
+
+Unlike domain-specific `lessons`, behavioral learnings are about HOW Claude should think and work — they apply across all domains and projects. They are injected at the start of every session to make Claude progressively smarter.
+
+#### `incidents` — Structured bug tracking with ticket numbers
+Written by: developer, diagnostician, qa. Read by: all agents (on-demand).
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `incident_id` | TEXT UNIQUE | INC-001 format |
+| `title` | TEXT | Short description |
+| `domain` | TEXT | Area/module affected |
+| `status` | TEXT | open → investigating → resolved → closed |
+| `description` | TEXT | Full description |
+| `symptoms` | TEXT | How it manifests |
+| `root_cause` | TEXT | What caused it (filled on resolution) |
+| `resolution` | TEXT | How it was fixed (filled on resolution) |
+| `affected_files` | TEXT | JSON array |
+| `related_incidents` | TEXT | JSON array of related INC-NNN |
+| `tags` | TEXT | JSON array of searchable keywords |
+
+Each bug gets a ticket number and all related knowledge lives under it, replacing scattered `bugs` and `failed_approaches` entries for bug tracking.
+
+#### `incident_entries` — Chronological log under each incident
+Written by: all agents. Read by: all agents (on-demand).
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `incident_id` | TEXT | References incidents.incident_id |
+| `entry_type` | TEXT | attempt, discovery, clue, hypothesis, note, resolution |
+| `content` | TEXT | What was tried/discovered/noted |
+| `result` | TEXT | worked, failed, partial (for attempts); NULL otherwise |
+| `agent` | TEXT | Which agent made this entry |
+
+Full protocol: `.claude/protocols/incident-protocol.md`
+
 #### `decay_log` — Memory evolution audit trail
 Written by: maintenance queries. Read by: maintenance queries.
 
@@ -271,6 +322,15 @@ Per-domain learning health: total outcomes, positive/neutral/negative counts, av
 
 #### `v_workflow_usage`
 Workflow usage summary: aggregates `workflow_runs` by type, showing total runs, completed runs, and last run date. Feeds the OMEGA Identity block in briefing and experience auto-upgrade tracking. Ordered by `completed_runs DESC`. Has no dependency on `user_profile` — works regardless of whether a profile exists.
+
+#### `v_behavioral_briefing`
+Active behavioral learnings sorted by confidence. Used by `briefing.sh` to inject meta-cognitive rules at session start.
+
+#### `v_incident_search`
+All incidents sorted by status (open first), with entry count. Used for searching incidents by domain, symptoms, or tags.
+
+#### `v_incident_timeline`
+Full chronological view of an incident's entries (attempts, discoveries, resolution). Used for reviewing the complete history of a bug investigation.
 
 ## Briefing Queries by Agent
 
@@ -413,18 +473,37 @@ UPDATE lessons SET status = 'superseded'
 WHERE domain = 'scheduler' AND content LIKE '%outdated pattern%';
 ```
 
-## The Self-Learning Loop
+## The Learning Loop
 
 ```
-Agent starts → briefing injects recent outcomes + active lessons
-  → Agent works → logs changes, decisions, failures, outcomes INCREMENTALLY
-  → Agent close-out: verifies completeness, distills lessons, reinforces/supersedes
-  → Next agent/session gets updated learning context
+Session starts → briefing injects behavioral learnings (meta-cognitive rules)
+  → Agent starts → queries memory.db for scope-specific context
+  → Agent works → logs changes, decisions, failures, outcomes, incidents INCREMENTALLY
+  → Agent close-out: distills lessons, extracts behavioral learnings, tracks bugs as incidents
+  → Next session starts → gets updated behavioral learnings (Claude is now smarter)
 ```
 
-Unlike `failed_approaches` (which only captures failures), the self-learning system captures **what works** and **how well it works**. Outcomes are scored incrementally during work (not batched), so the learning data survives context compaction. At close-out, agents distill patterns from accumulated outcomes into permanent lessons. Over time, high-confidence lessons become established rules that agents follow automatically, while low-confidence lessons decay and get archived.
+### Three Tiers of Learning
 
-**Cross-agent learning**: The developer's -1 score on a retry-heavy module informs the architect to design smaller milestones next time. The test-writer's +1 on edge-case-first testing reinforces that approach project-wide.
+| Tier | Table | Scope | Injected at session start? |
+|------|-------|-------|---------------------------|
+| **Behavioral Learnings** | `behavioral_learnings` | Cross-domain, meta-cognitive | **YES** — the main session briefing content |
+| **Lessons** | `lessons` | Domain-specific patterns | No — agent queries on-demand |
+| **Outcomes** | `outcomes` | Raw self-scored actions | No — used for lesson distillation |
+
+**Behavioral learnings** make Claude smarter over time. They are about HOW Claude should think and work. Example: "Always verify technical claims with evidence before stating them." These are extracted from user corrections, incident resolutions, and self-reflection.
+
+**Lessons** are domain-specific patterns. Example: "Use Option<T> for container access in concurrent Rust code." These are distilled from 3+ similar outcomes.
+
+**Outcomes** are raw self-scored actions. They feed lesson distillation but are not injected at session start.
+
+### Incident Tracking (Bug Knowledge Base)
+
+Bugs are tracked as **incidents** (INC-NNN) with structured entries. Each incident has a timeline of attempts, discoveries, clues, and resolution. This replaces scattered `bugs` entries with a searchable knowledge base organized by ticket number.
+
+Full protocol: `.claude/protocols/incident-protocol.md`
+
+**Cross-agent learning**: The developer's -1 score on a retry-heavy module informs the architect to design smaller milestones next time. When an incident is resolved, the agent extracts a behavioral learning if the bug revealed a flaw in Claude's reasoning process.
 
 ## Decay Mechanics
 

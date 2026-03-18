@@ -1,5 +1,5 @@
 -- Claude Workflow Institutional Memory Schema
--- Version: 1.1.0 — Added self-learning tables (outcomes, lessons) and learning views
+-- Version: 1.2.0 — Added behavioral learnings and incident tracking
 -- Every workflow execution writes to this DB. Every agent reads from it before acting.
 
 PRAGMA journal_mode = WAL;
@@ -204,6 +204,74 @@ CREATE INDEX IF NOT EXISTS idx_lessons_domain ON lessons(domain);
 CREATE INDEX IF NOT EXISTS idx_lessons_status ON lessons(status);
 
 -- ============================================================
+-- BEHAVIORAL LEARNINGS — cross-domain meta-cognitive rules
+-- These are injected at session start to make agents smarter.
+-- Unlike lessons (domain-specific patterns), these are about
+-- HOW to think and work, not WHAT works in a specific domain.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS behavioral_learnings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    rule TEXT NOT NULL,                    -- The behavioral rule itself (actionable, imperative)
+    context TEXT,                          -- What incident/situation taught this rule
+    source_project TEXT,                   -- Which project this was learned in
+    confidence REAL DEFAULT 0.5,           -- 0.0-1.0, grows with reinforcement
+    occurrences INTEGER DEFAULT 1,         -- How many times reinforced
+    status TEXT DEFAULT 'active',          -- active, superseded, archived
+    created_at TEXT DEFAULT (datetime('now')),
+    last_reinforced TEXT DEFAULT (datetime('now')),
+    UNIQUE(rule)                           -- Content-based dedup
+);
+
+CREATE INDEX IF NOT EXISTS idx_behavioral_status ON behavioral_learnings(status);
+CREATE INDEX IF NOT EXISTS idx_behavioral_confidence ON behavioral_learnings(confidence);
+
+-- ============================================================
+-- INCIDENTS — structured bug tracking with ticket numbers
+-- Each bug gets a ticket (INC-001) and all related knowledge
+-- (attempts, discoveries, clues, resolution) lives under it.
+-- Replaces scattered bugs/failed_approaches for bug tracking.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS incidents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    incident_id TEXT UNIQUE NOT NULL,      -- INC-001 format
+    title TEXT NOT NULL,                   -- Short description
+    domain TEXT,                           -- Area/module affected
+    status TEXT DEFAULT 'open',            -- open, investigating, resolved, closed
+    description TEXT,                      -- Full description of the issue
+    symptoms TEXT,                         -- How it manifests (error messages, behavior)
+    root_cause TEXT,                       -- What actually caused it (filled on resolution)
+    resolution TEXT,                       -- How it was fixed (filled on resolution)
+    affected_files TEXT,                   -- JSON array of file paths
+    related_incidents TEXT,                -- JSON array of related INC-NNN
+    tags TEXT,                             -- JSON array of searchable keywords
+    run_id INTEGER REFERENCES workflow_runs(id),
+    created_at TEXT DEFAULT (datetime('now')),
+    resolved_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_incidents_status ON incidents(status);
+CREATE INDEX IF NOT EXISTS idx_incidents_domain ON incidents(domain);
+
+-- ============================================================
+-- INCIDENT ENTRIES — chronological log under each incident
+-- Every attempt, discovery, clue, and note is an entry.
+-- This creates a searchable knowledge base per bug.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS incident_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    incident_id TEXT NOT NULL,             -- References incidents.incident_id
+    entry_type TEXT NOT NULL,              -- attempt, discovery, clue, hypothesis, note, resolution
+    content TEXT NOT NULL,                 -- What was tried/discovered/noted
+    result TEXT,                           -- worked, failed, partial (for attempts); NULL for non-attempts
+    agent TEXT,                            -- Which agent made this entry
+    run_id INTEGER REFERENCES workflow_runs(id),
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_incident_entries_incident ON incident_entries(incident_id);
+CREATE INDEX IF NOT EXISTS idx_incident_entries_type ON incident_entries(entry_type);
+
+-- ============================================================
 -- DECAY LOG — tracks how the memory evolves over time
 -- ============================================================
 CREATE TABLE IF NOT EXISTS decay_log (
@@ -354,3 +422,39 @@ SELECT
 FROM workflow_runs
 GROUP BY type
 ORDER BY completed_runs DESC;
+
+-- Behavioral learnings for session briefing (sorted by confidence)
+CREATE VIEW IF NOT EXISTS v_behavioral_briefing AS
+SELECT
+    rule, confidence, occurrences, context, source_project
+FROM behavioral_learnings
+WHERE status = 'active'
+ORDER BY confidence DESC, occurrences DESC
+LIMIT 20;
+
+-- Incident search: search across title, description, symptoms, entries
+CREATE VIEW IF NOT EXISTS v_incident_search AS
+SELECT
+    i.incident_id, i.title, i.domain, i.status,
+    i.description, i.symptoms, i.root_cause, i.resolution,
+    i.tags,
+    (SELECT COUNT(*) FROM incident_entries e WHERE e.incident_id = i.incident_id) as entry_count,
+    i.created_at, i.resolved_at
+FROM incidents i
+ORDER BY
+    CASE i.status WHEN 'open' THEN 0 WHEN 'investigating' THEN 1 WHEN 'resolved' THEN 2 WHEN 'closed' THEN 3 END,
+    i.id DESC;
+
+-- Incident timeline: full chronological view of an incident's entries
+CREATE VIEW IF NOT EXISTS v_incident_timeline AS
+SELECT
+    e.incident_id,
+    i.title as incident_title,
+    e.entry_type,
+    e.content,
+    e.result,
+    e.agent,
+    e.created_at
+FROM incident_entries e
+JOIN incidents i ON i.incident_id = e.incident_id
+ORDER BY e.incident_id, e.id ASC;

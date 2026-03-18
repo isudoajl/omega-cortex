@@ -129,7 +129,7 @@ your-project/
 ├── .claude/
 │   ├── agents/           <- 15 core agent definitions (+ extension agents)
 │   ├── commands/         <- 16 core commands (+ extension commands)
-│   ├── protocols/        <- 4 on-demand protocol reference files
+│   ├── protocols/        <- 5 on-demand protocol reference files
 │   ├── hooks/            <- 5 automation hooks
 │   ├── settings.json     <- Hook configuration (merged, not overwritten)
 │   ├── memory.db         <- SQLite institutional memory database
@@ -165,7 +165,7 @@ omega/
 ├── core/                              # Every project gets this
 │   ├── agents/                        # 15 universal agents
 │   ├── commands/                      # 16 universal commands
-│   ├── protocols/                     # 4 on-demand reference files
+│   ├── protocols/                     # 5 on-demand reference files
 │   ├── db/                            # Institutional memory layer
 │   │   ├── schema.sql                 # SQLite schema
 │   │   └── queries/                   # Named query templates
@@ -202,20 +202,27 @@ Every target project gets `.claude/memory.db` — a persistent knowledge base th
 | `requirements` | Requirement lifecycle (defined -> tested -> verified) |
 | `patterns` | Successful patterns to reuse |
 | `outcomes` | Self-learning Tier 1: raw self-scored results per action |
-| `lessons` | Self-learning Tier 2: distilled patterns from outcomes |
+| `lessons` | Self-learning Tier 2: distilled domain-specific patterns |
+| `behavioral_learnings` | Cross-domain meta-cognitive rules (injected at session start) |
+| `incidents` | Structured bug tracking with INC-NNN ticket numbers |
+| `incident_entries` | Chronological log of attempts/discoveries per incident |
 | `decay_log` | Memory evolution audit trail |
 | `user_profile` | Per-project identity (name, experience level, communication style) |
 | `onboarding_state` | Tracks onboarding flow progress and resumability |
 
-**Agent protocol**: Before work -> query DB (briefing). During work -> log incrementally. After work -> close-out (verify completeness, distill lessons). The briefing hook also injects an **OMEGA Identity** block when a user profile exists — adapting agent communication style to the user's experience level.
+**Agent protocol**: Before work -> query DB (briefing). During work -> log incrementally. After work -> close-out (verify completeness, distill lessons, extract behavioral learnings, track bugs as incidents). The briefing hook injects an **OMEGA Identity** block and **behavioral learnings** at session start.
 
-### Self-Learning Loop
+### Three-Tier Learning
 
-Agents don't just record what happened — they evaluate *how well it worked* and distill patterns:
+Agents learn at three levels, each injected at different times:
 
-- **Tier 1 (Outcomes)**: After every significant action, the agent self-scores: +1 (helpful), 0 (neutral), -1 (unhelpful). The 15 most recent outcomes for the scope are injected into every future briefing.
-- **Tier 2 (Lessons)**: When 3+ outcomes share a theme, agents distill them into permanent rules with confidence tracking and a cap of 10 active lessons per domain.
-- **Cross-agent learning**: The developer's -1 on a retry-heavy module informs the architect to design smaller milestones. The test-writer's +1 on edge-case-first testing reinforces that approach.
+- **Behavioral Learnings** (session start): Cross-domain meta-cognitive rules about HOW Claude should think — e.g., "Always verify technical claims with evidence." Extracted from user corrections, incident resolutions, and self-reflection. These make Claude **progressively smarter across sessions**.
+- **Lessons** (agent briefing, on-demand): Domain-specific patterns — e.g., "Use Option<T> for concurrent access in Rust." Distilled from 3+ similar outcomes. Queried per scope when agents brief themselves.
+- **Outcomes** (internal): Raw self-scored actions (+1/-1). Feed lesson distillation but never shown at session start.
+
+### Incident Tracking
+
+Bugs are tracked as **incidents** (INC-001, INC-002, ...). Each incident has a structured timeline of attempts, discoveries, clues, hypotheses, and resolution. When resolved, agents extract behavioral learnings if the incident revealed a flaw in Claude's reasoning. Open incidents appear in the session briefing as a summary; full details are queried on-demand.
 
 ### Automation Hooks
 
@@ -223,7 +230,7 @@ Five hooks enforce the memory protocol automatically:
 
 | Hook | Event | Purpose |
 |------|-------|---------|
-| `briefing.sh` | UserPromptSubmit | Auto-injects institutional memory context (once per session) |
+| `briefing.sh` | UserPromptSubmit | Auto-injects behavioral learnings + decisions + incidents (once per session) |
 | `debrief-gate.sh` | PreToolUse (Bash) | Blocks `git commit` if no outcomes are logged |
 | `incremental-gate.sh` | PreToolUse (Write/Edit) | Blocks after 10 file edits without logging outcomes |
 | `debrief-nudge.sh` | PostToolUse | Periodic reminder to log incrementally |

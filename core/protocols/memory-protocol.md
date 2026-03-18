@@ -114,6 +114,8 @@ When your work is complete (or when stopping due to context budget / errors), ru
 2. **Final self-scoring** — score any remaining significant actions you haven't yet scored.
 3. **Check for lesson distillation** — do 3+ recent outcomes share a theme? If so, distill a lesson (see Self-Learning below).
 4. **Reinforce/supersede lessons** — if you confirmed an existing lesson, reinforce it. If one no longer applies, supersede it.
+5. **Extract behavioral learnings** — did the user correct your approach? Did you discover something about HOW to work better? If so, extract a behavioral learning (see Behavioral Learnings below).
+6. **Track bugs as incidents** — if bugs were encountered, ensure they have incident tickets (see Incident Protocol).
 
 If context is tight, the close-out can be minimal — the important data was already logged incrementally. At minimum, ensure at least one outcome is logged (required for git commits).
 
@@ -236,6 +238,88 @@ sqlite3 .claude/memory.db "UPDATE lessons SET occurrences = occurrences + 1, con
 
 # 4. SUPERSEDE lessons that no longer apply
 sqlite3 .claude/memory.db "UPDATE lessons SET status='superseded' WHERE domain='domain' AND content LIKE '%outdated pattern%';"
+```
+
+## Behavioral Learnings (Session-Level Intelligence)
+
+Behavioral learnings are **cross-domain meta-cognitive rules** about HOW Claude should think and work. Unlike domain-specific lessons, these apply to ALL work across ALL projects. They are injected at the start of every session via the briefing hook.
+
+**What qualifies as a behavioral learning:**
+- Rules about Claude's reasoning process: "Always verify claims with evidence"
+- Rules about interaction quality: "When a user challenges your answer, re-analyze rather than defend"
+- Rules about analysis discipline: "Calculate resource impact, never estimate by feel"
+- Rules about work patterns: "After 2 failures of the same approach, stop and reassess"
+
+**What does NOT qualify:**
+- Domain-specific patterns: "Use Option<T> in Rust concurrent code" → this is a `lesson`
+- Project-specific conventions: "Deploy via rsync" → this is a `pattern`
+- Bug details: "setup.sh fails with sed" → this is an `incident`
+
+### When to Create a Behavioral Learning
+
+1. **User correction** (strongest signal): The user says "don't do X" or "you should always Y" and the insight is about HOW Claude works, not domain-specific.
+2. **Incident resolution**: Resolving an incident reveals a flaw in Claude's reasoning process.
+3. **Self-reflection**: You notice you made an avoidable mistake and can articulate a rule to prevent it.
+
+### How to Create/Reinforce
+
+```bash
+# Create a new behavioral learning
+sqlite3 .claude/memory.db "INSERT INTO behavioral_learnings (rule, context)
+VALUES (
+    'Always verify technical claims with evidence before stating them',
+    'Learned from INC-001: claimed 10 stress nodes was trivial without calculating resource impact'
+) ON CONFLICT(rule) DO UPDATE SET
+    occurrences = occurrences + 1,
+    confidence = MIN(1.0, confidence + 0.1),
+    last_reinforced = datetime('now');"
+
+# Reinforce an existing learning
+sqlite3 .claude/memory.db "UPDATE behavioral_learnings SET
+    occurrences = occurrences + 1,
+    confidence = MIN(1.0, confidence + 0.1),
+    last_reinforced = datetime('now')
+WHERE rule LIKE '%verify%claims%';"
+
+# Supersede a learning that no longer applies
+sqlite3 .claude/memory.db "UPDATE behavioral_learnings SET status='superseded' WHERE rule LIKE '%outdated rule%';"
+```
+
+### Confidence Mechanics
+- Starts at **0.5** (emerging)
+- Grows **+0.1** per reinforcement (max 1.0)
+- Decays **-0.1** every 30 days unreinforced
+- At **0.8+**: treat as established rule — follow always
+- At **0.5-0.7**: strong guidance — follow unless specific reason not to
+- Below **0.5**: emerging — consider but don't blindly follow
+
+## Incident Tracking (Bug Knowledge Base)
+
+Incidents replace scattered `bugs` table entries with a structured ticket system. Each bug gets a ticket number (INC-NNN) and all related knowledge lives under it.
+
+**Full protocol:** Read `.claude/protocols/incident-protocol.md` for create/update/resolve/query procedures.
+
+**Core rules:**
+- Every bug gets an incident ticket (INC-NNN)
+- Every attempt, discovery, and clue is logged as an incident entry
+- On resolution, always ask: "Does this teach us a behavioral rule?"
+- Incidents are NOT injected in full at session start — only titles/status appear in the briefing
+- Full incident details are queried on-demand when working in the relevant domain
+
+### Quick Reference
+
+```bash
+# Get next incident ID
+NEXT_ID=$(sqlite3 .claude/memory.db "SELECT 'INC-' || printf('%03d', COALESCE(MAX(CAST(SUBSTR(incident_id, 5) AS INTEGER)), 0) + 1) FROM incidents;")
+
+# Create incident
+sqlite3 .claude/memory.db "INSERT INTO incidents (incident_id, title, domain, description, symptoms, run_id) VALUES ('$NEXT_ID', 'title', 'domain', 'description', 'symptoms', $RUN_ID);"
+
+# Log an attempt
+sqlite3 .claude/memory.db "INSERT INTO incident_entries (incident_id, entry_type, content, result, agent, run_id) VALUES ('INC-001', 'attempt', 'What was tried', 'failed', 'developer', $RUN_ID);"
+
+# Resolve incident
+sqlite3 .claude/memory.db "UPDATE incidents SET status='resolved', root_cause='...', resolution='...', resolved_at=datetime('now') WHERE incident_id='INC-001';"
 ```
 
 ## Error Handling

@@ -63,10 +63,13 @@ Every workflow reads from and writes to `.claude/memory.db`. **This protocol is 
 
 **Core rules (always in effect):**
 - **DB Detection**: `test -f .claude/memory.db` at session/workflow start. If missing, skip memory ops gracefully.
-- **Briefing before action**: Every agent queries memory.db (hotspots, failed approaches, findings, decisions, patterns, bugs) before starting work.
+- **Session briefing = behavioral learnings**: The briefing hook injects behavioral learnings (meta-cognitive rules), active decisions, and open incidents. NOT bug details, outcomes, or hotspots — those are on-demand agent queries.
+- **Briefing before action**: Every agent queries memory.db for scope-specific context (hotspots, failed approaches, findings, decisions, patterns) before starting work.
 - **Log incrementally**: Write to memory.db immediately after each significant action. Never batch for the end — context compaction loses batched entries.
 - **Self-score every action**: Rate significant actions (-1/0/+1) immediately after completing them.
-- **Close-out when done**: Verify completeness, distill lessons from patterns (3+ similar outcomes → lesson). Apply the episodic filter before every distillation: only record a lesson if a future agent would *act differently* because of it — not just know what happened.
+- **Track bugs as incidents**: Every bug gets an incident ticket (INC-NNN). All attempts, discoveries, and resolution go under it. Read `.claude/protocols/incident-protocol.md`.
+- **Extract behavioral learnings**: When the user corrects your approach or an incident reveals a flaw in your reasoning, extract a behavioral rule. These are about HOW you should think, not domain-specific patterns.
+- **Close-out when done**: Verify completeness, distill lessons, extract behavioral learnings, track bugs as incidents. Apply the episodic filter: only record if a future agent would *act differently*.
 - **Pipeline tracking**: Every `/workflow:*` command registers a `workflow_runs` entry at start, updates status at end.
 - **Non-pipeline work**: Even informal work gets a `workflow_runs` entry with type `'manual'`.
 - **Error tolerance**: If sqlite3 fails, log the error and continue working. Never block work for a DB failure.
