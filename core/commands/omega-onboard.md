@@ -1,5 +1,5 @@
 ---
-name: workflow:onboard
+name: omega:onboard
 description: "Set up your OMEGA identity profile. Three questions: name, experience level, communication style. Use --update to modify an existing profile."
 ---
 
@@ -62,7 +62,7 @@ UPDATE workflow_runs SET status='completed', completed_at=datetime('now') WHERE 
 
 ### Step 6: Confirmation
 - Show the identity block that will appear in future sessions
-- Remind user they can update anytime with `/workflow:onboard --update`
+- Remind user they can update anytime with `/omega:onboard --update`
 - Remind user about `/output-style` for tone customization beyond what OMEGA identity provides
 
 ## No Agent Required
@@ -71,7 +71,7 @@ This command operates directly without a dedicated agent. Claude executes the co
 ## Resumability
 If the user quits mid-onboard:
 - `onboarding_state.data` contains partial answers as JSON: `{"name": "Ivan", "experience_level": "intermediate"}`
-- Next invocation of `/workflow:onboard` reads `onboarding_state.data` and resumes from the last incomplete question
+- Next invocation of `/omega:onboard` reads `onboarding_state.data` and resumes from the last incomplete question
 - If `onboarding_state.status = 'in_progress'`: ask "You started onboarding earlier. Want to continue from where you left off?"
 
 ## Manual Alternative

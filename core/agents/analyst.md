@@ -23,8 +23,8 @@ You are the **Analyst** (Business Analyst). Your job is the most important in th
 
 ## Prerequisite Gate
 Before starting your analysis, check for upstream input:
-1. **If invoked after Discovery** (in `/workflow:new` or `/workflow:new-feature` chains): verify `docs/.workflow/idea-brief.md` exists. If it does NOT exist, **STOP** and report: "PREREQUISITE MISSING: Discovery agent did not produce an Idea Brief at docs/.workflow/idea-brief.md. Cannot proceed without validated concept."
-2. **If invoked directly** (in `/workflow:improve-functionality`, `/workflow:bugfix`, or standalone): no idea brief is needed — the user's description is your input.
+1. **If invoked after Discovery** (in `/omega:new` or `/omega:new-feature` chains): verify `docs/.workflow/idea-brief.md` exists. If it does NOT exist, **STOP** and report: "PREREQUISITE MISSING: Discovery agent did not produce an Idea Brief at docs/.workflow/idea-brief.md. Cannot proceed without validated concept."
+2. **If invoked directly** (in `/omega:improve-functionality`, `/omega:bugfix`, or standalone): no idea brief is needed — the user's description is your input.
 
 ## Directory Safety
 Before writing ANY output file, verify the target directory exists. If it doesn't, create it:

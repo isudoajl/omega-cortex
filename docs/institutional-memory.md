@@ -66,7 +66,7 @@ Hook scripts live in `.claude/hooks/` and are configured in `.claude/settings.js
 ### Tables
 
 #### `workflow_runs` — Pipeline execution traces
-Every `/workflow:*` command creates a row at start and closes it at end.
+Every `/omega:*` command creates a row at start and closes it at end.
 
 | Column | Type | Purpose |
 |--------|------|---------|
@@ -273,7 +273,7 @@ Written by: maintenance queries. Read by: maintenance queries.
 | `reason` | TEXT | Why the decay happened |
 
 #### `user_profile` — Per-project identity (single row by convention)
-Written by: `/workflow:onboard` command. Read by: `briefing.sh`.
+Written by: `/omega:onboard` command. Read by: `briefing.sh`.
 
 | Column | Type | Purpose |
 |--------|------|---------|
@@ -286,7 +286,7 @@ Written by: `/workflow:onboard` command. Read by: `briefing.sh`.
 Single-row by convention, not by constraint. The onboarding command uses `INSERT OR REPLACE` to maintain one row. Experience level auto-upgrades during briefing: beginner to intermediate at 10 completed workflows, intermediate to advanced at 30.
 
 #### `onboarding_state` — Tracks onboarding flow progress
-Written by: `/workflow:onboard` command. Read by: `/workflow:onboard` (for resume).
+Written by: `/omega:onboard` command. Read by: `/omega:onboard` (for resume).
 
 | Column | Type | Purpose |
 |--------|------|---------|
@@ -549,8 +549,8 @@ SQLite binary files don't diff in git. Mitigations:
 - `$RUN_ID` passing relies on orchestrator convention, not enforcement
 
 **Potential future additions:**
-- A `workflow:memory-health` command that runs maintenance queries + self-learning health stats
+- A `omega:memory-health` command that runs maintenance queries + self-learning health stats
 - Cross-project pattern sharing (export patterns and lessons from one project, import to another)
 - Automated decay via a post-workflow hook
-- A `workflow:memory-query` command for ad-hoc DB queries
+- A `omega:memory-query` command for ad-hoc DB queries
 - A `/learning` command to inspect outcomes and lessons (similar to OMEGA's /learning)

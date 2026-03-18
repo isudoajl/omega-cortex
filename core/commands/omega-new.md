@@ -1,5 +1,5 @@
 ---
-name: workflow:new
+name: omega:new
 description: "Start a new project from scratch with the full workflow. Use when: building something new, greenfield project, creating from scratch, 'build me a...', 'I want to create...', 'let\\'s make a new...', starting fresh, no existing code."
 ---
 
@@ -46,7 +46,7 @@ If any agent fails mid-chain:
    - Which step failed and why
    - What remains to be done
 2. Report to user with the chain state
-3. The user can resume with `/workflow:resume` which auto-detects the resume point, or `/workflow:resume --from="[step]"` to resume from a specific step
+3. The user can resume with `/omega:resume` which auto-detects the resume point, or `/omega:resume --from="[step]"` to resume from a specific step
 
 ## Step 1: Discovery
 Invoke the `discovery` subagent with the user's raw idea.
@@ -111,7 +111,7 @@ After the Architect completes, parse the architecture document for milestones:
 ## Steps 4-9: Milestone Loop
 **For EACH milestone in dependency order**, execute the following steps. After completing all steps for a milestone, **auto-continue to the next milestone without user intervention**.
 
-> **60% Context Budget:** Each agent invocation for a milestone must complete within 60% of its context window. The Architect sized milestones to respect this budget (max 3 modules each). If an agent stops due to budget exhaustion, save chain state to `docs/.workflow/chain-state.md` and use `/workflow:resume` to continue.
+> **60% Context Budget:** Each agent invocation for a milestone must complete within 60% of its context window. The Architect sized milestones to respect this budget (max 3 modules each). If an agent stops due to budget exhaustion, save chain state to `docs/.workflow/chain-state.md` and use `/omega:resume` to continue.
 
 ### Step 4: Test Writer (scoped to current milestone)
 Invoke the `test-writer` subagent passing the architecture, **scoped to the current milestone's modules and requirements only**.

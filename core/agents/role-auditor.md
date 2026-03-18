@@ -476,9 +476,9 @@ The `--scope` parameter limits which dimensions are audited.
 
 ## Integration
 
-- **Upstream**: Invoked by `workflow-audit-role` command or directly by user. Input is a file path to a `.claude/agents/*.md` file, or "all"
+- **Upstream**: Invoked by `omega-audit-role` command or directly by user. Input is a file path to a `.claude/agents/*.md` file, or "all"
 - **Downstream**: Output consumed by the role-creator for remediation, or by the user for review. Output format is the `audit()` + `final_report()` schema defined above
-- **Companion command**: `.claude/commands/workflow-audit-role.md`
+- **Companion command**: `.claude/commands/omega-audit-role.md`
 - **Related agent**: `role-creator.md` — creates roles that this auditor evaluates. The role-creator's "Role Anatomy Checklist" (14 items) is the basis for this auditor's anatomy scoring
 - **Pipeline position**: Post-creation gate. Runs after role-creator produces a definition, before the role enters the pipeline
 

@@ -1,5 +1,5 @@
 ---
-name: workflow:resume
+name: omega:resume
 description: "Resume a stopped or failed workflow from the last completed step. Use when: 'continue where we left off', 'resume the workflow', 'pick up from...', context limit was hit, workflow was interrupted, 'finish what we started'. Accepts optional --from to specify a milestone or step."
 ---
 
@@ -11,12 +11,12 @@ Optional: `--from="M3"` or `--from="test-writer"` to override the auto-detected 
 
 ## When to Use
 
-This command resumes **milestone-based workflows only** (`/workflow:new`, `/workflow:new-feature`). If you need to resume a non-milestone workflow (`/workflow:bugfix`, `/workflow:improve-functionality`), re-invoke the failed step's agent directly instead.
+This command resumes **milestone-based workflows only** (`/omega:new`, `/omega:new-feature`). If you need to resume a non-milestone workflow (`/omega:bugfix`, `/omega:improve-functionality`), re-invoke the failed step's agent directly instead.
 
 ## Prerequisite Gate
 
 ### Required Files
-- `docs/.workflow/milestone-progress.md` MUST exist — if not, STOP: "No milestone progress file found. There is no workflow to resume. Use `/workflow:new` or `/workflow:new-feature` to start a workflow."
+- `docs/.workflow/milestone-progress.md` MUST exist — if not, STOP: "No milestone progress file found. There is no workflow to resume. Use `/omega:new` or `/omega:new-feature` to start a workflow."
 - `specs/*-architecture.md` MUST exist — needed to understand milestone scopes and module definitions
 - `specs/*-requirements.md` MUST exist — needed for agent context (requirement IDs, acceptance criteria, traceability)
 
@@ -52,7 +52,7 @@ If any agent fails mid-chain during resume:
    - Which step failed and why
    - What remains to be done
 2. Report to user with the chain state
-3. The user can resume again with `/workflow:resume` or `/workflow:resume --from="[step]"`
+3. The user can resume again with `/omega:resume` or `/omega:resume --from="[step]"`
 
 ## Step 1: Read Milestone Progress
 

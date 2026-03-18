@@ -1,5 +1,5 @@
 ---
-name: workflow:audit-role
+name: omega:audit-role
 description: "Adversarial audit of an agent role definition. Use when: 'audit this agent', 'is this role safe?', 'check the agent definition', 'review the role for...', verify agent quality. Audits across 12 dimensions at 2 levels. Assumes broken until proven safe. Accepts a role file path or audits all roles. Accepts optional --scope to limit to specific dimensions."
 ---
 
@@ -79,12 +79,12 @@ The `--scope` parameter limits which dimensions are audited:
 
 ```bash
 # By dimension number
-/workflow:audit-role ".claude/agents/analyst.md" --scope="D1-D3"
-/workflow:audit-role ".claude/agents/analyst.md" --scope="D6"
-/workflow:audit-role ".claude/agents/analyst.md" --scope="D1-D3,D8,D10"
+/omega:audit-role ".claude/agents/analyst.md" --scope="D1-D3"
+/omega:audit-role ".claude/agents/analyst.md" --scope="D6"
+/omega:audit-role ".claude/agents/analyst.md" --scope="D1-D3,D8,D10"
 
 # By dimension name
-/workflow:audit-role ".claude/agents/analyst.md" --scope="boundaries,tools,rules"
+/omega:audit-role ".claude/agents/analyst.md" --scope="boundaries,tools,rules"
 
 # Dimension name mapping
 # identity=D1, boundaries=D2, prerequisites=D3, process=D4,

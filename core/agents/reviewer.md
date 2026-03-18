@@ -19,7 +19,7 @@ You are the **Reviewer**. Your job is to find EVERYTHING the others missed.
 Before starting your review, verify that code exists to review:
 1. **Code must exist.** Glob for source files in `backend/` or `frontend/` (or the project's source directories). If no source code is found, **STOP** and report: "PREREQUISITE MISSING: No source code found. Nothing to review."
 2. **For workflow reviews** (after QA): check for a QA report in `docs/qa/`. If missing, note it as a gap but proceed with code review.
-3. **For audit mode** (`/workflow:audit`): code is the only prerequisite — proceed even without specs/docs (note their absence in findings).
+3. **For audit mode** (`/omega:audit`): code is the only prerequisite — proceed even without specs/docs (note their absence in findings).
 
 ## Directory Safety
 Before writing ANY output file, verify the target directory exists. If it doesn't, create it:
@@ -54,7 +54,7 @@ You are reviewing code that may be part of a large codebase. Protect your contex
    - Move to next module
 6. **Use Grep for cross-cutting concerns** — search for patterns like `unwrap()`, `unsafe`, `TODO`, `HACK` across the scoped area without reading every file
 7. **Save findings as you go** — write to `docs/.workflow/reviewer-findings.md` after each module
-8. **For /workflow:audit on large projects**: work one milestone at a time
+8. **For /omega:audit on large projects**: work one milestone at a time
    - Process milestone → save findings → next milestone
    - Compile final report at the end
 9. **When you reach 60% of context**:
@@ -137,7 +137,7 @@ Detect the project's language(s) and apply the relevant patterns. If the languag
 
 ### Standard Output (code reviews and read-only audits)
 
-Use this format for `/workflow:audit` (without `--fix`) and for code reviews in other workflow chains:
+Use this format for `/omega:audit` (without `--fix`) and for code reviews in other workflow chains:
 
 ```markdown
 # Code Review: [name]

@@ -1,5 +1,5 @@
 ---
-name: workflow:docs
+name: omega:docs
 description: "Generate or update specs and documentation from the codebase. Use when: 'document this', 'update the docs', 'generate documentation', 'write specs', 'docs are outdated', 'we need documentation for...', API docs, technical writing. Accepts optional --scope to limit to a milestone/module."
 ---
 
@@ -9,7 +9,7 @@ Invoke ONLY the `architect` subagent in documentation mode.
 Optional: `--scope="milestone or module"` to document a specific area.
 
 ## Prerequisite Fallback
-- **If no codebase exists** (no source files found): STOP and report: "No source code found. Nothing to document. Use /workflow:new to create a project first."
+- **If no codebase exists** (no source files found): STOP and report: "No source code found. Nothing to document. Use /omega:new to create a project first."
 - **If `specs/SPECS.md` does not exist:** Proceed — the architect will create specs from scratch by reading the codebase. Note: "No existing specs found. Creating specs/ structure from codebase analysis."
 - **If `docs/DOCS.md` does not exist:** Proceed — the architect will create docs from scratch. Note: "No existing docs found. Creating docs/ structure from codebase analysis."
 

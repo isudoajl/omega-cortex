@@ -1,5 +1,5 @@
 ---
-name: workflow:c2c
+name: omega:c2c
 description: Run the C2C multi-round protocol POC — two agents (writer + auditor) iterate until certification or max rounds.
 ---
 

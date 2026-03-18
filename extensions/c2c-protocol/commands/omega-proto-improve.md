@@ -1,5 +1,5 @@
 ---
-name: workflow:proto-improve
+name: omega:proto-improve
 description: Improve a protocol specification based on PROTO-AUDITOR findings. Generates structured patches via PROTO-ARCHITECT. Accepts protocol + audit report paths and optional --scope to limit to specific findings.
 ---
 
@@ -15,7 +15,7 @@ Generate structured improvement patches for a protocol specification based on au
 1. Parse the user's input for protocol file paths, audit report path, and `--scope` parameter
 2. If no audit report path provided:
    - Search `c2c-protocol/audits/` for the most recent audit report
-   - If none found, STOP and instruct the user to run `/workflow:proto-audit` first
+   - If none found, STOP and instruct the user to run `/omega:proto-audit` first
 3. Read all protocol files completely
 4. Read the audit report completely
 5. Verify the audit report contains valid `audit()` blocks with finding IDs
@@ -92,7 +92,7 @@ Present these as a numbered list for the user to resolve.
 After patches are generated, suggest:
 ```
 To validate the patches, re-audit the patched protocol:
-/workflow:proto-audit
+/omega:proto-audit
 
 To apply patches to the protocol, review the patch report at:
 c2c-protocol/patches/patches-[protocol-name]-[date].md
@@ -105,4 +105,4 @@ c2c-protocol/patches/patches-[protocol-name]-[date].md
 - The agent does NOT modify protocol files directly — patches are proposals
 - Patch batches are atomic: all pass or none apply
 - Operator must review structural changes and TIER 3 patches on CRITICAL findings
-- After applying patches, always re-audit with `/workflow:proto-audit` to verify
+- After applying patches, always re-audit with `/omega:proto-audit` to verify

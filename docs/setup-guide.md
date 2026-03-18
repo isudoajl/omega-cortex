@@ -141,10 +141,10 @@ your-project/
 │   │   ├── ... (14 core agents)
 │   │   └── blockchain-network.md  (if --ext=blockchain)
 │   ├── commands/              ← Workflow orchestrators
-│   │   ├── workflow-new.md
-│   │   ├── workflow-bugfix.md
+│   │   ├── omega-new.md
+│   │   ├── omega-bugfix.md
 │   │   ├── ... (14 core commands)
-│   │   └── workflow-blockchain-network.md  (if --ext=blockchain)
+│   │   └── omega-blockchain-network.md  (if --ext=blockchain)
 │   ├── hooks/                 ← Automation hooks
 │   │   ├── briefing.sh        ← UserPromptSubmit: injects memory context on first prompt
 │   │   ├── debrief-gate.sh   ← PreToolUse (Bash): blocks git commit without outcomes
@@ -264,8 +264,8 @@ claude
 
 Verify agents are available:
 ```
-/workflow:new "test"        # Should invoke the discovery agent
-/workflow:audit             # Should invoke the reviewer agent
+/omega:new "test"        # Should invoke the discovery agent
+/omega:audit             # Should invoke the reviewer agent
 ```
 
 Check the memory DB:

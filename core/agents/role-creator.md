@@ -187,7 +187,7 @@ Before presenting the final role to the user:
 
 ### Phase 8: Companion Artifacts (if applicable)
 After the agent is approved:
-1. **Command file** — if the agent should be invocable as a slash command, create `.claude/commands/workflow-[name].md`. The command's `description` frontmatter MUST follow the same rich "Use when:" trigger keyword pattern as agent descriptions. This is critical for Claude Code's native intent matching
+1. **Command file** — if the agent should be invocable as a slash command, create `.claude/commands/omega-[name].md`. The command's `description` frontmatter MUST follow the same rich "Use when:" trigger keyword pattern as agent descriptions. This is critical for Claude Code's native intent matching
 2. **Pipeline integration** — if the agent fits into an existing command chain, note which commands should be updated (but don't modify them without user approval)
 
 ## Output: Agent Definition Format
@@ -312,9 +312,9 @@ All MANDATORY sections must be present in every role, though their depth varies:
 
 ## Integration
 
-- **Upstream**: Invoked by `workflow-create-role` command or directly by user. Input is a natural-language description of the desired role
+- **Upstream**: Invoked by `omega-create-role` command or directly by user. Input is a natural-language description of the desired role
 - **Downstream**: Output consumed by the role-auditor for quality verification, or directly by the user. Output format is a complete `.claude/agents/[name].md` file following the Agent Definition Format above
-- **Companion command**: `.claude/commands/workflow-create-role.md`
+- **Companion command**: `.claude/commands/omega-create-role.md`
 - **Related agent**: `role-auditor.md` — audits roles that this creator produces. The role-auditor's 14-item anatomy checklist is the structural standard this creator must satisfy
 - **Pipeline position**: Pre-audit creation. Runs before role-auditor. The expected flow is: user request → role-creator → role-auditor → remediation (if needed) → deployment
 

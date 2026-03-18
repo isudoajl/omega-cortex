@@ -1,5 +1,5 @@
 ---
-name: workflow:blockchain-network
+name: omega:blockchain-network
 description: Blockchain network infrastructure specialist — node setup, P2P networking, RPC infrastructure, network security, monitoring, and chain synchronization guidance.
 ---
 
@@ -34,12 +34,12 @@ The agent handles these categories of blockchain network infrastructure work:
 ## Usage Examples
 
 ```
-/workflow:blockchain-network "set up an Ethereum validator node on Ubuntu with Reth + Lighthouse"
-/workflow:blockchain-network "my Cosmos node keeps losing peers, help me diagnose" --scope="network-analysis"
-/workflow:blockchain-network "design a production RPC infrastructure for Ethereum with load balancing" --scope="rpc"
-/workflow:blockchain-network "harden my Solana validator against network attacks" --scope="security"
-/workflow:blockchain-network "set up monitoring for my Ethereum node fleet with Prometheus and Grafana" --scope="monitoring"
-/workflow:blockchain-network "migrate my execution client from Geth to Reth without downtime"
+/omega:blockchain-network "set up an Ethereum validator node on Ubuntu with Reth + Lighthouse"
+/omega:blockchain-network "my Cosmos node keeps losing peers, help me diagnose" --scope="network-analysis"
+/omega:blockchain-network "design a production RPC infrastructure for Ethereum with load balancing" --scope="rpc"
+/omega:blockchain-network "harden my Solana validator against network attacks" --scope="security"
+/omega:blockchain-network "set up monitoring for my Ethereum node fleet with Prometheus and Grafana" --scope="monitoring"
+/omega:blockchain-network "migrate my execution client from Geth to Reth without downtime"
 ```
 
 ## What It Produces

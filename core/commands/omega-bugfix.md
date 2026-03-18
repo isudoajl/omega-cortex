@@ -1,5 +1,5 @@
 ---
-name: workflow:bugfix
+name: omega:bugfix
 description: "Fix a bug with a reduced chain. Use when: something is broken, crash, error, defect, regression, 'X is not working', 'it fails when...', 'there\\'s a bug in...', unexpected behavior, wrong output, test failure, exception. Accepts optional --scope to limit context. Use --incident=INC-NNN to resume an existing incident."
 ---
 
@@ -40,7 +40,7 @@ sqlite3 .claude/memory.db "UPDATE incidents SET status='investigating' WHERE inc
 INC_ID=$(sqlite3 .claude/memory.db "SELECT 'INC-' || printf('%03d', COALESCE(MAX(CAST(SUBSTR(incident_id, 5) AS INTEGER)), 0) + 1) FROM incidents;")
 sqlite3 .claude/memory.db "INSERT INTO incidents (incident_id, title, domain, description, symptoms, run_id) VALUES ('$INC_ID', 'SHORT_TITLE', 'SCOPE_OR_DOMAIN', 'USER_DESCRIPTION', 'SYMPTOMS_IF_ANY', $RUN_ID);"
 ```
-2. Tell the user: "Tracking as **$INC_ID**. Resume in future sessions with `/workflow:bugfix --incident=$INC_ID`"
+2. Tell the user: "Tracking as **$INC_ID**. Resume in future sessions with `/omega:bugfix --incident=$INC_ID`"
 
 ### During the pipeline:
 Log significant steps as incident entries (attempts, discoveries, clues). Each agent should INSERT entries as they work.

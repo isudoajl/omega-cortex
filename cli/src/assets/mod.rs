@@ -104,60 +104,60 @@ static CORE_AGENTS: [Asset; 14] = [
 // ---------------------------------------------------------------------------
 
 const CMD_WORKFLOW_AUDIT: Asset = Asset {
-    name: "workflow-audit.md",
-    content: include_str!("../../../core/commands/workflow-audit.md"),
+    name: "omega-audit.md",
+    content: include_str!("../../../core/commands/omega-audit.md"),
 };
 const CMD_WORKFLOW_AUDIT_ROLE: Asset = Asset {
-    name: "workflow-audit-role.md",
-    content: include_str!("../../../core/commands/workflow-audit-role.md"),
+    name: "omega-audit-role.md",
+    content: include_str!("../../../core/commands/omega-audit-role.md"),
 };
 const CMD_WORKFLOW_BUGFIX: Asset = Asset {
-    name: "workflow-bugfix.md",
-    content: include_str!("../../../core/commands/workflow-bugfix.md"),
+    name: "omega-bugfix.md",
+    content: include_str!("../../../core/commands/omega-bugfix.md"),
 };
 const CMD_WORKFLOW_CREATE_ROLE: Asset = Asset {
-    name: "workflow-create-role.md",
-    content: include_str!("../../../core/commands/workflow-create-role.md"),
+    name: "omega-create-role.md",
+    content: include_str!("../../../core/commands/omega-create-role.md"),
 };
 const CMD_WORKFLOW_DIAGNOSE: Asset = Asset {
-    name: "workflow-diagnose.md",
-    content: include_str!("../../../core/commands/workflow-diagnose.md"),
+    name: "omega-diagnose.md",
+    content: include_str!("../../../core/commands/omega-diagnose.md"),
 };
 const CMD_WORKFLOW_DOCS: Asset = Asset {
-    name: "workflow-docs.md",
-    content: include_str!("../../../core/commands/workflow-docs.md"),
+    name: "omega-docs.md",
+    content: include_str!("../../../core/commands/omega-docs.md"),
 };
 const CMD_WORKFLOW_FUNCTIONALITIES: Asset = Asset {
-    name: "workflow-functionalities.md",
-    content: include_str!("../../../core/commands/workflow-functionalities.md"),
+    name: "omega-functionalities.md",
+    content: include_str!("../../../core/commands/omega-functionalities.md"),
 };
 const CMD_WORKFLOW_IMPROVE: Asset = Asset {
-    name: "workflow-improve.md",
-    content: include_str!("../../../core/commands/workflow-improve.md"),
+    name: "omega-improve.md",
+    content: include_str!("../../../core/commands/omega-improve.md"),
 };
 const CMD_WORKFLOW_NEW: Asset = Asset {
-    name: "workflow-new.md",
-    content: include_str!("../../../core/commands/workflow-new.md"),
+    name: "omega-new.md",
+    content: include_str!("../../../core/commands/omega-new.md"),
 };
 const CMD_WORKFLOW_NEW_FEATURE: Asset = Asset {
-    name: "workflow-new-feature.md",
-    content: include_str!("../../../core/commands/workflow-new-feature.md"),
+    name: "omega-new-feature.md",
+    content: include_str!("../../../core/commands/omega-new-feature.md"),
 };
 const CMD_WORKFLOW_RESUME: Asset = Asset {
-    name: "workflow-resume.md",
-    content: include_str!("../../../core/commands/workflow-resume.md"),
+    name: "omega-resume.md",
+    content: include_str!("../../../core/commands/omega-resume.md"),
 };
 const CMD_WORKFLOW_SYNC: Asset = Asset {
-    name: "workflow-sync.md",
-    content: include_str!("../../../core/commands/workflow-sync.md"),
+    name: "omega-sync.md",
+    content: include_str!("../../../core/commands/omega-sync.md"),
 };
 const CMD_WORKFLOW_UNDERSTAND: Asset = Asset {
-    name: "workflow-understand.md",
-    content: include_str!("../../../core/commands/workflow-understand.md"),
+    name: "omega-understand.md",
+    content: include_str!("../../../core/commands/omega-understand.md"),
 };
 const CMD_WORKFLOW_WIZARD_UX: Asset = Asset {
-    name: "workflow-wizard-ux.md",
-    content: include_str!("../../../core/commands/workflow-wizard-ux.md"),
+    name: "omega-wizard-ux.md",
+    content: include_str!("../../../core/commands/omega-wizard-ux.md"),
 };
 
 static CORE_COMMANDS: [Asset; 14] = [

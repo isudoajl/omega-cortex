@@ -1,5 +1,5 @@
 ---
-name: workflow:consult
+name: omega:consult
 description: "Intelligent specialist routing — finds or creates the right domain expert for any request. Use when: 'I need help with marketing', 'consult a specialist', 'find an expert in...', domain-specific task outside normal development workflows, 'I need advice on [field]', cross-domain problem, 'who can help with...', specialist needed, 'this requires expertise in...', complex domain request, 'I need a [domain] expert'."
 ---
 
@@ -84,7 +84,7 @@ No matching specialist exists. Create one, then delegate.
    - Include "Use when:" trigger keywords in the description
    - Validate structural completeness (Phase 6)
    - Save to `.claude/agents/[name].md`
-4. **Skip the adversarial audit** — the specialist is for immediate use. Suggest auditing later via `/workflow:audit-role` if the specialist will be reused
+4. **Skip the adversarial audit** — the specialist is for immediate use. Suggest auditing later via `/omega:audit-role` if the specialist will be reused
 5. Verify the new specialist file exists at `.claude/agents/[name].md`
 6. Invoke the newly created specialist agent with the user's original request and `$RUN_ID`
 7. Present the specialist's output to the user
@@ -99,7 +99,7 @@ sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, a
 The role-creator produces structurally complete agents (all mandatory sections, memory protocol, boundaries, process, output format). For immediate use, structural validation is sufficient. If the specialist will be reused across sessions, recommend:
 ```
 The [name] specialist was created for immediate use. For production-quality assurance, run:
-/workflow:audit-role ".claude/agents/[name].md"
+/omega:audit-role ".claude/agents/[name].md"
 ```
 
 ---
@@ -133,7 +133,7 @@ sqlite3 .claude/memory.db "INSERT INTO outcomes (run_id, agent, score, domain, a
 ### Pipeline Constraints
 - Maximum **4 agents** in a single Tier 3 pipeline
 - Maximum **1 specialist creation** per pipeline (don't create 3 specialists in one run)
-- If the pipeline exceeds context budget, save state to `docs/.workflow/consult-state.md` and suggest `/workflow:resume`
+- If the pipeline exceeds context budget, save state to `docs/.workflow/consult-state.md` and suggest `/omega:resume`
 - Each agent in the pipeline must produce output before the next one starts (sequential, not parallel)
 
 ---
@@ -161,7 +161,7 @@ If the workflow fails mid-execution:
    - Which step failed and why
    - What output has been produced so far
 2. Update memory.db with the failure
-3. The user can resume with `/workflow:resume`
+3. The user can resume with `/omega:resume`
 
 ## Inter-Step Output Validation
 

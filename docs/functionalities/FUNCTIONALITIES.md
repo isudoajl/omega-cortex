@@ -30,27 +30,27 @@
 ### Pipeline Chains (Command → Agent sequences)
 
 ```
-workflow:new               → discovery → analyst → architect → test-writer → developer → QA → reviewer
-workflow:new-feature       → (discovery) → feature-evaluator → analyst → architect → test-writer → developer → QA → reviewer
-workflow:improve-functionality → analyst → test-writer → developer → QA → reviewer
-workflow:bugfix            → analyst → test-writer → developer → QA → reviewer
-workflow:audit             → reviewer
-workflow:docs              → architect
-workflow:sync              → architect
-workflow:functionalities   → functionality-analyst
-workflow:understand        → codebase-expert
-workflow:c2c               → c2c-writer ↔ c2c-auditor (multi-round loop, max 20 rounds)
-workflow:proto-audit       → proto-auditor
-workflow:proto-improve     → proto-architect
-workflow:create-role       → role-creator → role-auditor → auto-remediation (max 2 cycles)
-workflow:audit-role        → role-auditor
+omega:new               → discovery → analyst → architect → test-writer → developer → QA → reviewer
+omega:new-feature       → (discovery) → feature-evaluator → analyst → architect → test-writer → developer → QA → reviewer
+omega:improve-functionality → analyst → test-writer → developer → QA → reviewer
+omega:bugfix            → analyst → test-writer → developer → QA → reviewer
+omega:audit             → reviewer
+omega:docs              → architect
+omega:sync              → architect
+omega:functionalities   → functionality-analyst
+omega:understand        → codebase-expert
+omega:c2c               → c2c-writer ↔ c2c-auditor (multi-round loop, max 20 rounds)
+omega:proto-audit       → proto-auditor
+omega:proto-improve     → proto-architect
+omega:create-role       → role-creator → role-auditor → auto-remediation (max 2 cycles)
+omega:audit-role        → role-auditor
 ```
 
 ### Data Flow (File artifacts)
 
 ```
 Discovery → docs/.workflow/idea-brief.md → Feature Evaluator, Analyst
-Feature Evaluator → docs/.workflow/feature-evaluation.md → workflow-new-feature (gate decision)
+Feature Evaluator → docs/.workflow/feature-evaluation.md → omega-new-feature (gate decision)
 Analyst → specs/[domain]-requirements.md → Architect, Test Writer, Developer, QA
 Architect → specs/[domain]-architecture.md → Test Writer, Developer
 Test Writer → test files → Developer

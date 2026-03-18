@@ -1,7 +1,7 @@
 # QA Report: OMEGA Persona (Milestone M1)
 
 ## Scope Validated
-All modules in Milestone M1: schema (core/db/schema.sql), briefing hook (core/hooks/briefing.sh), CLAUDE.md identity section, onboarding command (core/commands/workflow-onboard.md), documentation (docs/institutional-memory.md, README.md, scripts/setup.sh).
+All modules in Milestone M1: schema (core/db/schema.sql), briefing hook (core/hooks/briefing.sh), CLAUDE.md identity section, onboarding command (core/commands/omega-onboard.md), documentation (docs/institutional-memory.md, README.md, scripts/setup.sh).
 
 ## Summary
 **CONDITIONAL APPROVAL** -- All Must requirements pass. All Should requirements pass. One non-blocking cosmetic bug found in the usage breakdown formatting (trailing comma and missing spaces). The persona feature works correctly end-to-end: schema creates clean tables with proper constraints, briefing.sh injects the identity block in the right position with correct format, experience auto-upgrade triggers at the right thresholds, backward compatibility is fully preserved, documentation is consistent, and no regressions were introduced in existing functionality (123/123 setup tests pass, 151/151 persona tests pass).
@@ -30,7 +30,7 @@ This is a toolkit (not a runtime application). Validation was performed by:
 | REQ-PERSONA-010 | Should | Yes (5 tests) | Yes | Yes | Prompt when empty, includes manual SQL, not shown when table missing, not shown with profile |
 | REQ-PERSONA-011 | Should | Yes (1 test) | Yes | Yes | Manual SQL documented in onboard command |
 | REQ-PERSONA-012 | Should | No (docs) | N/A | Yes | institutional-memory.md, README.md, CLAUDE.md all updated. Verified manually. |
-| REQ-PERSONA-013 | Could | No (docs) | N/A | Yes | setup.sh summary includes /workflow:onboard. Verified manually. |
+| REQ-PERSONA-013 | Could | No (docs) | N/A | Yes | setup.sh summary includes /omega:onboard. Verified manually. |
 | REQ-PERSONA-014 | Could | No (deferred) | N/A | Partial | Resumability documented in command file but not tested at runtime |
 
 ### Gaps Found
@@ -97,8 +97,8 @@ This is a toolkit (not a runtime application). Validation was performed by:
 
 ### Should Requirements
 
-#### REQ-PERSONA-008: /workflow:onboard command
-- [x] File at core/commands/workflow-onboard.md -- PASS
+#### REQ-PERSONA-008: /omega:onboard command
+- [x] File at core/commands/omega-onboard.md -- PASS
 - [x] 3-question conversational flow: name, experience level, communication style -- PASS
 - [x] Supports --update flag -- PASS
 - [x] Creates workflow_runs entry with type='onboard' -- PASS (documented in flow)
@@ -117,18 +117,18 @@ This is a toolkit (not a runtime application). Validation was performed by:
 - [x] Informational only, does not block usage -- PASS
 
 #### REQ-PERSONA-011: Profile update capability
-- [x] Via /workflow:onboard --update (documented) -- PASS
+- [x] Via /omega:onboard --update (documented) -- PASS
 - [x] Via manual sqlite3 (documented in onboard command and onboarding prompt) -- PASS
 
 #### REQ-PERSONA-012: Documentation updates
 - [x] institutional-memory.md: user_profile, onboarding_state, v_workflow_usage sections added -- PASS
-- [x] README.md: /workflow:onboard in commands table, 15 commands, user_profile + onboarding_state in table list -- PASS
+- [x] README.md: /omega:onboard in commands table, 15 commands, user_profile + onboarding_state in table list -- PASS
 - [x] CLAUDE.md: 15 commands in tree, onboard in commands table and usage modes -- PASS
 
 ### Could Requirements
 
 #### REQ-PERSONA-013: setup.sh command listing
-- [x] /workflow:onboard in setup.sh summary output (line 630) -- PASS
+- [x] /omega:onboard in setup.sh summary output (line 630) -- PASS
 
 #### REQ-PERSONA-014: Onboarding state resumability
 - Documented in command file but not runtime-tested -- PARTIAL (Could priority, acceptable)

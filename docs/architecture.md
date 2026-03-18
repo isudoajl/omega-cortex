@@ -16,8 +16,8 @@ OMEGA is **not** an application. It is a set of agent definitions, command orche
 | All 20 agents copied to every project | Core (15) always; extensions opt-in via `--ext=` |
 | No cross-session memory | SQLite `.claude/memory.db` with 17 tables + 10 views |
 | Agents act independently | Mandatory briefing/incremental logging/close-out + self-learning — agents log as they work and distill patterns |
-| `workflow-feature.md` + `workflow-new-feature.md` (duplicate) | Consolidated: only `workflow-new-feature.md` |
-| `workflow-improve.md` + `workflow-improve-functionality.md` (duplicate) | Consolidated: only `workflow-improve.md` |
+| `omega-feature.md` + `omega-new-feature.md` (duplicate) | Consolidated: only `omega-new-feature.md` |
+| `omega-improve.md` + `omega-improve-functionality.md` (duplicate) | Consolidated: only `omega-improve.md` |
 | `setup.sh` copies everything blindly | `setup.sh --ext=blockchain` — selective deployment |
 
 ## Repository Structure
@@ -71,7 +71,7 @@ omega (source)                         target-project (consumer)
 ─────────────────────────              ─────────────────────────
 core/agents/analyst.md          →      .claude/agents/analyst.md
 core/agents/developer.md        →      .claude/agents/developer.md
-core/commands/workflow-new.md   →      .claude/commands/workflow-new.md
+core/commands/omega-new.md   →      .claude/commands/omega-new.md
 extensions/blockchain/agents/   →      .claude/agents/ (if --ext=blockchain)
 core/db/schema.sql              →      .claude/memory.db (initialized)
 core/db/queries/*.sql           →      .claude/db-queries/*.sql
@@ -84,7 +84,7 @@ Claude Code reads agents from `.claude/agents/` (OMEGA flattens them there) and 
 ### Single Pipeline Execution
 
 ```
-User invokes /workflow:new-feature "add retry logic" --scope="scheduler"
+User invokes /omega:new-feature "add retry logic" --scope="scheduler"
     │
     ├─ Orchestrator creates workflow_run in memory.db → gets $RUN_ID
     │
@@ -161,7 +161,7 @@ Bugs are tracked as **incidents** (INC-NNN). Each incident has a structured time
 ### Specialist Routing Flow
 
 ```
-User invokes /workflow:consult "help me with HIPAA compliance"
+User invokes /omega:consult "help me with HIPAA compliance"
     │
     ├─ Orchestrator creates workflow_run (type='consult') in memory.db
     │
@@ -189,7 +189,7 @@ User invokes /workflow:consult "help me with HIPAA compliance"
 For **Tier 3 (critical)**, the router assembles a pipeline of existing core agents + specialist:
 
 ```
-/workflow:consult --critical "should we migrate to microservices?"
+/omega:consult --critical "should we migrate to microservices?"
     │
     ├─ Router classifies: Tier 3 (high-stakes architectural decision)
     │
@@ -206,11 +206,11 @@ Specialists accumulate per project — the first request creates them, subsequen
 ### Cross-Session Memory Accumulation
 
 ```
-Session 1: /workflow:new-feature "add scheduler"
+Session 1: /omega:new-feature "add scheduler"
   → memory.db accumulates: decisions about scheduler design, patterns used,
     files touched, dependencies discovered
 
-Session 2: /workflow:bugfix "scheduler crash on empty queue"
+Session 2: /omega:bugfix "scheduler crash on empty queue"
   → Session briefing: behavioral learnings + any related open incidents
   → Agent briefing: "scheduler.rs is a hotspot (touched 3x),
     approach X failed before because of race condition"
@@ -250,7 +250,7 @@ extensions/my-domain/
 ├── agents/
 │   └── my-agent.md          # YAML frontmatter + agent definition
 └── commands/
-    └── workflow-my-domain.md # Slash command orchestrator
+    └── omega-my-domain.md # Slash command orchestrator
 ```
 
 Then `setup.sh --ext=my-domain` deploys it. The `--list-ext` flag auto-discovers extensions from the directory structure.

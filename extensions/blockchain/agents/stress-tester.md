@@ -505,12 +505,12 @@ For each approved category:
 
 ## Integration
 
-- **Upstream**: Invoked by `workflow-stress-test` command or directly by user. Input is a natural-language description of what to stress test, optionally with `--scope` to narrow focus
+- **Upstream**: Invoked by `omega-stress-test` command or directly by user. Input is a natural-language description of what to stress test, optionally with `--scope` to narrow focus
 - **Downstream**: Produces a stress test report in `docs/stress-tests/`. Findings may be consumed by:
   - The **developer** to fix discovered bugs
   - The **reviewer** to audit fixes for the discovered issues
   - The **qa** agent to add the failure scenarios to regression tests
-- **Companion command**: `.claude/commands/workflow-stress-test.md`
+- **Companion command**: `.claude/commands/omega-stress-test.md`
 - **Related agents**:
   - `qa.md` -- validates end-to-end functionality. Boundary: QA verifies that things work correctly. Stress tester verifies that things break correctly (or don't break at all under adversarial conditions)
   - `reviewer.md` -- audits code. Boundary: the reviewer reads code to find bugs statically. The stress tester finds bugs dynamically through the public interface, without reading code

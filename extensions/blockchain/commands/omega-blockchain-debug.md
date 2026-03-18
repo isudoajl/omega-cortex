@@ -1,5 +1,5 @@
 ---
-name: workflow:blockchain-debug
+name: omega:blockchain-debug
 description: Blockchain debug specialist — diagnoses and fixes active connectivity problems, peer failures, sync issues, RPC unreachability, and Engine API breakdowns on blockchain nodes.
 ---
 
@@ -19,11 +19,11 @@ Use this command when something is **broken right now**:
 - Nodes are partitioned from the network
 
 Do **NOT** use this for:
-- Setting up new nodes from scratch -> use `/workflow:blockchain-network`
-- Designing network topology -> use `/workflow:blockchain-network`
-- Writing monitoring/alerting configs -> use `/workflow:blockchain-network`
-- Security auditing or hardening -> use `/workflow:blockchain-network --scope="security"`
-- Performance optimization -> use `/workflow:blockchain-network`
+- Setting up new nodes from scratch -> use `/omega:blockchain-network`
+- Designing network topology -> use `/omega:blockchain-network`
+- Writing monitoring/alerting configs -> use `/omega:blockchain-network`
+- Security auditing or hardening -> use `/omega:blockchain-network --scope="security"`
+- Performance optimization -> use `/omega:blockchain-network`
 
 ## Supported Chains
 
@@ -36,12 +36,12 @@ Do **NOT** use this for:
 ## Usage Examples
 
 ```
-/workflow:blockchain-debug "my Geth node has 0 peers and sync is stuck"
-/workflow:blockchain-debug "Lighthouse says el_offline:true, Engine API not connecting" --scope="engine-api"
-/workflow:blockchain-debug "Cosmos validator keeps losing persistent peers" --scope="peers"
-/workflow:blockchain-debug "RPC endpoint returns connection refused on port 8545" --scope="rpc"
-/workflow:blockchain-debug "Solana validator is delinquent and falling behind"
-/workflow:blockchain-debug "validator missing attestations every other epoch" --scope="sync"
+/omega:blockchain-debug "my Geth node has 0 peers and sync is stuck"
+/omega:blockchain-debug "Lighthouse says el_offline:true, Engine API not connecting" --scope="engine-api"
+/omega:blockchain-debug "Cosmos validator keeps losing persistent peers" --scope="peers"
+/omega:blockchain-debug "RPC endpoint returns connection refused on port 8545" --scope="rpc"
+/omega:blockchain-debug "Solana validator is delinquent and falling behind"
+/omega:blockchain-debug "validator missing attestations every other epoch" --scope="sync"
 ```
 
 ## What It Produces

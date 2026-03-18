@@ -1,5 +1,5 @@
 ---
-name: workflow:improve
+name: omega:improve
 description: "Improve existing code — refactor, optimize, or enhance without adding new features. Use when: refactoring, performance optimization, code cleanup, simplification, 'make this faster', 'clean up...', 'refactor...', 'optimize...', reduce complexity, improve readability, technical debt. Accepts optional --scope to limit context."
 ---
 

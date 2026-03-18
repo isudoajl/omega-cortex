@@ -1,7 +1,7 @@
 # Architecture: OMEGA Persona (Identity Layer)
 
 ## Scope
-Lightweight identity layer for OMEGA: per-project user profile in `memory.db`, automatic briefing injection, experience-based adaptation, and optional onboarding command. Covers modules in `core/db/schema.sql`, `core/hooks/briefing.sh`, `CLAUDE.md`, `core/commands/workflow-onboard.md`, and documentation files.
+Lightweight identity layer for OMEGA: per-project user profile in `memory.db`, automatic briefing injection, experience-based adaptation, and optional onboarding command. Covers modules in `core/db/schema.sql`, `core/hooks/briefing.sh`, `CLAUDE.md`, `core/commands/omega-onboard.md`, and documentation files.
 
 ## Overview
 
@@ -157,7 +157,7 @@ if [ -n "$PROFILE_TABLE_EXISTS" ]; then
         echo ""
     else
         # Table exists but no profile row -- show onboarding prompt
-        echo "Welcome to OMEGA. Personalize your experience: /workflow:onboard"
+        echo "Welcome to OMEGA. Personalize your experience: /omega:onboard"
         echo "  Or set manually: sqlite3 .claude/memory.db \"INSERT INTO user_profile (user_name, experience_level, communication_style) VALUES ('Your Name', 'beginner', 'balanced');\""
         echo ""
     fi
@@ -238,16 +238,16 @@ Severity classification, TDD enforcement, read-only constraints, iteration limit
 - **Carve-outs are explicit**: Lists every protocol that identity cannot override, preventing ambiguity.
 - **"No identity block" guidance**: Prevents agents from prompting for onboarding -- only the briefing hook does that.
 
-### Module 4: Onboarding Command (`core/commands/workflow-onboard.md`)
+### Module 4: Onboarding Command (`core/commands/omega-onboard.md`)
 - **Responsibility**: Conversational 3-question flow to create or update user profile
-- **Public interface**: `/workflow:onboard` and `/workflow:onboard --update` commands
+- **Public interface**: `/omega:onboard` and `/omega:onboard --update` commands
 - **Dependencies**: `user_profile` table, `onboarding_state` table, `workflow_runs` table (Module 1)
 - **Implementation order**: 4 (depends on schema and understanding of identity block format)
 
 #### Command Structure
 
 ```markdown
-# /workflow:onboard
+# /omega:onboard
 
 ## Purpose
 Set up your OMEGA identity. Three questions: name, experience level, communication style.
@@ -291,7 +291,7 @@ Set up your OMEGA identity. Three questions: name, experience level, communicati
 
 ### Step 6: Confirmation
 - Show the identity block that will appear in future sessions
-- Remind user they can update anytime with `/workflow:onboard --update`
+- Remind user they can update anytime with `/omega:onboard --update`
 - Remind user about `/output-style` for tone customization beyond what OMEGA identity provides
 
 ## No Agent Required
@@ -300,7 +300,7 @@ This command operates directly without a dedicated agent. Claude executes the co
 ## Resumability (Could priority)
 If the user quits mid-onboard:
 - `onboarding_state.data` contains partial answers as JSON: `{"name": "Ivan", "experience_level": "intermediate"}`
-- Next invocation of `/workflow:onboard` reads `onboarding_state.data` and resumes from the last incomplete question
+- Next invocation of `/omega:onboard` reads `onboarding_state.data` and resumes from the last incomplete question
 - If `onboarding_state.status = 'in_progress'`: ask "You started onboarding earlier. Want to continue from where you left off?"
 
 ## Memory Protocol
@@ -327,7 +327,7 @@ If the user quits mid-onboard:
 
 **`scripts/setup.sh`** (line ~629, after the diagnose command):
 ```bash
-echo "    /workflow:onboard                     Personalize your profile"
+echo "    /omega:onboard                     Personalize your profile"
 ```
 
 **`docs/institutional-memory.md`**:
@@ -337,13 +337,13 @@ echo "    /workflow:onboard                     Personalize your profile"
 - Update table/view counts: "12 tables" to "14 tables", "7 views" to "8 views"
 
 **`README.md`**:
-- Add `/workflow:onboard` to the commands table
+- Add `/omega:onboard` to the commands table
 - Update command count from 14 to 15
 - Add brief mention of the persona/identity feature in the features section
 
 **`CLAUDE.md`** (repository structure section):
 - Update `# 14 core commands` to `# 15 core commands` in the tree comment
-- Add `workflow-onboard.md` to the commands list in the tree
+- Add `omega-onboard.md` to the commands list in the tree
 - Update the Core Commands table with the onboard entry
 - Update the Usage Modes section with the new command
 
@@ -404,7 +404,7 @@ echo "    /workflow:onboard                     Personalize your profile"
 ## Data Flow
 
 ```
-/workflow:onboard          briefing.sh (every session)
+/omega:onboard          briefing.sh (every session)
        |                          |
        v                          v
   user_profile  <---- READ ---- user_profile
@@ -444,7 +444,7 @@ echo "    /workflow:onboard                     Personalize your profile"
 
 | ID | Name | Scope (Modules) | Scope (Requirements) | Est. Size | Dependencies |
 |----|------|-----------------|---------------------|-----------|-------------|
-| M1 | OMEGA Persona | schema.sql, briefing.sh, CLAUDE.md, workflow-onboard.md, docs | REQ-PERSONA-001 to REQ-PERSONA-014 | M | None |
+| M1 | OMEGA Persona | schema.sql, briefing.sh, CLAUDE.md, omega-onboard.md, docs | REQ-PERSONA-001 to REQ-PERSONA-014 | M | None |
 
 This is a single-milestone feature. All five modules are tightly coupled and small enough to implement in one pass. The schema is the foundation, briefing.sh is the core logic, CLAUDE.md is the protocol, the onboarding command is the user interface, and documentation is the wrapper. No module exceeds 50 new lines of meaningful code.
 
@@ -461,10 +461,10 @@ This is a single-milestone feature. All five modules are tightly coupled and sma
 | REQ-PERSONA-005 | Must | Module 2: Briefing Hook (table-existence check) | `core/hooks/briefing.sh` |
 | REQ-PERSONA-006 | Must | Module 2: Briefing Hook (auto-upgrade logic) | `core/hooks/briefing.sh` |
 | REQ-PERSONA-007 | Must | Module 3: CLAUDE.md Identity Protocol | `CLAUDE.md` |
-| REQ-PERSONA-008 | Should | Module 4: Onboarding Command | `core/commands/workflow-onboard.md` |
+| REQ-PERSONA-008 | Should | Module 4: Onboarding Command | `core/commands/omega-onboard.md` |
 | REQ-PERSONA-009 | Should | Module 2: Briefing Hook (last_seen update) | `core/hooks/briefing.sh` |
 | REQ-PERSONA-010 | Should | Module 2: Briefing Hook (onboarding prompt) | `core/hooks/briefing.sh` |
-| REQ-PERSONA-011 | Should | Module 4: Onboarding Command (--update flag) | `core/commands/workflow-onboard.md` |
+| REQ-PERSONA-011 | Should | Module 4: Onboarding Command (--update flag) | `core/commands/omega-onboard.md` |
 | REQ-PERSONA-012 | Should | Module 5: Documentation | `docs/institutional-memory.md`, `README.md`, `CLAUDE.md` |
 | REQ-PERSONA-013 | Could | Module 5: Documentation | `scripts/setup.sh` |
-| REQ-PERSONA-014 | Could | Module 4: Onboarding Command (resumability) | `core/commands/workflow-onboard.md` |
+| REQ-PERSONA-014 | Could | Module 4: Onboarding Command (resumability) | `core/commands/omega-onboard.md` |

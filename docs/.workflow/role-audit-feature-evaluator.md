@@ -51,7 +51,7 @@
 
 ### CRITICAL
 
-**D11-1**: Feature-evaluator claims integration into `workflow-new-feature.md` but no command references it. The command goes directly from Discovery to Analyst with no evaluation gate. Agent is orphaned from the pipeline.
+**D11-1**: Feature-evaluator claims integration into `omega-new-feature.md` but no command references it. The command goes directly from Discovery to Analyst with no evaluation gate. Agent is orphaned from the pipeline.
 
 ### MAJOR
 
@@ -88,12 +88,12 @@
 
 ## Overall Verdict: BROKEN → HARDENED (pending infrastructure)
 
-The role specification itself passes D1-D10 cleanly (all SOUND). The sole remaining issue is D11 integration — the agent is well-defined but not wired into the pipeline. Once `workflow-new-feature.md` and `CLAUDE.md` are updated, the verdict moves to **HARDENED**.
+The role specification itself passes D1-D10 cleanly (all SOUND). The sole remaining issue is D11 integration — the agent is well-defined but not wired into the pipeline. Once `omega-new-feature.md` and `CLAUDE.md` are updated, the verdict moves to **HARDENED**.
 
 ### Deployment Conditions
 
 **MUST RESOLVE:**
-1. Update `workflow-new-feature.md` to include feature-evaluator gate step
+1. Update `omega-new-feature.md` to include feature-evaluator gate step
 2. Add feature-evaluator to CLAUDE.md Architecture section
 
 **SHOULD IMPROVE:**

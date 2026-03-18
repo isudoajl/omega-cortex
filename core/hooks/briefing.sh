@@ -100,7 +100,7 @@ if [ -n "$PROFILE_TABLE_EXISTS" ]; then
         echo "OMEGA IDENTITY: ${USER_NAME:-User} | Experience: $EXP_LEVEL | Style: $COMM_STYLE | Workflows: ${USAGE_SUMMARY:-0} completed${USAGE_LINE}"
         echo ""
     else
-        echo "Welcome to OMEGA. Personalize your experience: /workflow:onboard"
+        echo "Welcome to OMEGA. Personalize your experience: /omega:onboard"
         echo "  Or set manually: sqlite3 .claude/memory.db \"INSERT INTO user_profile (user_name, experience_level, communication_style) VALUES ('Your Name', 'beginner', 'balanced');\""
         echo ""
     fi

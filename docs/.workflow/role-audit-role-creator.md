@@ -107,7 +107,7 @@
 
 ### D11: Integration & Pipeline Fit -- PASS (1 minor)
 
-**D11-1** (MINOR): No explicit `## Integration` section documenting upstream/downstream relationships. The role-creator is invoked by `workflow-create-role.md` command and its output is consumed by `role-auditor`. These relationships should be explicit.
+**D11-1** (MINOR): No explicit `## Integration` section documenting upstream/downstream relationships. The role-creator is invoked by `omega-create-role.md` command and its output is consumed by `role-auditor`. These relationships should be explicit.
 
 ### D12: Self-Audit -- PASS (0 findings)
 

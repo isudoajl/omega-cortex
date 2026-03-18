@@ -28,7 +28,7 @@ test -f .claude/memory.db && echo "DB_EXISTS" || echo "NO_DB"
 - If `NO_DB` → skip memory operations gracefully, work without institutional memory
 
 ### Pipeline Start (orchestrator responsibility)
-Every `/workflow:*` command creates a run entry at the **very beginning**, before invoking any agent:
+Every `/omega:*` command creates a run entry at the **very beginning**, before invoking any agent:
 
 ```bash
 # Register the workflow run
@@ -150,7 +150,7 @@ sqlite3 .claude/memory.db "UPDATE workflow_runs SET status='partial', completed_
 ```
 
 ### Non-Pipeline Sessions
-When working **outside** a formal `/workflow:*` command (e.g., user asks for a quick fix, a one-off question, or manual work):
+When working **outside** a formal `/omega:*` command (e.g., user asks for a quick fix, a one-off question, or manual work):
 
 1. **Still check the DB** — run the briefing queries for the area you're working on
 2. **Still write back** — create a workflow_run with type `'manual'` and log what you did
@@ -345,7 +345,7 @@ If the limit is reached, the workflow STOPS and reports remaining issues to the 
 Multi-step commands verify that each agent produced its expected output file before invoking the next agent. If output is missing, the chain halts with a clear report of which step failed.
 
 ### Error Recovery
-If any agent fails mid-chain, the workflow saves chain state to `docs/.workflow/chain-state.md` and updates memory.db with the failure. The user can resume with `/workflow:resume`.
+If any agent fails mid-chain, the workflow saves chain state to `docs/.workflow/chain-state.md` and updates memory.db with the failure. The user can resume with `/omega:resume`.
 
 ### Directory Safety
 Every agent that writes output files verifies target directories exist before writing. If a directory is missing, the agent creates it.
@@ -375,10 +375,10 @@ Test-writer and reviewer adapt their patterns to the project's language (detecte
 ### Scope Parameter
 All workflow commands accept an optional scope to limit context usage:
 ```
-/workflow:new-feature "add retry logic" --scope="providers"
-/workflow:audit --scope="milestone 3: core"
-/workflow:sync --scope="memory"
-/workflow:bugfix "scheduler crash" --scope="backend/src/gateway/scheduler.rs"
+/omega:new-feature "add retry logic" --scope="providers"
+/omega:audit --scope="milestone 3: core"
+/omega:sync --scope="memory"
+/omega:bugfix "scheduler crash" --scope="backend/src/gateway/scheduler.rs"
 ```
 
 When no scope is provided, the analyst determines the minimal scope needed based on the task description.
@@ -391,7 +391,7 @@ Every agent operates under a **60% context window budget**. This is a proactive 
 **How it works:**
 - The **Architect** sizes milestones so each downstream agent can complete one milestone within 60% of its context (max 3 modules per milestone)
 - Each **pipeline agent** monitors its own usage proactively and stops at the 60% mark
-- When an agent hits the budget, it saves state to `docs/.workflow/` and the pipeline continues via `/workflow:resume`
+- When an agent hits the budget, it saves state to `docs/.workflow/` and the pipeline continues via `/omega:resume`
 
 **Heuristics for agents:**
 - If you've read more than ~20 files without saving progress, you are likely near the budget
@@ -456,78 +456,78 @@ docs/
 
 ### New project from scratch
 ```
-/workflow:new "description of the idea"
+/omega:new "description of the idea"
 ```
 Full chain: discovery → analyst → architect → test-writer → developer → QA → reviewer.
 
 ### Add feature to existing project
 ```
-/workflow:new-feature "description of the feature" [--scope="area"]
+/omega:new-feature "description of the feature" [--scope="area"]
 ```
 Full chain: (discovery if vague) → feature-evaluator (GO/NO-GO) → analyst → architect → test-writer → developer → QA → reviewer.
 
 ### Improve existing code
 ```
-/workflow:improve "description of the improvement" [--scope="area"]
+/omega:improve "description of the improvement" [--scope="area"]
 ```
 Reduced chain (no architect): analyst → test-writer (regression) → developer (refactor) → QA → reviewer
 
 ### Fix a bug
 ```
-/workflow:bugfix "description of the bug" [--scope="file or module"]
+/omega:bugfix "description of the bug" [--scope="file or module"]
 ```
 Reduced chain: analyst → test-writer (reproduces the bug) → developer → QA → reviewer
 
 ### Audit existing code
 ```
-/workflow:audit [--scope="milestone or module"]
-/workflow:audit --fix [--scope="area"] [--include-p3]
+/omega:audit [--scope="milestone or module"]
+/omega:audit --fix [--scope="area"] [--include-p3]
 ```
 
 ### Document existing project
 ```
-/workflow:docs [--scope="milestone or module"]
+/omega:docs [--scope="milestone or module"]
 ```
 
 ### Sync specs and docs with codebase
 ```
-/workflow:sync [--scope="milestone or module"]
+/omega:sync [--scope="milestone or module"]
 ```
 
 ### Map codebase functionalities
 ```
-/workflow:functionalities [--scope="module or area"]
+/omega:functionalities [--scope="module or area"]
 ```
 
 ### Understand a codebase
 ```
-/workflow:understand [--scope="module or area"]
+/omega:understand [--scope="module or area"]
 ```
 
 ### Create a new agent role
 ```
-/workflow:create-role "description of the desired role"
+/omega:create-role "description of the desired role"
 ```
 
 ### Audit an agent role definition
 ```
-/workflow:audit-role ".claude/agents/[name].md" [--scope="dimensions"]
+/omega:audit-role ".claude/agents/[name].md" [--scope="dimensions"]
 ```
 
 ### Resume a stopped workflow
 ```
-/workflow:resume [--from="M3" or --from="developer"]
+/omega:resume [--from="M3" or --from="developer"]
 ```
 
 ### Design a wizard or setup flow
 ```
-/workflow:wizard-ux "description of wizard" [--scope="medium"]
+/omega:wizard-ux "description of wizard" [--scope="medium"]
 ```
 
 ### Diagnose a hard bug
 ```
-/workflow:diagnose "description of the bug" [--scope="subsystem"]
-/workflow:diagnose "description of the bug" --fix [--scope="subsystem"]
+/omega:diagnose "description of the bug" [--scope="subsystem"]
+/omega:diagnose "description of the bug" --fix [--scope="subsystem"]
 ```
 
 ## Conventions

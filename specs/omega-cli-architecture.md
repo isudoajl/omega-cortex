@@ -889,9 +889,9 @@ pub fn extensions() -> &'static [Extension] {
                 Asset { name: "stress-tester.md", content: include_str!("..."), .. },
             ],
             commands: &[
-                Asset { name: "workflow-blockchain-network.md", content: include_str!("..."), .. },
-                Asset { name: "workflow-blockchain-debug.md", content: include_str!("..."), .. },
-                Asset { name: "workflow-stress-test.md", content: include_str!("..."), .. },
+                Asset { name: "omega-blockchain-network.md", content: include_str!("..."), .. },
+                Asset { name: "omega-blockchain-debug.md", content: include_str!("..."), .. },
+                Asset { name: "omega-stress-test.md", content: include_str!("..."), .. },
             ],
         },
         Extension {
@@ -909,11 +909,11 @@ Available extensions:
 
   blockchain (3 agents, 3 commands)
     Agents:  blockchain-network, blockchain-debug, stress-tester
-    Commands: workflow-blockchain-network, workflow-blockchain-debug, workflow-stress-test
+    Commands: omega-blockchain-network, omega-blockchain-debug, omega-stress-test
 
   c2c-protocol (2 agents, 3 commands)
     Agents:  proto-auditor, proto-architect
-    Commands: workflow-c2c, workflow-proto-audit, workflow-proto-improve
+    Commands: omega-c2c, omega-proto-audit, omega-proto-improve
 ```
 
 ### Future: External Extension Packs (v0.3+)

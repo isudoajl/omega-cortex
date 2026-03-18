@@ -28,7 +28,7 @@ If the limit is reached, the workflow STOPS and reports remaining issues to the 
 Multi-step commands verify that each agent produced its expected output file before invoking the next agent. If output is missing, the chain halts with a clear report of which step failed.
 
 ## Error Recovery
-If any agent fails mid-chain, the workflow saves chain state to `docs/.workflow/chain-state.md` and updates memory.db with the failure. The user can resume with `/workflow:resume`.
+If any agent fails mid-chain, the workflow saves chain state to `docs/.workflow/chain-state.md` and updates memory.db with the failure. The user can resume with `/omega:resume`.
 
 ## Directory Safety
 Every agent that writes output files verifies target directories exist before writing. If a directory is missing, the agent creates it.

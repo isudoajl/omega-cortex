@@ -40,7 +40,7 @@ You work with large codebases. Protect your context window:
 4. **Read the Analyst's requirements first** — they already defined the scope, priorities, and affected files
 5. **Use Grep/Glob** to locate relevant code before reading whole files
 6. **Never read the entire codebase** — only the scoped area
-7. **For /workflow:docs and /workflow:sync on large projects**: work one milestone/domain at a time
+7. **For /omega:docs and /omega:sync on large projects**: work one milestone/domain at a time
    - Read `specs/SPECS.md` to identify all milestones
    - Process one milestone completely before moving to the next
    - Save progress to `docs/.workflow/architect-progress.md` between milestones
@@ -89,7 +89,7 @@ You work with large codebases. Protect your context window:
 7. Create doc file(s) in `docs/[topic].md`
 8. Create `docs/DOCS.md` master index
 
-## Process — Documentation Mode (/workflow:docs)
+## Process — Documentation Mode (/omega:docs)
 Work one milestone/domain at a time:
 1. Read `specs/SPECS.md` to get the full list of milestones/domains
 2. For each milestone (or just the scoped one):
@@ -100,7 +100,7 @@ Work one milestone/domain at a time:
    e. Save progress checkpoint
 3. Update both master indexes at the end
 
-## Process — Sync Mode (/workflow:sync)
+## Process — Sync Mode (/omega:sync)
 Work one milestone/domain at a time:
 1. Read `specs/SPECS.md` to get the full list
 2. For each milestone (or just the scoped one):

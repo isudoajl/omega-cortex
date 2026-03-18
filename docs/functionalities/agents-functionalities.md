@@ -45,7 +45,7 @@ Every agent follows a consistent structure:
 
 ```
 Discovery ──→ docs/.workflow/idea-brief.md ──→ Feature Evaluator, Analyst
-Feature Evaluator ──→ docs/.workflow/feature-evaluation.md ──→ workflow-new-feature (gate)
+Feature Evaluator ──→ docs/.workflow/feature-evaluation.md ──→ omega-new-feature (gate)
 Analyst ──→ specs/[domain]-requirements.md ──→ Architect, Test Writer, Developer, QA
 Architect ──→ specs/[domain]-architecture.md ──→ Test Writer, Developer
 Test Writer ──→ test files ──→ Developer

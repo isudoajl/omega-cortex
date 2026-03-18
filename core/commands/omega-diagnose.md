@@ -1,6 +1,6 @@
 ---
-name: workflow:diagnose
-description: "Deep diagnostic investigation for hard bugs where the root cause is unknown. Use when: 'I can\\'t figure out why...', mysterious behavior, intermittent failure, flaky test, root cause unknown, 'bugfix didn\\'t work', 'we tried fixing it but...', heisenbug, race condition, deep investigation needed. Escalation path when workflow:bugfix has failed. Use --incident=INC-NNN to resume an existing incident."
+name: omega:diagnose
+description: "Deep diagnostic investigation for hard bugs where the root cause is unknown. Use when: 'I can\\'t figure out why...', mysterious behavior, intermittent failure, flaky test, root cause unknown, 'bugfix didn\\'t work', 'we tried fixing it but...', heisenbug, race condition, deep investigation needed. Escalation path when omega:bugfix has failed. Use --incident=INC-NNN to resume an existing incident."
 ---
 
 # Workflow: Diagnose
@@ -11,9 +11,9 @@ Optional: `--scope="file, module, or subsystem"` to focus the investigation.
 Optional: `--fix` to also implement the fix after diagnosis (otherwise stops at the diagnosis report).
 Optional: `--incident=INC-NNN` to resume an existing incident ticket.
 
-## When to Use This Instead of workflow:bugfix
+## When to Use This Instead of omega:bugfix
 
-- You've tried `workflow:bugfix` and the bug persists
+- You've tried `omega:bugfix` and the bug persists
 - The bug has been "fixed" multiple times but keeps coming back
 - Nobody understands WHY the system misbehaves
 - The bug is intermittent, timing-dependent, or only appears under specific conditions
@@ -49,7 +49,7 @@ sqlite3 -header -column .claude/memory.db "SELECT title, description, symptoms, 
 INC_ID=$(sqlite3 .claude/memory.db "SELECT 'INC-' || printf('%03d', COALESCE(MAX(CAST(SUBSTR(incident_id, 5) AS INTEGER)), 0) + 1) FROM incidents;")
 sqlite3 .claude/memory.db "INSERT INTO incidents (incident_id, title, domain, description, symptoms, run_id) VALUES ('$INC_ID', 'SHORT_TITLE', 'SCOPE_OR_DOMAIN', 'USER_DESCRIPTION', 'SYMPTOMS_IF_ANY', $RUN_ID);"
 ```
-2. Tell the user: "Tracking as **$INC_ID**. Resume in future sessions with `/workflow:diagnose --incident=$INC_ID`"
+2. Tell the user: "Tracking as **$INC_ID**. Resume in future sessions with `/omega:diagnose --incident=$INC_ID`"
 
 ### During diagnosis:
 The Diagnostician MUST log entries as it works:
@@ -98,8 +98,8 @@ After the Diagnostician completes, verify:
 If `--fix` was NOT passed:
 - Present the diagnosis report to the user
 - STOP here. The user can:
-  - Run `workflow:bugfix` with the diagnosis as context
-  - Run `workflow:diagnose --fix` to continue with the fix
+  - Run `omega:bugfix` with the diagnosis as context
+  - Run `omega:diagnose --fix` to continue with the fix
   - Address the root cause manually
 
 If `--fix` WAS passed:
@@ -156,7 +156,7 @@ Clean up `docs/.workflow/` temporary files (keep `diagnosis-report.md` — it's 
 If the Diagnostician hits context limits mid-diagnosis:
 1. Save progress to `docs/.workflow/diagnosis-progress.md`
 2. Update memory.db with partial findings
-3. The user can resume with `workflow:diagnose` — the new session reads the progress file and memory.db to continue where the last session stopped
+3. The user can resume with `omega:diagnose` — the new session reads the progress file and memory.db to continue where the last session stopped
 
 ## Inter-Step Output Validation
 

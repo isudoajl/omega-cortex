@@ -1,5 +1,5 @@
 ---
-name: workflow:proto-audit
+name: omega:proto-audit
 description: Audit a protocol specification using PROTO-AUDITOR v2.0. Runs 12 dimensions across 3 levels. Accepts protocol file paths and optional --scope to limit to specific dimensions.
 ---
 
@@ -74,7 +74,7 @@ Skip all other dimensions but note them as "skipped — out of scope" in the fin
 If findings were found, suggest:
 ```
 To generate improvement patches based on this audit, run:
-/workflow:proto-improve
+/omega:proto-improve
 ```
 
 ## Important Notes

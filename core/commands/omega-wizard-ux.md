@@ -1,5 +1,5 @@
 ---
-name: workflow:wizard-ux
+name: omega:wizard-ux
 description: "Design an intuitive installation wizard, setup flow, or onboarding sequence for TUI, GUI, Web, or CLI. Use when: 'design a setup wizard', 'create an onboarding flow', 'installation experience', 'step-by-step setup', 'configuration wizard', multi-step form design. Produces a complete wizard flow specification with step definitions, validation rules, UX copy, error recovery, and accessibility requirements."
 ---
 
@@ -27,9 +27,9 @@ Invoke the `wizard-ux` subagent with the user's wizard description and any `--sc
 
 Examples:
 ```
-/workflow:wizard-ux "design a setup wizard for first-time database configuration" --scope="TUI"
-/workflow:wizard-ux "create an onboarding flow for new API users" --scope="Web"
-/workflow:wizard-ux "installation wizard for our CLI tool"
+/omega:wizard-ux "design a setup wizard for first-time database configuration" --scope="TUI"
+/omega:wizard-ux "create an onboarding flow for new API users" --scope="Web"
+/omega:wizard-ux "installation wizard for our CLI tool"
 ```
 
 If no medium is specified, the agent will ask. If the wizard scope is too broad, the agent will recommend splitting into multiple focused wizards.

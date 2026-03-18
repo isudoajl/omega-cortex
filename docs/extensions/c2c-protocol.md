@@ -45,15 +45,15 @@ Consumes audit reports from proto-auditor and generates structured patches throu
 
 | Command | Description |
 |---------|-------------|
-| `/workflow:c2c` | Multi-round POC: writer + auditor iterate until certification (max 5 rounds) |
-| `/workflow:proto-audit "path" [--scope]` | Audit a protocol spec (12 dimensions, 3 levels). Scope: specific dimensions |
-| `/workflow:proto-improve "path" [--scope]` | Improve a protocol spec from audit findings (6-step pipeline) |
+| `/omega:c2c` | Multi-round POC: writer + auditor iterate until certification (max 5 rounds) |
+| `/omega:proto-audit "path" [--scope]` | Audit a protocol spec (12 dimensions, 3 levels). Scope: specific dimensions |
+| `/omega:proto-improve "path" [--scope]` | Improve a protocol spec from audit findings (6-step pipeline) |
 
 ## Typical Workflow
 
 ```
 1. Write/update a protocol spec in c2c-protocol/
-2. /workflow:proto-audit "c2c-protocol/spec.md"     → produces audit findings
-3. /workflow:proto-improve "c2c-protocol/spec.md"    → generates patches from findings
+2. /omega:proto-audit "c2c-protocol/spec.md"     → produces audit findings
+3. /omega:proto-improve "c2c-protocol/spec.md"    → generates patches from findings
 4. Repeat until the audit produces no critical findings
 ```

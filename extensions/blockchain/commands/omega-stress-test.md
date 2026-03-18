@@ -1,5 +1,5 @@
 ---
-name: workflow:stress-test
+name: omega:stress-test
 description: Black-box stress testing of the DOLI blockchain -- pushes every CLI subcommand and RPC endpoint to their breaking point to discover crashes, corrupt states, and protocol violations. Tests against any user-specified network.
 ---
 
@@ -37,12 +37,12 @@ Use this command when you need to:
 ## Usage Examples
 
 ```
-/workflow-stress-test "run a full CLI stress test against mainnet"
-/workflow-stress-test "test all producer commands for edge cases" --scope=producer
-/workflow-stress-test "hammer the RPC endpoints" --scope=rpc
-/workflow-stress-test "test wallet create/restore/export/import" --scope=wallet
-/workflow-stress-test "find input validation vulnerabilities" --scope=edge-cases
-/workflow-stress-test "test transaction edge cases (zero, overflow, invalid address)" --scope=transactions
+/omega-stress-test "run a full CLI stress test against mainnet"
+/omega-stress-test "test all producer commands for edge cases" --scope=producer
+/omega-stress-test "hammer the RPC endpoints" --scope=rpc
+/omega-stress-test "test wallet create/restore/export/import" --scope=wallet
+/omega-stress-test "find input validation vulnerabilities" --scope=edge-cases
+/omega-stress-test "test transaction edge cases (zero, overflow, invalid address)" --scope=transactions
 ```
 
 ## Prerequisites

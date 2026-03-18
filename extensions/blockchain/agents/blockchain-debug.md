@@ -308,9 +308,9 @@ Blockchain connectivity problems exist at one of these layers. Work top-down:
 
 ## Integration
 
-- **Upstream**: Invoked by the `workflow-blockchain-debug` command or directly by the user. Input is a natural-language description of the problem (symptoms, error messages, logs)
+- **Upstream**: Invoked by the `omega-blockchain-debug` command or directly by the user. Input is a natural-language description of the problem (symptoms, error messages, logs)
 - **Downstream**: Produces a Root Cause Analysis report. No direct downstream agent dependency. If the RCA reveals infrastructure gaps (missing monitoring, poor configuration, no security hardening), the report recommends engaging the blockchain-network agent for those improvements
-- **Companion command**: `.claude/commands/workflow-blockchain-debug.md`
+- **Companion command**: `.claude/commands/omega-blockchain-debug.md`
 - **Related agents**:
   - `blockchain-network.md` — the infrastructure architect. Boundary: blockchain-network designs and builds; blockchain-debug diagnoses and fixes. If the debug specialist finds the root cause is "this was never set up correctly," the RCA recommends the blockchain-network agent for proper setup. They do not overlap: one builds, the other fixes
   - `reviewer.md` — if the debugging involves application code (e.g., a custom blockchain client), the reviewer handles code review. The debug specialist only examines configuration, logs, and network state

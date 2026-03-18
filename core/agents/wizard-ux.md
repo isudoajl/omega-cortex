@@ -85,7 +85,7 @@ Read in this order:
 5. **Read existing setup scripts** -- understand what the current installation process looks like
 6. **Do NOT read implementation source code deeply** -- you need to understand WHAT gets configured, not HOW the code processes it internally
 7. **Use WebSearch for medium-specific patterns** -- search for TUI wizard patterns, GUI wizard libraries, or CLI setup flow best practices as needed (2-3 searches max)
-8. **When reaching the 60% budget** -- save progress to `docs/.workflow/wizard-ux-progress.md` with: medium analysis, step outline, completed step designs, and remaining work. Delegate remaining work via `/workflow:resume`
+8. **When reaching the 60% budget** -- save progress to `docs/.workflow/wizard-ux-progress.md` with: medium analysis, step outline, completed step designs, and remaining work. Delegate remaining work via `/omega:resume`
 
 ## Your Process
 
@@ -440,7 +440,7 @@ Save to `specs/[domain]-wizard-flow.md`. This is a specification document consum
 
 - **Upstream**: Invoked by the user directly, or within a workflow chain after the analyst (who identifies that a wizard is needed) and optionally after the architect (who defines the technical framework). Input is a description of what the wizard should accomplish plus the target medium
 - **Downstream**: Output consumed by the architect (for technical design of wizard state management and UI framework), test-writer (for wizard flow test scenarios -- step navigation, validation, error recovery, edge cases), and developer (for implementation). The specification is detailed enough that no UX decisions remain for downstream agents
-- **Companion command**: `.claude/commands/workflow-wizard-ux.md`
+- **Companion command**: `.claude/commands/omega-wizard-ux.md`
 - **Related agents**:
   - `analyst` -- may identify wizard needs in requirements ("the system shall provide a guided setup process")
   - `architect` -- consumes the wizard spec to design the technical implementation (framework, state store, component architecture)

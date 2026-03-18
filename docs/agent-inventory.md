@@ -24,7 +24,7 @@ These execute in sequence within workflow commands.
 | **Input** | Raw user idea or feature description |
 | **Output** | `docs/.workflow/idea-brief.md` |
 | **Memory** | No structured briefing/debrief — conversational agent |
-| **Invoked by** | `workflow:new`, `workflow:new-feature` (conditional) |
+| **Invoked by** | `omega:new`, `omega:new-feature` (conditional) |
 
 The only agent that engages in extended back-and-forth with the user. Produces a validated concept that downstream agents can act on without ambiguity.
 
@@ -60,7 +60,7 @@ The only agent that engages in extended back-and-forth with the user. Produces a
 | **Output** | `specs/[domain]-architecture.md`, updates to `specs/SPECS.md` and `docs/DOCS.md` |
 | **Briefing reads** | Failed approaches, component dependencies, hotspots, active decisions, known patterns |
 | **Debrief writes** | Architectural decisions with rationale + alternatives, new dependencies, superseded old decisions |
-| **Invoked by** | `workflow:new`, `workflow:new-feature`, `workflow:docs`, `workflow:sync` |
+| **Invoked by** | `omega:new`, `omega:new-feature`, `omega:docs`, `omega:sync` |
 
 ---
 
@@ -77,7 +77,7 @@ The only agent that engages in extended back-and-forth with the user. Produces a
 | **Output** | Test files; traceability matrix updates |
 | **Briefing reads** | Past bugs (regression tests), open findings (need coverage), existing requirements (avoid duplicates), hotspots (prioritize coverage) |
 | **Debrief writes** | UPDATE requirement status to 'tested', test strategy decisions |
-| **Invoked by** | `workflow:new`, `workflow:new-feature`, `workflow:improve`, `workflow:bugfix`, `workflow:audit --fix` |
+| **Invoked by** | `omega:new`, `omega:new-feature`, `omega:improve`, `omega:bugfix`, `omega:audit --fix` |
 
 ---
 
@@ -94,7 +94,7 @@ The only agent that engages in extended back-and-forth with the user. Produces a
 | **Output** | Source code; specs/docs updates if behavior changed |
 | **Briefing reads** | Hotspots, failed approaches, open findings, active decisions, established patterns |
 | **Debrief writes** | File changes + why, decisions made, failed approaches (even partial), hotspot counter updates, patterns discovered |
-| **Invoked by** | `workflow:new`, `workflow:new-feature`, `workflow:improve`, `workflow:bugfix`, `workflow:audit --fix` |
+| **Invoked by** | `omega:new`, `omega:new-feature`, `omega:improve`, `omega:bugfix`, `omega:audit --fix` |
 | **Max retry** | 5 attempts per test-fix cycle, then escalation |
 
 ---
@@ -112,7 +112,7 @@ The only agent that engages in extended back-and-forth with the user. Produces a
 | **Output** | `docs/qa/[domain]-qa-report.md` |
 | **Briefing reads** | Past bugs with same symptoms, known fragile areas, open findings, component dependencies |
 | **Debrief writes** | New bugs found, hotspot risk level updates, requirement status updates to 'verified' |
-| **Invoked by** | `workflow:new`, `workflow:new-feature`, `workflow:improve`, `workflow:bugfix` |
+| **Invoked by** | `omega:new`, `omega:new-feature`, `omega:improve`, `omega:bugfix` |
 
 ---
 
@@ -129,7 +129,7 @@ The only agent that engages in extended back-and-forth with the user. Produces a
 | **Output** | `docs/reviews/` or `docs/audits/` |
 | **Briefing reads** | Full hotspot map, open findings history, component dependencies, past bugs, known patterns |
 | **Debrief writes** | New findings (with AUDIT-PX-NNN IDs), hotspot risk reassessment, discovered dependencies |
-| **Invoked by** | `workflow:new`, `workflow:new-feature`, `workflow:improve`, `workflow:bugfix`, `workflow:audit` |
+| **Invoked by** | `omega:new`, `omega:new-feature`, `omega:improve`, `omega:bugfix`, `omega:audit` |
 
 ---
 
@@ -151,7 +151,7 @@ These execute standalone or as gates in the pipeline.
 | **Input** | Idea brief or feature description |
 | **Output** | `docs/.workflow/feature-evaluation.md` with GO/CONDITIONAL/NO-GO verdict |
 | **Memory** | No structured briefing/debrief (evaluation is self-contained) |
-| **Invoked by** | `workflow:new-feature` (always, before analyst) |
+| **Invoked by** | `omega:new-feature` (always, before analyst) |
 
 Advisory — user always has final say. NO-GO can be overridden.
 
@@ -169,7 +169,7 @@ Advisory — user always has final say. NO-GO can be overridden.
 | **Input** | Source code |
 | **Output** | `docs/functionalities/FUNCTIONALITIES.md` + per-domain files |
 | **Memory** | No structured briefing/debrief (read-only inventory) |
-| **Invoked by** | `workflow:functionalities` |
+| **Invoked by** | `omega:functionalities` |
 
 ---
 
@@ -185,7 +185,7 @@ Advisory — user always has final say. NO-GO can be overridden.
 | **Input** | Source code |
 | **Output** | `docs/understanding/PROJECT-UNDERSTANDING.md` |
 | **Memory** | No structured briefing/debrief (read-only comprehension) |
-| **Invoked by** | `workflow:understand` |
+| **Invoked by** | `omega:understand` |
 
 ---
 
@@ -201,7 +201,7 @@ Advisory — user always has final say. NO-GO can be overridden.
 | **Input** | Feature description + optional `--scope` for target medium |
 | **Output** | `specs/[domain]-wizard-flow.md` |
 | **Memory** | No structured briefing/debrief (design spec is self-contained) |
-| **Invoked by** | `workflow:wizard-ux` |
+| **Invoked by** | `omega:wizard-ux` |
 
 Produces specifications consumed by architect → test-writer → developer. Does NOT write implementation code.
 
@@ -220,9 +220,9 @@ Produces specifications consumed by architect → test-writer → developer. Doe
 | **Output** | `docs/.workflow/diagnosis-report.md`, `docs/.workflow/diagnosis-reasoning.md` |
 | **Briefing reads** | Failed approaches (primary evidence source), hotspots, bugs, findings, patterns |
 | **Debrief writes** | Root cause analysis, confirmed/eliminated hypotheses, diagnostic outcomes |
-| **Invoked by** | `workflow:diagnose` |
+| **Invoked by** | `omega:diagnose` |
 
-The opposite of the Developer — builds system models and designs experiments instead of trying fixes. Uses failed approaches as logical constraints to eliminate hypotheses. Escalation path when `workflow:bugfix` has failed.
+The opposite of the Developer — builds system models and designs experiments instead of trying fixes. Uses failed approaches as logical constraints to eliminate hypotheses. Escalation path when `omega:bugfix` has failed.
 
 ---
 
@@ -245,7 +245,7 @@ Routes requests to the right specialist.
 | **Output** | `docs/.workflow/routing-decision.md` |
 | **Briefing reads** | Past routing decisions, specialist creation history, routing outcomes, routing lessons |
 | **Debrief writes** | Routing decisions, routing outcomes |
-| **Invoked by** | `workflow:consult` |
+| **Invoked by** | `omega:consult` |
 
 Three-tier routing: Tier 1 (handle directly), Tier 2 (delegate to existing or create specialist), Tier 3 (assemble multi-agent reasoning pipeline). For Tier 3, composes existing core agents (discovery, reviewer, diagnostician) with specialist agents for adversarial tension.
 
@@ -268,7 +268,7 @@ These create and audit other agents.
 | **Role** | Designs new agent role definitions: sharp boundaries, detailed processes, output formats, failure handling |
 | **Input** | Description of desired role |
 | **Output** | `.claude/agents/[name].md` |
-| **Invoked by** | `workflow:create-role` |
+| **Invoked by** | `omega:create-role` |
 
 Uses an 8-phase process with structural completeness verification.
 
@@ -286,7 +286,7 @@ Uses an 8-phase process with structural completeness verification.
 | **Input** | Agent definition file(s) |
 | **Output** | `docs/.workflow/role-audit-[name].md` |
 | **Verdicts** | broken → degraded → hardened → deployable |
-| **Invoked by** | `workflow:audit-role`, `workflow:create-role` (post-creation audit) |
+| **Invoked by** | `omega:audit-role`, `omega:create-role` (post-creation audit) |
 
 ---
 
@@ -305,7 +305,7 @@ Uses an 8-phase process with structural completeness verification.
 | **Role** | Infrastructure architect: P2P networking, node operations, RPC/API, monitoring, security, chain sync |
 | **Covers** | Ethereum (Geth, Reth, Nethermind, Erigon + CL clients), Solana, Cosmos/CometBFT, Substrate/Polkadot |
 | **Output** | Infrastructure reports, configs, docker-compose, monitoring setups, node guides |
-| **Invoked by** | `workflow:blockchain-network` |
+| **Invoked by** | `omega:blockchain-network` |
 
 ---
 
@@ -320,7 +320,7 @@ Uses an 8-phase process with structural completeness verification.
 | **Role** | Firefighter: diagnoses active connectivity problems using 7-phase methodology (gather → confirm → isolate → diagnose → fix → verify → document) |
 | **Handles** | Peer failures, sync stuck, RPC unreachable, Engine API breakdowns, validator missing attestations, network partitions |
 | **Output** | `docs/.workflow/blockchain-debug-rca.md` (Root Cause Analysis) |
-| **Invoked by** | `workflow:blockchain-debug` |
+| **Invoked by** | `omega:blockchain-debug` |
 
 Read-only diagnostics by default. Destructive actions require explicit user approval.
 
@@ -337,7 +337,7 @@ Read-only diagnostics by default. Destructive actions require explicit user appr
 | **Role** | Black-box adversarial testing of blockchain CLI/RPC endpoints |
 | **Method** | Uses only CLI commands, curl RPC calls, and log analysis — never modifies code or touches node processes |
 | **Output** | Stress test reports with crashes, corrupt states, protocol violations |
-| **Invoked by** | `workflow:stress-test` |
+| **Invoked by** | `omega:stress-test` |
 
 ---
 
@@ -353,7 +353,7 @@ Read-only diagnostics by default. Destructive actions require explicit user appr
 |-|-|
 | **Role** | Audits protocol specifications across 12 dimensions at 3 levels (protocol, enforcement, self). Adversarial stance. |
 | **Output** | `c2c-protocol/audits/audit-[protocol]-[date].md` |
-| **Invoked by** | `workflow:proto-audit` |
+| **Invoked by** | `omega:proto-audit` |
 
 ---
 
@@ -367,4 +367,4 @@ Read-only diagnostics by default. Destructive actions require explicit user appr
 |-|-|
 | **Role** | Protocol improvement: consumes audit reports, generates structured patches via 6-step pipeline |
 | **Output** | `c2c-protocol/patches/patches-[protocol]-[date].md` |
-| **Invoked by** | `workflow:proto-improve` |
+| **Invoked by** | `omega:proto-improve` |

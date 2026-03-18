@@ -8,5 +8,5 @@
 
 ## Features
 
-- [OMEGA Persona Requirements](persona-requirements.md) -- Reduced-scope identity layer: user_profile table, onboarding_state table, workflow_usage view, briefing.sh identity block, experience auto-upgrade, OMEGA Identity protocol in CLAUDE.md, /workflow:onboard command
+- [OMEGA Persona Requirements](persona-requirements.md) -- Reduced-scope identity layer: user_profile table, onboarding_state table, workflow_usage view, briefing.sh identity block, experience auto-upgrade, OMEGA Identity protocol in CLAUDE.md, /omega:onboard command
 - [OMEGA Persona Architecture](persona-architecture.md) -- Module breakdown, schema SQL, briefing hook design, CLAUDE.md identity protocol, onboarding command structure, failure modes, milestone plan

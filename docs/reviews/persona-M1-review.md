@@ -8,7 +8,7 @@
 | `core/db/schema.sql` | Modified | New tables + view |
 | `core/hooks/briefing.sh` | Modified | Identity block (~47 lines) |
 | `CLAUDE.md` | Modified | OMEGA Identity section, command counts |
-| `core/commands/workflow-onboard.md` | New | Onboarding command |
+| `core/commands/omega-onboard.md` | New | Onboarding command |
 | `scripts/setup.sh` | Modified | Summary line |
 | `docs/institutional-memory.md` | Modified | New table/view docs |
 | `README.md` | Modified | Counts + command listing |
@@ -23,7 +23,7 @@
 - **Status:** FIXED — added `user_profile` and `onboarding_state` entries
 
 #### REVIEW-P2-002: Duplicate workflow_runs INSERT in onboarding command
-- **Location:** `core/commands/workflow-onboard.md:36-40`
+- **Location:** `core/commands/omega-onboard.md:36-40`
 - **Status:** FIXED — replaced duplicate INSERT with reference to Pipeline Tracking section
 
 ### P3 (Minor) — Not Fixed (pre-existing or low priority)

@@ -102,8 +102,8 @@ None. This is the first agent in the pipeline.
 
 ### Prerequisite Gates
 
-1. **If invoked after Discovery** (in `/workflow:new` or `/workflow:new-feature`): verifies `docs/.workflow/idea-brief.md` exists. Stops if missing.
-2. **If invoked directly** (in `/workflow:improve-functionality`, `/workflow:bugfix`): no idea brief needed — user's description is input.
+1. **If invoked after Discovery** (in `/omega:new` or `/omega:new-feature`): verifies `docs/.workflow/idea-brief.md` exists. Stops if missing.
+2. **If invoked directly** (in `/omega:improve-functionality`, `/omega:bugfix`): no idea brief needed — user's description is input.
 
 ### Inputs
 
@@ -193,7 +193,7 @@ None. This is the first agent in the pipeline.
 | 4 | Scope enforcement | Limits strictly to `--scope` if provided. |
 | 5 | Requirements-first reading | Reads analyst's requirements first (scope, priorities, affected files). |
 | 6 | Grep before Read | Locates relevant code before reading whole files. |
-| 7 | Large project milestone processing | For `/workflow:docs` and `/workflow:sync`: works one milestone at a time, saves progress between milestones. |
+| 7 | Large project milestone processing | For `/omega:docs` and `/omega:sync`: works one milestone at a time, saves progress between milestones. |
 | 8 | Context limit handling | Summarizes to `docs/.workflow/architect-summary.md`. |
 | 9 | Drift flagging | Flags drift between code and specs/docs. |
 | 10 | Module structure design | Designs modules, interfaces, and dependencies. |
@@ -214,8 +214,8 @@ None. This is the first agent in the pipeline.
 | 25 | External dependencies documentation | Lists crate/library dependencies with version and purpose. |
 | 26 | New feature process | Read requirements → read scoped codebase/specs → design → update specs/docs → update indexes → update traceability. |
 | 27 | Greenfield process | Read requirements → design full structure → define modules/interfaces/order → failure modes/security/performance → create specs/ and docs/ from scratch. |
-| 28 | Documentation mode (`/workflow:docs`) | Per milestone: read code → compare against specs → update stale → create missing → save checkpoint → update indexes. |
-| 29 | Sync mode (`/workflow:sync`) | Per milestone: read code → read specs/docs → log drift → fix drift → save checkpoint → generate drift report → update indexes. |
+| 28 | Documentation mode (`/omega:docs`) | Per milestone: read code → compare against specs → update stale → create missing → save checkpoint → update indexes. |
+| 29 | Sync mode (`/omega:sync`) | Per milestone: read code → read specs/docs → log drift → fix drift → save checkpoint → generate drift report → update indexes. |
 
 ### Outputs
 
@@ -481,7 +481,7 @@ None. This is the first agent in the pipeline.
 
 1. **Code must exist** — Globs for source files. Stops if missing.
 2. **For workflow reviews** (after QA): checks for QA report in `docs/qa/`. Notes gap if missing but proceeds.
-3. **For audit mode** (`/workflow:audit`): code is the only prerequisite.
+3. **For audit mode** (`/omega:audit`): code is the only prerequisite.
 
 ### Inputs
 
@@ -524,7 +524,7 @@ None. This is the first agent in the pipeline.
 | File | Condition |
 |------|-----------|
 | Review report in `docs/reviews/` | After workflow chains |
-| Audit report in `docs/audits/` | For `/workflow:audit` |
+| Audit report in `docs/audits/` | For `/omega:audit` |
 | `docs/.workflow/reviewer-findings.md` | Progressive findings |
 | `docs/.workflow/reviewer-partial.md` | If context limited |
 
@@ -816,7 +816,7 @@ Contains: `triage()`, individual `patch()` blocks, `self_audit()`, `version()`, 
 
 ### Inputs
 
-- Natural-language description of the desired role from user or `workflow-create-role` command.
+- Natural-language description of the desired role from user or `omega-create-role` command.
 - Existing agent definitions (`.claude/agents/*.md`) — for pattern consistency and overlap detection.
 - Existing commands (`.claude/commands/*.md`) — for orchestration patterns.
 - `CLAUDE.md` — for workflow rules and global constraints.
@@ -834,7 +834,7 @@ Contains: `triage()`, individual `patch()` blocks, `self_audit()`, `version()`, 
 | 6 | Agent definition writing (Phase 5) | Produces complete agent definition file following the mandatory structure: YAML frontmatter, identity, personality, boundaries, prerequisite gate, directory safety, source of truth, context management, process (phases), output format, rules, anti-patterns, failure handling, integration. |
 | 7 | Validation (Phase 6) | 5-point check: completeness (all anatomy checklist items), consistency (no CLAUDE.md contradictions), clarity (another LLM could execute unambiguously), boundary sharpness, failure coverage (5 common scenarios). |
 | 8 | User confirmation (Phase 7) | Presents complete definition, explains key design decisions, waits for explicit approval before saving. |
-| 9 | Companion artifacts (Phase 8) | Creates `.claude/commands/workflow-[name].md` if the agent should be invocable as a slash command. Notes pipeline integration opportunities without modifying existing commands. |
+| 9 | Companion artifacts (Phase 8) | Creates `.claude/commands/omega-[name].md` if the agent should be invocable as a slash command. Notes pipeline integration opportunities without modifying existing commands. |
 | 10 | Overlap detection | Cross-references new role against all existing agents to prevent duplicated responsibilities. |
 | 11 | Context limit handling | Saves progress to `docs/.workflow/role-creator-progress.md`. |
 
@@ -843,7 +843,7 @@ Contains: `triage()`, individual `patch()` blocks, `self_audit()`, `version()`, 
 | File | Condition |
 |------|-----------|
 | `.claude/agents/[name].md` | Primary output (after user approval) |
-| `.claude/commands/workflow-[name].md` | If companion command requested |
+| `.claude/commands/omega-[name].md` | If companion command requested |
 | `docs/.workflow/role-creator-progress.md` | If context limited or user abandons |
 
 ### Fail-Safe Controls

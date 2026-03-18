@@ -1,5 +1,5 @@
 ---
-name: workflow:new-feature
+name: omega:new-feature
 description: "Add a feature to an existing project. Use when: adding new functionality, 'add support for...', 'I want to add...', 'implement X capability', new endpoint, new command, new module, extend the system, 'can we add...', 'we need a new...'. Accepts optional --scope to limit context."
 ---
 
@@ -32,7 +32,7 @@ Pass `$RUN_ID` to every agent so they can reference it in their briefing/debrief
 
 ## Existing Project Validation
 Before starting the chain, verify this is an existing project:
-1. Check for source code files in the project. If none exist, suggest `/workflow:new` instead.
+1. Check for source code files in the project. If none exist, suggest `/omega:new` instead.
 2. If `specs/SPECS.md` does not exist, **don't fail** — proceed but note: "No specs/SPECS.md found. The analyst will work from code and user description only. Specs will be created as part of this workflow."
 
 ## Fail-Safe Controls
@@ -62,7 +62,7 @@ If any agent fails mid-chain:
    - Which step failed and why
    - What remains to be done
 2. Report to user with the chain state
-3. The user can resume with `/workflow:resume` which auto-detects the resume point, or `/workflow:resume --from="[step]"` to resume from a specific step
+3. The user can resume with `/omega:resume` which auto-detects the resume point, or `/omega:resume --from="[step]"` to resume from a specific step
 
 ## Step 0: Discovery (conditional)
 **Evaluate whether discovery is needed.** Invoke the `discovery` subagent if the feature description is vague or underspecified — for example:
@@ -136,7 +136,7 @@ After the Architect completes, parse the architecture document for milestones:
 ## Steps 3-8: Milestone Loop
 **For EACH milestone in dependency order**, execute the following steps. After completing all steps for a milestone, **auto-continue to the next milestone without user intervention**.
 
-> **60% Context Budget:** Each agent invocation for a milestone must complete within 60% of its context window. The Architect sized milestones to respect this budget (max 3 modules each). If an agent stops due to budget exhaustion, save chain state to `docs/.workflow/chain-state.md` and use `/workflow:resume` to continue.
+> **60% Context Budget:** Each agent invocation for a milestone must complete within 60% of its context window. The Architect sized milestones to respect this budget (max 3 modules each). If an agent stops due to budget exhaustion, save chain state to `docs/.workflow/chain-state.md` and use `/omega:resume` to continue.
 
 ### Step 3: Test Writer (scoped to current milestone)
 Invoke the `test-writer` subagent, **scoped to the current milestone's modules and requirements only**.

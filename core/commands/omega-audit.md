@@ -1,5 +1,5 @@
 ---
-name: workflow:audit
+name: omega:audit
 description: "Audit existing code for bugs, security vulnerabilities, performance issues, and tech debt. Use when: code review, security audit, 'review this code', 'check for vulnerabilities', 'is this code safe?', quality check, 'audit the...', find issues. Read-only by default; with --fix, auto-fixes findings by priority. Accepts --scope, --fix, --include-p3."
 ---
 

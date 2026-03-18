@@ -646,21 +646,21 @@ if [ "$SKIP_DB" = false ]; then
 fi
 echo ""
 echo "  Core commands:"
-echo "    /workflow:new \"idea\"                  Start from scratch"
-echo "    /workflow:new-feature \"feat\"          Add a feature"
-echo "    /workflow:improve \"desc\"              Refactor/optimize"
-echo "    /workflow:bugfix \"bug\"                Fix a bug"
-echo "    /workflow:audit [--fix]               Audit code"
-echo "    /workflow:docs                        Generate specs & docs"
-echo "    /workflow:sync                        Sync specs/docs"
-echo "    /workflow:functionalities             Map codebase"
-echo "    /workflow:understand                  Deep comprehension"
-echo "    /workflow:create-role \"desc\"          Design agent role"
-echo "    /workflow:audit-role \"path\"           Audit agent role"
-echo "    /workflow:diagnose \"bug\"               Deep root cause diagnosis"
-echo "    /workflow:wizard-ux \"desc\"            Design wizard UX"
-echo "    /workflow:onboard                     Personalize your profile"
-echo "    /workflow:resume                      Resume stopped workflow"
+echo "    /omega:new \"idea\"                  Start from scratch"
+echo "    /omega:new-feature \"feat\"          Add a feature"
+echo "    /omega:improve \"desc\"              Refactor/optimize"
+echo "    /omega:bugfix \"bug\"                Fix a bug"
+echo "    /omega:audit [--fix]               Audit code"
+echo "    /omega:docs                        Generate specs & docs"
+echo "    /omega:sync                        Sync specs/docs"
+echo "    /omega:functionalities             Map codebase"
+echo "    /omega:understand                  Deep comprehension"
+echo "    /omega:create-role \"desc\"          Design agent role"
+echo "    /omega:audit-role \"path\"           Audit agent role"
+echo "    /omega:diagnose \"bug\"               Deep root cause diagnosis"
+echo "    /omega:wizard-ux \"desc\"            Design wizard UX"
+echo "    /omega:onboard                     Personalize your profile"
+echo "    /omega:resume                      Resume stopped workflow"
 
 if [ -n "$EXTENSIONS" ]; then
     echo ""
@@ -670,14 +670,14 @@ if [ -n "$EXTENSIONS" ]; then
         ext=$(echo "$ext" | tr -d ' ')
         case $ext in
             blockchain)
-                echo "    /workflow:blockchain-network \"desc\"   Node/P2P infrastructure"
-                echo "    /workflow:blockchain-debug \"desc\"     Debug connectivity"
-                echo "    /workflow:stress-test \"desc\"          Stress test CLI/RPC"
+                echo "    /omega:blockchain-network \"desc\"   Node/P2P infrastructure"
+                echo "    /omega:blockchain-debug \"desc\"     Debug connectivity"
+                echo "    /omega:stress-test \"desc\"          Stress test CLI/RPC"
                 ;;
             c2c-protocol)
-                echo "    /workflow:c2c                         C2C protocol POC"
-                echo "    /workflow:proto-audit                 Audit protocol spec"
-                echo "    /workflow:proto-improve               Improve protocol"
+                echo "    /omega:c2c                         C2C protocol POC"
+                echo "    /omega:proto-audit                 Audit protocol spec"
+                echo "    /omega:proto-improve               Improve protocol"
                 ;;
         esac
     done

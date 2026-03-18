@@ -17,10 +17,10 @@
 ## Scope Parameter
 All workflow commands accept an optional scope to limit context usage:
 ```
-/workflow:new-feature "add retry logic" --scope="providers"
-/workflow:audit --scope="milestone 3: core"
-/workflow:sync --scope="memory"
-/workflow:bugfix "scheduler crash" --scope="backend/src/gateway/scheduler.rs"
+/omega:new-feature "add retry logic" --scope="providers"
+/omega:audit --scope="milestone 3: core"
+/omega:sync --scope="memory"
+/omega:bugfix "scheduler crash" --scope="backend/src/gateway/scheduler.rs"
 ```
 
 When no scope is provided, the analyst determines the minimal scope needed based on the task description.
@@ -33,7 +33,7 @@ Every agent operates under a **60% context window budget**. This is a proactive 
 **How it works:**
 - The **Architect** sizes milestones so each downstream agent can complete one milestone within 60% of its context (max 3 modules per milestone)
 - Each **pipeline agent** monitors its own usage proactively and stops at the 60% mark
-- When an agent hits the budget, it saves state to `docs/.workflow/` and the pipeline continues via `/workflow:resume`
+- When an agent hits the budget, it saves state to `docs/.workflow/` and the pipeline continues via `/omega:resume`
 
 **Heuristics for agents:**
 - If you've read more than ~20 files without saving progress, you are likely near the budget

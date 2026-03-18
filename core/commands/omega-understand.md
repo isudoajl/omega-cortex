@@ -1,5 +1,5 @@
 ---
-name: workflow:understand
+name: omega:understand
 description: "Deep comprehension of a codebase — architecture, domain logic, data flows, patterns, and risk areas. Use when: 'explain this codebase', 'how does this work?', 'I\\'m new to this project', onboarding, 'walk me through the architecture', 'what does this module do?', understanding code structure. Accepts optional --scope to limit to a module/area."
 ---
 

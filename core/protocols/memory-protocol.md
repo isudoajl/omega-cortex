@@ -13,7 +13,7 @@ test -f .claude/memory.db && echo "DB_EXISTS" || echo "NO_DB"
 - If `NO_DB` → skip memory operations gracefully, work without institutional memory
 
 ## Pipeline Start (orchestrator responsibility)
-Every `/workflow:*` command creates a run entry at the **very beginning**, before invoking any agent:
+Every `/omega:*` command creates a run entry at the **very beginning**, before invoking any agent:
 
 ```bash
 sqlite3 .claude/memory.db "INSERT INTO workflow_runs (type, description, scope) VALUES ('WORKFLOW_TYPE', 'USER_DESCRIPTION', 'SCOPE_OR_NULL');"
@@ -134,7 +134,7 @@ sqlite3 .claude/memory.db "UPDATE workflow_runs SET status='partial', completed_
 ```
 
 ## Non-Pipeline Sessions
-When working **outside** a formal `/workflow:*` command (e.g., user asks for a quick fix, a one-off question, or manual work):
+When working **outside** a formal `/omega:*` command (e.g., user asks for a quick fix, a one-off question, or manual work):
 
 1. **Still check the DB** — run the briefing queries for the area you're working on
 2. **Still write back** — create a workflow_run with type `'manual'` and log what you did

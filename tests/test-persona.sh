@@ -158,7 +158,7 @@ REAL_TOOLKIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SCHEMA_SQL="$REAL_TOOLKIT_DIR/core/db/schema.sql"
 BRIEFING_SH="$REAL_TOOLKIT_DIR/core/hooks/briefing.sh"
 CLAUDE_MD="$REAL_TOOLKIT_DIR/CLAUDE.md"
-ONBOARD_CMD="$REAL_TOOLKIT_DIR/core/commands/workflow-onboard.md"
+ONBOARD_CMD="$REAL_TOOLKIT_DIR/core/commands/omega-onboard.md"
 
 # Verify critical source files exist
 if [ ! -f "$SCHEMA_SQL" ]; then
@@ -1481,12 +1481,12 @@ echo ""
 
 # ============================================================
 # Requirement: REQ-PERSONA-008 (Should)
-# /workflow:onboard command
+# /omega:onboard command
 # ============================================================
 
 test_onboard_command_file_exists() {
-    echo "[TEST] REQ-PERSONA-008: workflow-onboard.md command file exists"
-    assert_file_exists "$ONBOARD_CMD" "core/commands/workflow-onboard.md exists"
+    echo "[TEST] REQ-PERSONA-008: omega-onboard.md command file exists"
+    assert_file_exists "$ONBOARD_CMD" "core/commands/omega-onboard.md exists"
 }
 
 test_onboard_command_has_purpose() {

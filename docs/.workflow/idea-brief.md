@@ -4,7 +4,7 @@
 Give OMEGA a persistent identity layer that knows who the user is, presents a configurable personality, guides first-time users through onboarding, and adapts its behavior based on accumulated experience -- all per-project, stored in `memory.db`.
 
 ## Problem Statement
-Today, OMEGA is a powerful multi-agent toolkit but it feels like a faceless pipeline. Every session starts cold. The system has no idea who is using it, how experienced they are, or how they prefer to communicate. A user who has run 50 workflows gets the same unexplained output as someone launching their first `/workflow:new`. There is no relationship continuity between sessions -- no "welcome back," no adaptation, no sense that OMEGA knows its user. This makes the experience transactional when it could be deeply personal.
+Today, OMEGA is a powerful multi-agent toolkit but it feels like a faceless pipeline. Every session starts cold. The system has no idea who is using it, how experienced they are, or how they prefer to communicate. A user who has run 50 workflows gets the same unexplained output as someone launching their first `/omega:new`. There is no relationship continuity between sessions -- no "welcome back," no adaptation, no sense that OMEGA knows its user. This makes the experience transactional when it could be deeply personal.
 
 ## Current State
 - **No user identity**: OMEGA does not know the user's name, role, or preferences.
@@ -18,7 +18,7 @@ Today, OMEGA is a powerful multi-agent toolkit but it feels like a faceless pipe
 Build a three-part system layered into OMEGA's existing architecture:
 
 ### Part 1: User Profile (DB tables + onboarding flow)
-New `user_profile` and `onboarding_state` tables in `memory.db`. A dedicated `/workflow:onboard` command (or auto-triggered on first session) guides the user through identity collection: name, experience level, communication preferences, and desired OMEGA personality archetype. Onboarding state is tracked so it never repeats.
+New `user_profile` and `onboarding_state` tables in `memory.db`. A dedicated `/omega:onboard` command (or auto-triggered on first session) guides the user through identity collection: name, experience level, communication preferences, and desired OMEGA personality archetype. Onboarding state is tracked so it never repeats.
 
 ### Part 2: OMEGA Personality Engine (briefing injection)
 The `briefing.sh` hook gains a new section at the **top** of its output: the OMEGA Identity Block. This injects the user's name, their selected personality archetype, their experience level, and any communication preferences into Claude's context. Every agent in the session sees this context. The personality is a **relationship/branding layer** -- it wraps around agent-specific functional tones without overriding them.
@@ -34,7 +34,7 @@ Track which workflows the user has run and how many times (leveraging existing `
 - A new user running OMEGA for the first time is greeted and guided through a brief onboarding.
 - After onboarding, OMEGA addresses the user by name and communicates in the selected personality style.
 - Onboarding never repeats for a completed profile.
-- A user who has run `/workflow:new` ten times sees noticeably less hand-holding than someone running it the first time.
+- A user who has run `/omega:new` ten times sees noticeably less hand-holding than someone running it the first time.
 - The personality layer does NOT break existing agent protocols -- the Reviewer is still strict, the Developer still follows TDD, but they all "sound like OMEGA" and know the user.
 
 ## MVP Scope
@@ -45,22 +45,22 @@ What MUST be in v1:
    - `onboarding_state` table: `step` (current onboarding step), `status` (not_started/in_progress/completed), `data` (JSON blob for partial onboarding state), `started_at`, `completed_at`
    - `workflow_usage` view: aggregates `workflow_runs` by type with counts, feeding experience adaptation
 
-2. **Onboarding command** (`core/commands/workflow-onboard.md`):
-   - New command: `/workflow:onboard`
+2. **Onboarding command** (`core/commands/omega-onboard.md`):
+   - New command: `/omega:onboard`
    - Conversational flow (not a form) that collects: name, experience level, personality preference
    - Personality archetypes offered: Formal Mentor, Casual Pair-Programmer, Socratic Teacher, Terse Operator, or Custom
    - Saves to `user_profile` and marks `onboarding_state` as completed
-   - Can be re-run to update preferences: `/workflow:onboard --update`
+   - Can be re-run to update preferences: `/omega:onboard --update`
 
 3. **Briefing hook enhancement** (`core/hooks/briefing.sh`):
    - New section at the TOP of briefing output (before hotspots): OMEGA Identity Block
    - Queries `user_profile` for name, personality, experience level
    - Queries `workflow_usage` view for usage patterns
    - Outputs personality instructions that all agents receive
-   - If `onboarding_state` is not completed, outputs a prompt to run `/workflow:onboard`
+   - If `onboarding_state` is not completed, outputs a prompt to run `/omega:onboard`
 
 4. **Auto-trigger on first session**:
-   - When `briefing.sh` detects no `user_profile` exists, it outputs a message: "Welcome to OMEGA. Run `/workflow:onboard` to personalize your experience."
+   - When `briefing.sh` detects no `user_profile` exists, it outputs a message: "Welcome to OMEGA. Run `/omega:onboard` to personalize your experience."
    - NOT forced -- the user can skip and use OMEGA without onboarding
 
 5. **Experience-level auto-upgrade logic**:
@@ -77,7 +77,7 @@ What MUST be in v1:
 - **Per-agent personality customization**: Users do not configure different personalities per agent. One personality wraps all agents.
 - **Avatar or visual identity**: No images, icons, or visual branding -- this is a CLI tool.
 - **Multi-user support**: One user per project. No user switching, authentication, or team profiles.
-- **Natural language personality modification mid-session**: Users change personality via `/workflow:onboard --update`, not by saying "be more casual" in conversation.
+- **Natural language personality modification mid-session**: Users change personality via `/omega:onboard --update`, not by saying "be more casual" in conversation.
 
 ## Key Decisions Made
 - **Per-project, not global**: Personality and identity live in each project's `memory.db`. Rationale: OMEGA's entire memory system is per-project. Adding a global layer would require a new storage mechanism and cross-project synchronization -- complexity that is not justified for v1.
@@ -98,7 +98,7 @@ What MUST be in v1:
 - **Experience threshold values**: At what workflow completion counts should experience auto-upgrade? Suggested: beginner -> intermediate at 10 completed workflows, intermediate -> advanced at 30. Needs validation.
 - **`last_seen` update mechanism**: Should `briefing.sh` update `user_profile.last_seen` on every session start? This adds a write to the read-only briefing hook. Alternative: update it in the first `workflow_runs` INSERT of each session.
 - **Onboarding resumability**: If the user quits mid-onboarding, should it resume from where they left off? The `onboarding_state.data` JSON blob supports this, but the onboarding command needs to implement it.
-- **Personality in non-pipeline sessions**: When the user works outside a `/workflow:*` command (manual sessions), does OMEGA still use the personality? Answer should be yes since `briefing.sh` fires on all sessions, but this should be confirmed.
+- **Personality in non-pipeline sessions**: When the user works outside a `/omega:*` command (manual sessions), does OMEGA still use the personality? Answer should be yes since `briefing.sh` fires on all sessions, but this should be confirmed.
 - **Schema migration for existing projects**: Projects already deployed with OMEGA have an existing `memory.db` without the new tables. The `db-init.sh` script uses `CREATE TABLE IF NOT EXISTS` so it handles this, but should the onboarding prompt appear for existing heavy users on first session after upgrade?
 
 ## Constraints
@@ -124,7 +124,7 @@ What MUST be in v1:
 ### New Files
 | File | Purpose |
 |------|---------|
-| `core/commands/workflow-onboard.md` | Onboarding command definition |
+| `core/commands/omega-onboard.md` | Onboarding command definition |
 | `core/agents/onboard.md` | Onboarding agent (conversational profile collection) |
 
 ### Modified Files

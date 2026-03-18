@@ -356,9 +356,9 @@ System runs out of something. Check:
 
 ## Integration
 
-- **Standalone**: Invoked via `workflow:diagnose` for hard bugs where the root cause is unknown
+- **Standalone**: Invoked via `omega:diagnose` for hard bugs where the root cause is unknown
 - **Before bugfix**: Can feed into the bugfix pipeline — once root cause is confirmed, the analyst can write requirements for the fix
-- **After failed bugfix**: When `workflow:bugfix` has been attempted and failed, the user can escalate to `workflow:diagnose`
+- **After failed bugfix**: When `omega:bugfix` has been attempted and failed, the user can escalate to `omega:diagnose`
 - **Conversational**: Like Discovery, this agent has extended back-and-forth with the user. Runtime observations, domain knowledge, and test results often come from the user, not the code
 
 ## Anti-Patterns — Don't Do These

@@ -29,20 +29,20 @@ static BLOCKCHAIN_AGENTS: [Asset; 3] = [
 ];
 
 const BLOCKCHAIN_CMD_DEBUG: Asset = Asset {
-    name: "workflow-blockchain-debug.md",
+    name: "omega-blockchain-debug.md",
     content: include_str!(
-        "../../../extensions/blockchain/commands/workflow-blockchain-debug.md"
+        "../../../extensions/blockchain/commands/omega-blockchain-debug.md"
     ),
 };
 const BLOCKCHAIN_CMD_NETWORK: Asset = Asset {
-    name: "workflow-blockchain-network.md",
+    name: "omega-blockchain-network.md",
     content: include_str!(
-        "../../../extensions/blockchain/commands/workflow-blockchain-network.md"
+        "../../../extensions/blockchain/commands/omega-blockchain-network.md"
     ),
 };
 const BLOCKCHAIN_CMD_STRESS_TEST: Asset = Asset {
-    name: "workflow-stress-test.md",
-    content: include_str!("../../../extensions/blockchain/commands/workflow-stress-test.md"),
+    name: "omega-stress-test.md",
+    content: include_str!("../../../extensions/blockchain/commands/omega-stress-test.md"),
 };
 
 static BLOCKCHAIN_COMMANDS: [Asset; 3] = [
@@ -73,17 +73,17 @@ const C2C_AGENT_AUDITOR: Asset = Asset {
 static C2C_AGENTS: [Asset; 2] = [C2C_AGENT_ARCHITECT, C2C_AGENT_AUDITOR];
 
 const C2C_CMD_C2C: Asset = Asset {
-    name: "workflow-c2c.md",
-    content: include_str!("../../../extensions/c2c-protocol/commands/workflow-c2c.md"),
+    name: "omega-c2c.md",
+    content: include_str!("../../../extensions/c2c-protocol/commands/omega-c2c.md"),
 };
 const C2C_CMD_PROTO_AUDIT: Asset = Asset {
-    name: "workflow-proto-audit.md",
-    content: include_str!("../../../extensions/c2c-protocol/commands/workflow-proto-audit.md"),
+    name: "omega-proto-audit.md",
+    content: include_str!("../../../extensions/c2c-protocol/commands/omega-proto-audit.md"),
 };
 const C2C_CMD_PROTO_IMPROVE: Asset = Asset {
-    name: "workflow-proto-improve.md",
+    name: "omega-proto-improve.md",
     content: include_str!(
-        "../../../extensions/c2c-protocol/commands/workflow-proto-improve.md"
+        "../../../extensions/c2c-protocol/commands/omega-proto-improve.md"
     ),
 };
 

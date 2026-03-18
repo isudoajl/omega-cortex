@@ -50,9 +50,9 @@ Black-box adversarial testing of blockchain CLI and RPC endpoints. Uses only:
 
 | Command | Description |
 |---------|-------------|
-| `/workflow:blockchain-network "desc" [--scope]` | Node setup, P2P networking, RPC infrastructure. Scope: `rpc`, `security`, `monitoring`, `sync`, `validator` |
-| `/workflow:blockchain-debug "desc" [--scope]` | Debug active connectivity problems. Scope: `peers`, `sync`, `rpc`, `engine-api`, `firewall` |
-| `/workflow:stress-test "desc"` | Stress test CLI/RPC endpoints to find crashes and protocol violations |
+| `/omega:blockchain-network "desc" [--scope]` | Node setup, P2P networking, RPC infrastructure. Scope: `rpc`, `security`, `monitoring`, `sync`, `validator` |
+| `/omega:blockchain-debug "desc" [--scope]` | Debug active connectivity problems. Scope: `peers`, `sync`, `rpc`, `engine-api`, `firewall` |
+| `/omega:stress-test "desc"` | Stress test CLI/RPC endpoints to find crashes and protocol violations |
 
 ## When to Use What
 

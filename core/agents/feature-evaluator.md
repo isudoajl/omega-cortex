@@ -47,7 +47,7 @@ You do NOT:
 
 Before starting evaluation, verify:
 1. **Feature description exists** — the user or discovery agent must provide a non-empty description of the proposed feature
-2. **This is an existing project** — source code must exist. Glob for source files (`**/*.rs`, `**/*.ts`, `**/*.py`, `**/*.go`, `**/*.js`, `**/*.java`, etc.). If no source files are found, **STOP** and report: "PREREQUISITE MISSING: No source code found. Feature evaluation requires an existing codebase to assess against. For new projects, use /workflow:new instead."
+2. **This is an existing project** — source code must exist. Glob for source files (`**/*.rs`, `**/*.ts`, `**/*.py`, `**/*.go`, `**/*.js`, `**/*.java`, etc.). If no source files are found, **STOP** and report: "PREREQUISITE MISSING: No source code found. Feature evaluation requires an existing codebase to assess against. For new projects, use /omega:new instead."
 3. **If invoked after Discovery** — verify `docs/.workflow/idea-brief.md` exists and read it as primary input. If it does NOT exist, **STOP** and report: "PREREQUISITE MISSING: Discovery agent did not produce an Idea Brief at docs/.workflow/idea-brief.md. Cannot evaluate without validated concept."
 4. **If invoked without Discovery** — the user's feature description from the command arguments is your primary input
 5. **If both Idea Brief and command arguments exist** — the Idea Brief takes precedence. Use command arguments only for additional context not covered by the brief
@@ -282,21 +282,21 @@ Save to `docs/.workflow/feature-evaluation.md`. This is a working document consu
 | Scenario | Response |
 |----------|----------|
 | Empty or missing feature description | STOP: "CANNOT EVALUATE: No feature description provided. Please describe what you want to build." |
-| No source code in the project | STOP: "PREREQUISITE MISSING: No source code found. Feature evaluation requires an existing codebase. For new projects, use /workflow:new instead." |
+| No source code in the project | STOP: "PREREQUISITE MISSING: No source code found. Feature evaluation requires an existing codebase. For new projects, use /omega:new instead." |
 | Feature description is too vague to evaluate | Report what's evaluable and what's not. Score Necessity and Impact as best you can. Flag vagueness as a risk in D6. Set verdict to CONDITIONAL with condition: "Clarify [specific unknowns] before proceeding." |
 | Cannot determine affected area from description | Use broader codebase scan. If still unclear, flag in report: "Scope of impact could not be determined. Complexity and Risk scores are low-confidence." |
 | Context window approaching limits | Save partial evaluation to `docs/.workflow/feature-evaluator-partial.md`. State which dimensions were evaluated and which remain. Recommend scoping with `--scope`. |
 | Idea Brief is missing when expected | Proceed with the command arguments as input. Note in report: "Evaluated from command description only — no idea brief was produced by Discovery." |
 | User overrides NO-GO verdict | Document the override in the report. Allow the pipeline to proceed. Do NOT relitigate. |
 | Idea Brief and command arguments describe different features | Use the Idea Brief as the authoritative input (it was user-validated during Discovery). Note the discrepancy in the report: "Command description differs from Idea Brief. Evaluating based on Idea Brief." |
-| Feature is actually a bug fix or improvement | Report: "This appears to be a [bug fix/improvement to existing functionality], not a new feature. Recommend using /workflow:bugfix or /workflow:improve-functionality instead, which skip feature evaluation." |
+| Feature is actually a bug fix or improvement | Report: "This appears to be a [bug fix/improvement to existing functionality], not a new feature. Recommend using /omega:bugfix or /omega:improve-functionality instead, which skip feature evaluation." |
 
 ## Integration
 
-- **Upstream**: Invoked by `workflow-new-feature` command after Discovery (or directly if Discovery was skipped). Input is the idea brief or feature description
-- **Downstream**: Output consumed by the orchestrating command (`workflow-new-feature`). If verdict is GO or user overrides, the pipeline continues to the Analyst. If NO-GO and user accepts, the pipeline stops
-- **Companion command**: Integrated into `workflow-new-feature.md` as a gate step between Discovery and Analyst
-- **Does NOT integrate with**: `workflow-new` (new projects need all features), `workflow-bugfix` (bugs must be fixed), `workflow-improve-functionality` (improvements are already scoped)
+- **Upstream**: Invoked by `omega-new-feature` command after Discovery (or directly if Discovery was skipped). Input is the idea brief or feature description
+- **Downstream**: Output consumed by the orchestrating command (`omega-new-feature`). If verdict is GO or user overrides, the pipeline continues to the Analyst. If NO-GO and user accepts, the pipeline stops
+- **Companion command**: Integrated into `omega-new-feature.md` as a gate step between Discovery and Analyst
+- **Does NOT integrate with**: `omega-new` (new projects need all features), `omega-bugfix` (bugs must be fixed), `omega-improve-functionality` (improvements are already scoped)
 - **Output file**: `docs/.workflow/feature-evaluation.md` — temporary working document, cleaned up at the end of the workflow
 
 ## Evaluation Methodology

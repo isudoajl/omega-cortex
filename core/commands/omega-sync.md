@@ -1,5 +1,5 @@
 ---
-name: workflow:sync
+name: omega:sync
 description: "Detect and fix drift between codebase and specs/docs. Use when: 'specs are out of date', 'docs don\\'t match the code', 'sync the documentation', drift detection, stale specs, 'code changed but docs didn\\'t', consistency check between code and docs. Accepts optional --scope to limit to a milestone/module."
 ---
 
@@ -9,10 +9,10 @@ Invoke ONLY the `architect` subagent in sync mode.
 Optional: `--scope="milestone or module"` to sync a specific area.
 
 ## Prerequisite Fallback
-- **If no codebase exists** (no source files found): STOP and report: "No source code found. Nothing to sync. Use /workflow:new to create a project first."
-- **If `specs/` directory is entirely missing:** This is effectively a `/workflow:docs` task — the architect creates specs from scratch. Note: "No specs/ directory found. This sync will create initial specs from the codebase."
+- **If no codebase exists** (no source files found): STOP and report: "No source code found. Nothing to sync. Use /omega:new to create a project first."
+- **If `specs/` directory is entirely missing:** This is effectively a `/omega:docs` task — the architect creates specs from scratch. Note: "No specs/ directory found. This sync will create initial specs from the codebase."
 - **If `docs/` directory is entirely missing:** Create docs from scratch as part of sync. Note: "No docs/ directory found. This sync will create initial docs from the codebase."
-- **If both specs/ and docs/ are missing:** Equivalent to `/workflow:docs`. Proceed with full documentation generation.
+- **If both specs/ and docs/ are missing:** Equivalent to `/omega:docs`. Proceed with full documentation generation.
 
 ## Without scope (full sync)
 The architect MUST work in chunks to avoid context limits:

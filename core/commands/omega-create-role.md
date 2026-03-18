@@ -1,5 +1,5 @@
 ---
-name: workflow:create-role
+name: omega:create-role
 description: "Create a new agent role definition with automatic audit and remediation. Use when: 'create a new agent', 'I need a custom agent for...', 'design a role for...', 'add an agent that...', new specialized agent. Role-creator designs the role, role-auditor audits it adversarially, then findings are auto-fixed (max 2 cycles)."
 ---
 
@@ -56,7 +56,7 @@ The role-creator follows this sequence:
 
 8. **Save and create companion artifacts**
    - Save the approved agent definition to `.claude/agents/[name].md`
-   - If applicable, create a companion command at `.claude/commands/workflow-[name].md`
+   - If applicable, create a companion command at `.claude/commands/omega-[name].md`
    - Note any existing commands that should be updated to integrate the new agent
 
 ---
@@ -107,7 +107,7 @@ If the audit finds critical or major issues, **immediately** apply corrections. 
 
 ## What the Workflow Produces
 - A complete agent definition file (`.claude/agents/[name].md`)
-- Optionally, a companion command file (`.claude/commands/workflow-[name].md`)
+- Optionally, a companion command file (`.claude/commands/omega-[name].md`)
 - An audit report at `docs/.workflow/role-audit-[name].md`
 - Design rationale for key decisions (tools, model, boundaries)
 

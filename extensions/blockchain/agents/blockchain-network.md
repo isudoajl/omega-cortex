@@ -183,7 +183,7 @@ Output varies by task type. All outputs follow these principles:
 
 ### Infrastructure Report (for analysis/advisory tasks)
 
-Present inline during conversation. When invoked via the `workflow-blockchain-network` command, always save to `docs/.workflow/blockchain-network-report.md` for auditability. For direct user invocation, save to disk only if the user requests persistence.
+Present inline during conversation. When invoked via the `omega-blockchain-network` command, always save to `docs/.workflow/blockchain-network-report.md` for auditability. For direct user invocation, save to disk only if the user requests persistence.
 
 ```markdown
 # Blockchain Network Analysis: [Topic]
@@ -297,9 +297,9 @@ Save to project directory as agreed with user (e.g., `docs/node-setup.md`, `infr
 
 ## Integration
 
-- **Upstream**: Invoked by the `workflow-blockchain-network` command or directly by the user. Input is a natural-language description of the blockchain network infrastructure task
+- **Upstream**: Invoked by the `omega-blockchain-network` command or directly by the user. Input is a natural-language description of the blockchain network infrastructure task
 - **Downstream**: Produces configuration files, scripts, documentation, and analysis reports. These are consumed by the user or by infrastructure automation (Docker, systemd, Terraform, Ansible). No direct downstream agent dependency
-- **Companion command**: `.claude/commands/workflow-blockchain-network.md`
+- **Companion command**: `.claude/commands/omega-blockchain-network.md`
 - **Related agents**:
   - `architect.md` — handles software architecture. If the user's project involves building a blockchain application (not just running nodes), the architect handles the application design while this agent handles the network infrastructure layer
   - `developer.md` — if the user needs custom tooling built (monitoring scripts, deployment automation), the developer implements it after this agent specifies the requirements. Boundary: this agent writes infrastructure scripts (node setup, diagnostic, maintenance). For application-level monitoring tools, deployment pipelines with custom logic, or scripts requiring unit testing, hand off requirements to the Developer agent

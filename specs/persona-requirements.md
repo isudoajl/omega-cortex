@@ -5,7 +5,7 @@
 - `core/db/schema.sql` — new `user_profile` table, `onboarding_state` table, `v_workflow_usage` view
 - `core/hooks/briefing.sh` — OMEGA Identity Block injection, experience auto-upgrade logic, `last_seen` update
 - `CLAUDE.md` — new "OMEGA Identity" section in workflow rules
-- `core/commands/workflow-onboard.md` — new onboarding command (Should priority)
+- `core/commands/omega-onboard.md` — new onboarding command (Should priority)
 - `scripts/setup.sh` — command listing update
 - `docs/institutional-memory.md` — new table/view documentation
 - `README.md` — feature and command documentation
@@ -31,12 +31,12 @@ OMEGA currently starts every session cold — it does not know who the user is, 
 | REQ-PERSONA-005 | No-profile backward compatibility | Must | No errors when user_profile table is missing or empty; existing agents unaffected |
 | REQ-PERSONA-006 | Experience auto-upgrade logic | Must | beginner→intermediate at 10 completed workflows; intermediate→advanced at 30; checked during briefing |
 | REQ-PERSONA-007 | OMEGA Identity protocol in CLAUDE.md | Must | New section with agent instructions; explicit override: protocol > identity; under 40 lines |
-| REQ-PERSONA-008 | `/workflow:onboard` command | Should | Conversational 3-question flow; writes to user_profile and onboarding_state; supports --update flag; no new agent |
+| REQ-PERSONA-008 | `/omega:onboard` command | Should | Conversational 3-question flow; writes to user_profile and onboarding_state; supports --update flag; no new agent |
 | REQ-PERSONA-009 | `last_seen` auto-update | Should | Updated in briefing.sh once per session; fire-and-forget |
 | REQ-PERSONA-010 | Onboarding prompt in briefing.sh | Should | Shown when user_profile is empty; informational only; includes manual SQL alternative |
-| REQ-PERSONA-011 | Profile update capability | Should | Via /workflow:onboard --update; via manual sqlite3; both documented |
+| REQ-PERSONA-011 | Profile update capability | Should | Via /omega:onboard --update; via manual sqlite3; both documented |
 | REQ-PERSONA-012 | Documentation updates | Should | institutional-memory.md, README.md, DOCS.md updated |
-| REQ-PERSONA-013 | setup.sh command listing | Could | /workflow:onboard in summary output |
+| REQ-PERSONA-013 | setup.sh command listing | Could | /omega:onboard in summary output |
 | REQ-PERSONA-014 | Onboarding state resumability | Could | Partial answers stored in JSON; resumes on next invocation |
 | REQ-PERSONA-015 | Personality archetypes | Won't | Use /output-style instead |
 | REQ-PERSONA-016 | Full onboarding agent | Won't | Stays at 14 agents |
@@ -96,8 +96,8 @@ OMEGA currently starts every session cold — it does not know who the user is, 
 - [ ] Explicit carve-outs: severity classification, TDD enforcement, read-only constraints, iteration limits, prerequisite gates, acceptance criteria completeness
 - [ ] Total section length under 40 lines of markdown
 
-### REQ-PERSONA-008: `/workflow:onboard` command
-- [ ] New command file at `core/commands/workflow-onboard.md`
+### REQ-PERSONA-008: `/omega:onboard` command
+- [ ] New command file at `core/commands/omega-onboard.md`
 - [ ] Conversational flow: (1) user's name, (2) experience level with descriptions, (3) communication style with descriptions
 - [ ] Maximum 3 questions
 - [ ] Writes to `user_profile` and `onboarding_state`
@@ -118,13 +118,13 @@ OMEGA currently starts every session cold — it does not know who the user is, 
 - [ ] Informational only — does NOT block usage
 
 ### REQ-PERSONA-011: Profile update capability
-- [ ] Via `/workflow:onboard --update`
+- [ ] Via `/omega:onboard --update`
 - [ ] Via manual `sqlite3` command
 - [ ] Both methods documented
 
 ### REQ-PERSONA-012: Documentation updates
 - [ ] `docs/institutional-memory.md` — add user_profile, onboarding_state, v_workflow_usage sections
-- [ ] `README.md` — add /workflow:onboard, update counts, mention persona feature
+- [ ] `README.md` — add /omega:onboard, update counts, mention persona feature
 - [ ] `CLAUDE.md` — update command count and table if new command added
 
 ## Impact Analysis
@@ -156,13 +156,13 @@ OMEGA currently starts every session cold — it does not know who the user is, 
 | REQ-PERSONA-005 | Must | TEST-PERSONA-005a..005c (3 tests: no error without table, no error with empty table, existing sections unchanged) + edge cases (no DB file, read-only DB) | Module 2: Briefing Hook (table-existence check) | core/hooks/briefing.sh |
 | REQ-PERSONA-006 | Must | TEST-PERSONA-006a..006i (9 tests: beginner->intermediate at 10, no upgrade at 9, intermediate->advanced at 30, no upgrade at 29, no double-upgrade, advanced stays, noop without profile, only counts completed, upgrade reflected in output) | Module 2: Briefing Hook (auto-upgrade logic) | core/hooks/briefing.sh |
 | REQ-PERSONA-007 | Must | TEST-PERSONA-007a..007i (9 tests: section exists, override hierarchy, experience levels, communication styles, carve-outs, under 40 lines, position, name guidance, no-identity guidance) | Module 3: CLAUDE.md Identity Protocol | CLAUDE.md |
-| REQ-PERSONA-008 | Should | TEST-PERSONA-008a..008f (6 tests + 5 skips: file exists, purpose, 3 questions, --update flag, workflow_run, no agent, manual SQL) | Module 4: Onboarding Command | core/commands/workflow-onboard.md |
+| REQ-PERSONA-008 | Should | TEST-PERSONA-008a..008f (6 tests + 5 skips: file exists, purpose, 3 questions, --update flag, workflow_run, no agent, manual SQL) | Module 4: Onboarding Command | core/commands/omega-onboard.md |
 | REQ-PERSONA-009 | Should | TEST-PERSONA-009a..009b (2 tests: last_seen updated, not updated without profile) | Module 2: Briefing Hook (last_seen update) | core/hooks/briefing.sh |
 | REQ-PERSONA-010 | Should | TEST-PERSONA-010a..010e (5 tests: prompt when empty, includes manual SQL, not shown when table missing, not shown when profile exists, nonblocking) | Module 2: Briefing Hook (onboarding prompt) | core/hooks/briefing.sh |
-| REQ-PERSONA-011 | Should | TEST-PERSONA-011a (1 test: manual SQL documented in onboard command) | Module 4: Onboarding Command (--update flag) | core/commands/workflow-onboard.md |
+| REQ-PERSONA-011 | Should | TEST-PERSONA-011a (1 test: manual SQL documented in onboard command) | Module 4: Onboarding Command (--update flag) | core/commands/omega-onboard.md |
 | REQ-PERSONA-012 | Should | Not tested (documentation) | Module 5: Documentation | docs/*.md, README.md |
 | REQ-PERSONA-013 | Could | Not tested (documentation) | Module 5: Documentation | scripts/setup.sh |
-| REQ-PERSONA-014 | Could | Not tested (Could priority, deferred) | Module 4: Onboarding Command (resumability) | core/commands/workflow-onboard.md |
+| REQ-PERSONA-014 | Could | Not tested (Could priority, deferred) | Module 4: Onboarding Command (resumability) | core/commands/omega-onboard.md |
 
 ## Specs Drift Detected
 - `docs/institutional-memory.md` — states "12 tables" and "7 views". After this feature: 14 tables, 8 views.
