@@ -130,7 +130,7 @@ your-project/
 │   ├── agents/           <- 15 core agent definitions (+ extension agents)
 │   ├── commands/         <- 16 core commands (+ extension commands)
 │   ├── protocols/        <- 5 on-demand protocol reference files
-│   ├── hooks/            <- 5 automation hooks
+│   ├── hooks/            <- 6 automation hooks
 │   ├── settings.json     <- Hook configuration (merged, not overwritten)
 │   ├── memory.db         <- SQLite institutional memory database
 │   └── db-queries/       <- Query reference files for agents
@@ -169,7 +169,7 @@ omega/
 │   ├── db/                            # Institutional memory layer
 │   │   ├── schema.sql                 # SQLite schema
 │   │   └── queries/                   # Named query templates
-│   └── hooks/                         # 5 automation hooks
+│   └── hooks/                         # 6 automation hooks
 │
 ├── extensions/                        # Opt-in per project
 │   ├── blockchain/                    # Ethereum, Solana, Cosmos, Substrate
@@ -231,6 +231,7 @@ Five hooks enforce the memory protocol automatically:
 | Hook | Event | Purpose |
 |------|-------|---------|
 | `briefing.sh` | UserPromptSubmit | Auto-injects behavioral learnings + decisions + incidents (once per session) |
+| `learning-detector.sh` | UserPromptSubmit | Detects user corrections and prompts Claude to save behavioral learnings (every message) |
 | `debrief-gate.sh` | PreToolUse (Bash) | Blocks `git commit` if no outcomes are logged |
 | `incremental-gate.sh` | PreToolUse (Write/Edit) | Blocks after 10 file edits without logging outcomes |
 | `debrief-nudge.sh` | PostToolUse | Periodic reminder to log incrementally |

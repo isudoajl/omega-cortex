@@ -52,7 +52,8 @@ The briefing/debrief protocol was originally voluntary — agents were told to r
 
 | Hook | Event | What it does | Enforcement |
 |------|-------|-------------|------------|
-| `briefing.sh` | UserPromptSubmit | Queries memory.db, injects context on first prompt per session (uses session_id) | **Automatic** — AI sees it, can't skip it |
+| `briefing.sh` | UserPromptSubmit | Injects behavioral learnings + decisions + incidents on first prompt per session | **Automatic** — AI sees it, can't skip it |
+| `learning-detector.sh` | UserPromptSubmit | Detects user corrections and prompts AI to save behavioral learnings (every message) | **Reminder** — fires on correction patterns |
 | `debrief-gate.sh` | PreToolUse (Bash) | Blocks `git commit` unless outcomes logged since session start (uses briefing timestamp) | **Blocking** — AI cannot commit without logging outcomes |
 | `incremental-gate.sh` | PreToolUse (Write/Edit) | Blocks file modifications after 10 edits without outcomes logged | **Blocking** — enforces incremental logging even without commits |
 | `debrief-nudge.sh` | PostToolUse | Reminds AI to log incrementally (every 5th tool call if no outcomes logged this session) | **Reminder** — periodic nudge |

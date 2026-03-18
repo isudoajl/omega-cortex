@@ -365,6 +365,11 @@ generate_hooks_json() {
             "type": "command",
             "command": "${PROJECT_ABS_PATH}/.claude/hooks/briefing.sh",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "${PROJECT_ABS_PATH}/.claude/hooks/learning-detector.sh",
+            "timeout": 5
           }
         ]
       }

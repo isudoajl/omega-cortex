@@ -40,7 +40,8 @@ omega/
 │   │   ├── context-budget.md         # 60% budget, scoping strategy
 │   │   └── identity.md               # Experience levels, communication styles
 │   └── hooks/                         # Claude Code automation hooks
-│       ├── briefing.sh                # UserPromptSubmit: auto-injects memory context
+│       ├── briefing.sh                # UserPromptSubmit: auto-injects memory context (once per session)
+│       ├── learning-detector.sh       # UserPromptSubmit: detects corrections → behavioral learnings (every message)
 │       ├── debrief-gate.sh            # PreToolUse: blocks git commit without outcomes
 │       ├── incremental-gate.sh        # PreToolUse: blocks edits after 10 modifications without outcomes
 │       ├── debrief-nudge.sh           # PostToolUse: periodic incremental logging reminder
