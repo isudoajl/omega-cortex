@@ -28,7 +28,7 @@ test -f .claude/memory.db && echo "DB_EXISTS" || echo "NO_DB"
 - If `NO_DB` → skip memory operations gracefully, work without institutional memory
 
 ### Pipeline Start (orchestrator responsibility)
-Every `/omega:*` command creates a run entry at the **very beginning**, before invoking any agent:
+Every `/omega:*` command **that modifies code** creates a run entry at the **very beginning**, before invoking any agent. Read-only commands (e.g., `audit` without `--fix`) skip tracking — the report artifact is sufficient.
 
 ```bash
 # Register the workflow run

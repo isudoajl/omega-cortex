@@ -66,7 +66,7 @@ Hook scripts live in `.claude/hooks/` and are configured in `.claude/settings.js
 ### Tables
 
 #### `workflow_runs` — Pipeline execution traces
-Every `/omega:*` command creates a row at start and closes it at end.
+Every `/omega:*` command that modifies code creates a row at start and closes it at end. Read-only commands (e.g., `audit` without `--fix`) skip tracking.
 
 | Column | Type | Purpose |
 |--------|------|---------|
