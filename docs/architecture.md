@@ -147,7 +147,7 @@ Learning operates at three tiers, each with different scope and injection timing
 | **Lessons** | Domain-specific patterns ("use Option<T> for concurrent access") | Agent briefing — scope-specific |
 | **Outcomes** | Raw self-scored actions (+1/-1) | Never — feeds lesson distillation |
 
-- **Session briefing**: Behavioral learnings + active decisions + open incidents (lean, focused)
+- **Session briefing**: Behavioral learnings + open incidents (lean, focused)
 - **Agent briefing**: Scope-specific queries (hotspots, failed approaches, findings, patterns, lessons)
 - **During work (incremental)**: Score actions, log incidents (INC-NNN), track attempts
 - **Close-out**: Distill lessons, extract behavioral learnings, resolve incidents
@@ -313,7 +313,7 @@ Four hooks cover the full lifecycle:
 
 | Hook | Enforcement |
 |-|-|
-| `briefing.sh` (UserPromptSubmit) | Automatic — behavioral learnings + decisions + incidents injected on first prompt per session |
+| `briefing.sh` (UserPromptSubmit) | Automatic — behavioral learnings + open incidents injected on first prompt per session |
 | `debrief-gate.sh` (PreToolUse/Bash) | **Blocking** — git commits fail without this session's self-scoring |
 | `incremental-gate.sh` (PreToolUse/Write,Edit) | **Blocking** — file modifications blocked after 10 edits without outcomes |
 | `debrief-nudge.sh` (PostToolUse) | Reminder — periodic nudge to log incrementally every 5th tool call |

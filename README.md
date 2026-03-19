@@ -230,7 +230,7 @@ Five hooks enforce the memory protocol automatically:
 
 | Hook | Event | Purpose |
 |------|-------|---------|
-| `briefing.sh` | UserPromptSubmit | Auto-injects behavioral learnings + decisions + incidents (once per session) |
+| `briefing.sh` | UserPromptSubmit | Auto-injects behavioral learnings + open incidents (once per session) |
 | `learning-detector.sh` | UserPromptSubmit | Detects user corrections and prompts Claude to save behavioral learnings (every message) |
 | `debrief-gate.sh` | PreToolUse (Bash) | Blocks `git commit` if no outcomes are logged |
 | `incremental-gate.sh` | PreToolUse (Write/Edit) | Blocks after 10 file edits without logging outcomes |

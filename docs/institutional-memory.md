@@ -31,11 +31,11 @@ BRIEFING │         CLOSE-OUT
 ```
 
 **Two levels of briefing:**
-1. **Session briefing** (automatic, via UserPromptSubmit hook) — injects **behavioral learnings** (meta-cognitive rules that make Claude smarter), active decisions, and open incidents. Does NOT inject bug details, hotspots, outcomes, or patterns — those are noise at session start.
+1. **Session briefing** (automatic, via UserPromptSubmit hook) — injects **behavioral learnings** (meta-cognitive rules that make Claude smarter) and open incidents. Does NOT inject decisions, bug details, hotspots, outcomes, or patterns — those are noise at session start.
 2. **Agent briefing** (per agent, on-demand) — each agent queries the DB for scope-specific context (hotspots, failed approaches, findings, decisions, patterns). This is targeted and relevant to the agent's current work.
 
 **Every agent, every time:**
-1. **Session Briefing** — behavioral learnings + active decisions + open incidents injected automatically. **Automated via UserPromptSubmit hook.**
+1. **Session Briefing** — behavioral learnings + open incidents injected automatically. **Automated via UserPromptSubmit hook.**
 2. **Agent Briefing** — agent queries memory.db for scope-specific context before starting work (hotspots, failed approaches, findings, patterns).
 3. **Work + Incremental Logging** — performs its normal job, logging to memory.db **immediately after each significant action** (file changes, decisions, failed approaches, outcomes). This is the primary data capture mechanism — it ensures data reaches the DB even if context compaction occurs mid-work.
 4. **Close-Out** — lightweight verification step: checks that all incremental entries were logged, scores remaining actions, distills lessons, extracts behavioral learnings, tracks bugs as incidents. Git commits are **blocked** until at least one outcome is logged.
@@ -52,7 +52,7 @@ The briefing/debrief protocol was originally voluntary — agents were told to r
 
 | Hook | Event | What it does | Enforcement |
 |------|-------|-------------|------------|
-| `briefing.sh` | UserPromptSubmit | Injects behavioral learnings + decisions + incidents on first prompt per session | **Automatic** — AI sees it, can't skip it |
+| `briefing.sh` | UserPromptSubmit | Injects behavioral learnings + open incidents on first prompt per session | **Automatic** — AI sees it, can't skip it |
 | `learning-detector.sh` | UserPromptSubmit | Detects user corrections and prompts AI to save behavioral learnings (every message) | **Reminder** — fires on correction patterns |
 | `debrief-gate.sh` | PreToolUse (Bash) | Blocks `git commit` unless outcomes logged since session start (uses briefing timestamp) | **Blocking** — AI cannot commit without logging outcomes |
 | `incremental-gate.sh` | PreToolUse (Write/Edit) | Blocks file modifications after 10 edits without outcomes logged | **Blocking** — enforces incremental logging even without commits |

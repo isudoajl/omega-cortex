@@ -117,13 +117,10 @@ if table_exists "behavioral_learnings"; then
     fi
 fi
 
-# === SECTION 2: ACTIVE DECISIONS ===
-# Architectural constraints that all agents must respect.
-if query_has_results "SELECT 1 FROM decisions WHERE status='active' LIMIT 1;"; then
-    echo "◉ ACTIVE DECISIONS (respect these unless you have strong reason to supersede):"
-    query "SELECT domain, decision, rationale FROM decisions WHERE status='active' ORDER BY id DESC LIMIT 5;"
-    echo ""
-fi
+# === DECISIONS — NOT injected at session start ===
+# Active decisions are queried on-demand by agents during their
+# scope-specific briefing, not at session start. They accumulate
+# project-specific implementation details that are noise at session level.
 
 # === SECTION 3: OPEN INCIDENTS ===
 # Active bug investigations — just summary, not full detail.

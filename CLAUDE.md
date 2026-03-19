@@ -63,7 +63,7 @@ Every workflow reads from and writes to `.claude/memory.db`. **This protocol is 
 
 **Core rules (always in effect):**
 - **DB Detection**: `test -f .claude/memory.db` at session/workflow start. If missing, skip memory ops gracefully.
-- **Session briefing = behavioral learnings**: The briefing hook injects behavioral learnings (meta-cognitive rules), active decisions, and open incidents. NOT bug details, outcomes, or hotspots — those are on-demand agent queries.
+- **Session briefing = behavioral learnings**: The briefing hook injects behavioral learnings (meta-cognitive rules) and open incidents. NOT decisions, bug details, outcomes, or hotspots — those are on-demand agent queries.
 - **Briefing before action**: Every agent queries memory.db for scope-specific context (hotspots, failed approaches, findings, decisions, patterns) before starting work.
 - **Log incrementally**: Write to memory.db immediately after each significant action. Never batch for the end — context compaction loses batched entries.
 - **Self-score every action**: Rate significant actions (-1/0/+1) immediately after completing them.
