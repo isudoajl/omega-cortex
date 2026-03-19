@@ -42,7 +42,8 @@ omega/
 │   │   └── identity.md               # Experience levels, communication styles
 │   └── hooks/                         # Claude Code automation hooks
 │       ├── briefing.sh                # UserPromptSubmit: auto-injects memory context (once per session)
-│       ├── learning-detector.sh       # UserPromptSubmit: detects corrections → behavioral learnings (every message)
+│       ├── learning-detector.sh       # UserPromptSubmit: detects corrections → nags until saved (every message)
+│       ├── learning-gate.sh           # PreToolUse: blocks git commit until corrections saved as behavioral learnings
 │       ├── debrief-gate.sh            # PreToolUse: blocks git commit without outcomes
 │       ├── incremental-gate.sh        # PreToolUse: blocks edits after 10 modifications without outcomes
 │       ├── debrief-nudge.sh           # PostToolUse: periodic incremental logging reminder

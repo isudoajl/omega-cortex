@@ -411,6 +411,11 @@ generate_hooks_json() {
             "type": "command",
             "command": "${PROJECT_ABS_PATH}/.claude/hooks/debrief-gate.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "${PROJECT_ABS_PATH}/.claude/hooks/learning-gate.sh",
+            "timeout": 5
           }
         ]
       },

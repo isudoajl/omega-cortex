@@ -46,7 +46,7 @@ Either method deploys everything:
 | 16 commands | `.claude/commands/` | Workflow orchestrators |
 | 5 protocols + index | `.claude/protocols/` | On-demand reference files with @INDEX lazy-load blocks |
 | Workflow rules | `CLAUDE.md` | **Appended** to existing CLAUDE.md (never overwrites) |
-| Automation hooks | `.claude/hooks/` | 5 hooks: auto-briefing, commit gate, incremental gate, debrief nudge, session close |
+| Automation hooks | `.claude/hooks/` | 7 hooks: auto-briefing, learning detector + gate, commit gate, incremental gate, debrief nudge, session close |
 | Hook config | `.claude/settings.json` | Registers hooks with Claude Code |
 | Memory DB | `.claude/memory.db` | SQLite with 14 tables, 7 views (incl. self-learning) |
 | Query references | `.claude/db-queries/` | Briefing, debrief, maintenance SQL templates |

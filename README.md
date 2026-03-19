@@ -97,7 +97,7 @@ Then inside Claude Code:
 
 #### Using `omg` CLI
 ```bash
-omg init                              # Core only (15 agents, 16 commands, 5 hooks, SQLite memory)
+omg init                              # Core only (15 agents, 16 commands, 7 hooks, SQLite memory)
 omg init --ext=blockchain             # Core + specific extension
 omg init --ext=blockchain,c2c-protocol # Core + multiple extensions
 omg init --ext=all                    # Core + all extensions
@@ -130,7 +130,7 @@ your-project/
 │   ├── agents/           <- 15 core agent definitions (+ extension agents)
 │   ├── commands/         <- 16 core commands (+ extension commands)
 │   ├── protocols/        <- 5 on-demand protocol reference files
-│   ├── hooks/            <- 6 automation hooks
+│   ├── hooks/            <- 7 automation hooks
 │   ├── settings.json     <- Hook configuration (merged, not overwritten)
 │   ├── memory.db         <- SQLite institutional memory database
 │   └── db-queries/       <- Query reference files for agents
@@ -169,7 +169,7 @@ omega/
 │   ├── db/                            # Institutional memory layer
 │   │   ├── schema.sql                 # SQLite schema
 │   │   └── queries/                   # Named query templates
-│   └── hooks/                         # 6 automation hooks
+│   └── hooks/                         # 7 automation hooks
 │
 ├── extensions/                        # Opt-in per project
 │   ├── blockchain/                    # Ethereum, Solana, Cosmos, Substrate
@@ -227,12 +227,13 @@ Bugs are tracked as **incidents** (INC-001, INC-002, ...). Each incident has a s
 
 ### Automation Hooks
 
-Five hooks enforce the memory protocol automatically:
+Six hooks enforce the memory protocol automatically:
 
 | Hook | Event | Purpose |
 |------|-------|---------|
 | `briefing.sh` | UserPromptSubmit | Auto-injects behavioral learnings + open incidents (once per session) |
-| `learning-detector.sh` | UserPromptSubmit | Detects user corrections and prompts Claude to save behavioral learnings (every message) |
+| `learning-detector.sh` | UserPromptSubmit | Detects corrections, tracks as pending, nags until saved (every message) |
+| `learning-gate.sh` | PreToolUse (Bash) | Blocks `git commit` until pending corrections are saved as behavioral learnings |
 | `debrief-gate.sh` | PreToolUse (Bash) | Blocks `git commit` if no outcomes are logged |
 | `incremental-gate.sh` | PreToolUse (Write/Edit) | Blocks after 10 file edits without logging outcomes |
 | `debrief-nudge.sh` | PostToolUse | Periodic reminder to log incrementally |
