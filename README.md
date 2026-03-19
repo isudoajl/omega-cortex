@@ -97,7 +97,7 @@ Then inside Claude Code:
 
 #### Using `omg` CLI
 ```bash
-omg init                              # Core only (15 agents, 16 commands, 7 hooks, SQLite memory)
+omg init                              # Core only (15 agents, 17 commands, 7 hooks, SQLite memory)
 omg init --ext=blockchain             # Core + specific extension
 omg init --ext=blockchain,c2c-protocol # Core + multiple extensions
 omg init --ext=all                    # Core + all extensions
@@ -259,7 +259,7 @@ Six hooks enforce the memory protocol automatically:
 | **role-creator** | Meta-agent: designs new agent role definitions |
 | **role-auditor** | Meta-agent: adversarial audit of role definitions (read-only) |
 
-## Core Commands (16)
+## Core Commands (17)
 
 | Command | Description |
 |---------|-------------|
@@ -278,6 +278,7 @@ Six hooks enforce the memory protocol automatically:
 | `/omega:create-role "desc"` | Design a new agent role |
 | `/omega:audit-role "path" [--scope]` | Adversarial audit of role definitions |
 | `/omega:diagnose "bug" [--scope] [--fix]` | Deep root cause diagnosis for hard bugs |
+| `/omega:learn "rule" [--list] [--remove]` | Manually teach OMEGA a behavioral learning |
 | `/omega:onboard [--update]` | Set up your OMEGA identity profile |
 
 ## Intelligent Specialist Routing

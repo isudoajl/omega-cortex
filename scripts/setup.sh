@@ -693,6 +693,7 @@ echo "    /omega:create-role \"desc\"          Design agent role"
 echo "    /omega:audit-role \"path\"           Audit agent role"
 echo "    /omega:diagnose \"bug\"               Deep root cause diagnosis"
 echo "    /omega:wizard-ux \"desc\"            Design wizard UX"
+echo "    /omega:learn \"rule\"                 Teach a behavioral learning"
 echo "    /omega:onboard                     Personalize your profile"
 echo "    /omega:resume                      Resume stopped workflow"
 
