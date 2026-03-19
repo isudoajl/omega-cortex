@@ -112,6 +112,15 @@ fn test_failed_login_returns_error_message() { ... }
 
 Adapt the comment format to the project's language (e.g., `//` for Rust, `#` for Python, `//` for TypeScript).
 
+## Skeleton-First Test Writing (Mandatory)
+Tests are code — they follow the same **skeleton → compile → implement** discipline as implementation code. This catches import errors, type mismatches, and structural issues before investing effort in test logic.
+
+1. **Skeleton**: Create all test function signatures with descriptive names and requirement ID references, but with placeholder bodies (e.g., `todo!()` in Rust, `throw new Error('not implemented')` in TypeScript, `pass` or `pytest.skip('skeleton')` in Python, `t.Skip("skeleton")` in Go)
+2. **Compile gate**: Build/compile the test skeleton. Fix any import errors, missing type references, or structural issues. The skeleton **MUST compile/parse cleanly** before writing test logic
+3. **Implement**: Fill in the test bodies with assertions, setup, and verification logic
+
+This is not optional. Even for "simple" test modules, the skeleton phase validates that all referenced types, functions, and modules exist and are correctly imported.
+
 ## Process
 For EACH module defined by the Architect (one at a time):
 
@@ -119,19 +128,20 @@ For EACH module defined by the Architect (one at a time):
 2. Read the architect's failure modes and security considerations for that module
 3. Grep for existing test patterns to match style/conventions
 4. Read the relevant spec file in specs/
-5. **Must requirements first:**
+5. **Skeleton phase**: Create all test function signatures for the module — organized by priority (Must/Should/Could) — with requirement ID references in comments and placeholder bodies. Verify the test skeleton compiles/parses cleanly before proceeding
+6. **Must requirements first** (fill in skeleton bodies):
    - Write acceptance criteria tests (happy path)
    - Write failure mode tests (recovery behavior)
    - Write security tests (attack surface probing)
    - Write edge case tests (all 10 worst scenarios that apply)
-6. **Should requirements second:**
+7. **Should requirements second:**
    - Write acceptance criteria tests
    - Write key failure mode and edge case tests
-7. **Could requirements last:**
+8. **Could requirements last:**
    - Write basic happy-path tests
-8. Write integration tests between modules (if applicable)
-9. **Save tests to disk before moving to next module**
-10. **Update the traceability matrix** in the requirements document — fill in Test IDs for each requirement
+9. Write integration tests between modules (if applicable)
+10. **Save tests to disk before moving to next module**
+11. **Update the traceability matrix** in the requirements document — fill in Test IDs for each requirement
 
 ## Test Structure
 

@@ -92,21 +92,34 @@ For new projects with no existing code:
 2. **Grep** existing code for conventions (naming, error handling, patterns)
 3. **For each module in order**:
    - Read its tests
-   - Implement minimum code to pass
+   - Create function/struct/type signatures and stubs based on tests and Architect's interface definitions
+   - Verify stubs compile (catch structural mismatches early)
+   - Fill in implementation logic to pass the tests
    - Run tests
    - Commit
 4. **Do not advance** to the next module until the current one passes all its tests
+
+## Skeleton-First Implementation (Mandatory)
+Every module follows a **skeleton → compile → implement** sequence. This catches structural errors (wrong signatures, missing types, import mismatches) before investing effort in logic.
+
+1. **Skeleton**: Create all function/struct/type signatures and stubs required by the tests and Architect's interface definitions. Stubs must have correct signatures but minimal bodies (e.g., `todo!()` in Rust, `throw new Error('not implemented')` in TypeScript, `pass` in Python, `panic("not implemented")` in Go)
+2. **Compile gate**: Build/compile the skeleton. Fix any signature mismatches, missing types, or import errors. The skeleton **MUST compile cleanly** before proceeding to implementation. This is a hard gate — do not skip it
+3. **Implement**: Fill in the stub bodies with minimum code to pass the tests
+
+This is not optional. Even for "simple" modules, the skeleton phase catches interface mismatches that would otherwise waste fix-retry cycles.
 
 ## Process
 For EACH module (in the order defined by the Architect):
 
 1. Grep existing code for conventions (don't read unrelated files)
 2. Read the tests for that module
-3. Implement the minimum code to pass the tests
-4. Run the tests from the relevant directory (`backend/` or `frontend/`)
-5. If they fail → fix → repeat (log failed approaches to memory.db immediately)
-6. If they pass → refactor if needed → **log to memory.db** → **commit** → next module
-7. At the end: run ALL tests together
+3. **Skeleton phase**: Create all function/struct/type signatures and stubs required by the tests and Architect's interface definitions. Stubs have correct signatures but minimal bodies (e.g., `todo!()`, `throw new Error('not implemented')`, `pass`, `panic("not implemented")`)
+4. **Compile gate**: Build/compile the skeleton. Fix any signature mismatches, missing types, or import errors. The skeleton MUST compile before proceeding
+5. **Implementation phase**: Fill in the stub bodies with minimum code to pass the tests
+6. Run the tests from the relevant directory (`backend/` or `frontend/`)
+7. If they fail → fix → repeat (log failed approaches to memory.db immediately)
+8. If they pass → refactor if needed → **log to memory.db** → **commit** → next module
+9. At the end: run ALL tests together
 
 ## Compilation & Lint Validation
 After implementing ALL modules for the current scope or milestone, you MUST run a full compilation and lint validation pass before declaring the work complete. The developer CANNOT hand off to QA until build + lint + tests all pass clean.
@@ -157,13 +170,15 @@ This validation counts toward the existing **maximum 5 attempts** per test-fix c
 
 ## TDD Cycle
 ```
-Red → Green → Refactor → Sync Specs/Docs → Commit → Next
+Red → Skeleton → Compile Gate → Green → Refactor → Sync Specs/Docs → Commit → Next
 ```
 
 ## Checklist Per Module
 - [ ] Existing code patterns grepped (not full read)
 - [ ] Tests read and understood
-- [ ] Implementation complete
+- [ ] Skeleton created (signatures and stubs from tests + Architect's interfaces)
+- [ ] Skeleton compiles cleanly (compile gate passed)
+- [ ] Stub bodies filled in with implementation logic
 - [ ] All tests pass
 - [ ] No compiler warnings
 - [ ] Code matches project conventions

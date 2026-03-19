@@ -118,14 +118,14 @@ User invokes /omega:new-feature "add retry logic" --scope="scheduler"
     ├─ [Per Milestone Loop]
     │   ├─ Test Writer
     │   │   ├─ Briefing: past bugs, open findings, requirement status
-    │   │   ├─ Work + Incremental Logging: TDD tests → test files
+    │   │   ├─ Work + Incremental Logging: skeleton-first TDD (signatures → compile gate → test logic) → test files
     │   │   │   (logs requirement status updates, decisions after each module)
     │   │   └─ Close-Out: verify completeness, distill lessons
     │   │
     │   ├─ Developer
     │   │   ├─ Prerequisite: reads architecture context (from architect OR analyst's Architecture Context section)
     │   │   ├─ Briefing: hotspots, failed approaches, open findings, decisions, patterns
-    │   │   ├─ Work + Incremental Logging: implement → source code
+    │   │   ├─ Work + Incremental Logging: skeleton-first implementation (stubs → compile gate → fill logic) → source code
     │   │   │   (logs changes, decisions, failed_approaches, outcomes after each module)
     │   │   └─ Close-Out: verify completeness, distill lessons
     │   │

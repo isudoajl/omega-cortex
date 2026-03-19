@@ -72,7 +72,7 @@ The only agent that engages in extended back-and-forth with the user. Produces a
 
 | | |
 |-|-|
-| **Role** | TDD red phase: writes failing tests before code exists, priority-driven (Must → Should → Could) |
+| **Role** | TDD red phase: writes failing tests before code exists, skeleton-first (signatures → compile gate → test logic), priority-driven (Must → Should → Could) |
 | **Input** | Architect design + analyst requirements in `specs/` |
 | **Output** | Test files; traceability matrix updates |
 | **Briefing reads** | Past bugs (regression tests), open findings (need coverage), existing requirements (avoid duplicates), hotspots (prioritize coverage) |
@@ -89,7 +89,7 @@ The only agent that engages in extended back-and-forth with the user. Produces a
 
 | | |
 |-|-|
-| **Role** | Implementation: minimum code to pass tests, module by module, commits per module. Must read architecture context before writing any code |
+| **Role** | Implementation: skeleton-first (signatures/stubs → compile gate → fill logic), minimum code to pass tests, module by module, commits per module. Must read architecture context before writing any code |
 | **Input** | Test files, architecture context (from architect design OR analyst's Architecture Context section), analyst requirements |
 | **Output** | Source code; specs/docs updates if behavior changed |
 | **Briefing reads** | Hotspots, failed approaches, open findings, active decisions, established patterns |
@@ -224,7 +224,7 @@ Produces specifications consumed by architect → test-writer → developer. Doe
 | **Debrief writes** | Root cause analysis, confirmed/eliminated hypotheses, diagnostic outcomes |
 | **Invoked by** | `omega:diagnose` |
 
-The opposite of the Developer — builds system models and designs experiments instead of trying fixes. Uses failed approaches as logical constraints to eliminate hypotheses. Escalation path when `omega:bugfix` has failed.
+The opposite of the Developer — builds system models and designs experiments instead of trying fixes. Uses failed approaches as logical constraints to eliminate hypotheses. Escalation path when `omega:bugfix` has failed. Fix implementation (Phase 7) follows skeleton-first discipline: signatures/stubs → compile gate → fill logic.
 
 ---
 

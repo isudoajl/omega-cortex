@@ -206,10 +206,11 @@ If you can't confirm a single root cause:
 ### Phase 7: Fix Implementation
 
 1. Write a test that reproduces the root cause directly (not just the symptom)
-2. Implement the fix
-3. Verify the reproduction test passes
-4. Run all existing tests for regression
-5. **Remove all diagnostic instrumentation** added in Phase 4
+2. **Skeleton phase**: Create function/struct/type signatures and stubs for the fix — correct interfaces with placeholder bodies (e.g., `todo!()`, `throw new Error('not implemented')`, `pass`). Verify the skeleton compiles before writing fix logic
+3. **Implement**: Fill in the stub bodies with the actual fix
+4. Verify the reproduction test passes
+5. Run all existing tests for regression
+6. **Remove all diagnostic instrumentation** added in Phase 4
 
 ## Output Files
 
