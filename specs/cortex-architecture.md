@@ -1139,12 +1139,12 @@ Phase 4:  M8 ◄───┤ (depends on M3, M5)
 | REQ-CTX-004 | 1 | Module 1: Schema + Migration | `core/db/migrate-1.3.0.sh` | M1 | TEST-CTX-M1-019 to 024, TEST-CTX-M1-043 to 048, TEST-CTX-M1-057, TEST-CTX-M1-059 |
 | REQ-CTX-005 | 1 | Module 1: Schema + Migration | `core/db/migrate-1.3.0.sh` | M1 | TEST-CTX-M1-025 to 032, TEST-CTX-M1-049 to 053, TEST-CTX-M1-055, TEST-CTX-M1-060, TEST-CTX-M1-119 |
 | REQ-CTX-006 | 1 | Module 1: Schema + Migration | `scripts/db-init.sh`, `core/db/migrate-1.3.0.sh` | M1 | TEST-CTX-M1-036, TEST-CTX-M1-061 to 068, TEST-CTX-M1-069 to 082, TEST-CTX-M1-108 to 113 |
-| REQ-CTX-007 | 1 | Module 2: Setup + Shared Store | `scripts/setup.sh` | M2 | |
-| REQ-CTX-008 | 1 | Module 2: Setup + Shared Store | `scripts/setup.sh` | M2 | |
-| REQ-CTX-009 | 1 | Module 3: Cortex Protocol | `core/protocols/cortex-protocol.md` | M2 | |
+| REQ-CTX-007 | 1 | Module 2: Setup + Shared Store | `scripts/setup.sh` | M2 | TEST-CTX-M2-001 to 009, M2-033 to 038, M2-091, M2-092 |
+| REQ-CTX-008 | 1 | Module 2: Setup + Shared Store | `scripts/setup.sh` | M2 | TEST-CTX-M2-010 to 013, M2-030 to 032, M2-093, M2-094, M2-096, M2-097 |
+| REQ-CTX-009 | 1 | Module 3: Cortex Protocol | `core/protocols/cortex-protocol.md` | M2 | TEST-CTX-M2-055 to 078 |
 | REQ-CTX-010 | 1 | Module 1: Schema + Migration | `core/db/schema.sql` | M1 | TEST-CTX-M1-012, TEST-CTX-M1-092 to 107, TEST-CTX-M1-121 |
-| REQ-CTX-011 | 1 | All Modules | All modified files | M2 | |
-| REQ-CTX-012 | 1 | Module 3: Cortex Protocol | `core/protocols/cortex-protocol.md` | M2 | |
+| REQ-CTX-011 | 1 | All Modules | All modified files | M2 | TEST-CTX-M2-014 to 029, M2-088 to 090, M2-095 |
+| REQ-CTX-012 | 1 | Module 3: Cortex Protocol | `core/protocols/cortex-protocol.md` | M2 | TEST-CTX-M2-039 to 054, M2-079 to 087, M2-098, M2-099 |
 | REQ-CTX-013 | 2 | Module 4: Curator Agent | `core/agents/curator.md` | M3 | |
 | REQ-CTX-014 | 2 | Module 4: Curator Agent | `core/agents/curator.md` | M3 | |
 | REQ-CTX-015 | 2 | Module 4: Curator Agent | `core/agents/curator.md` | M3 | |

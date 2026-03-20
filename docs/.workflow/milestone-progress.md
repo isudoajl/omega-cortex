@@ -3,8 +3,8 @@
 ## Phase 1: Foundation
 | ID | Name | Status | Timestamp |
 |----|------|--------|-----------|
-| M1 | Schema + Migration | PENDING | |
-| M2 | Shared Store + Protocol | PENDING | |
+| M1 | Schema + Migration | COMPLETE | 2026-03-20 |
+| M2 | Shared Store + Protocol | COMPLETE | 2026-03-20 |
 
 ## Phase 2: Curation
 | ID | Name | Status | Timestamp |

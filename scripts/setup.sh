@@ -118,7 +118,7 @@ TOTAL_REMOVED=0
 cleanup_stale() {
     local dir="$1"
     local prefix="$2"
-    [ -d "$dir" ] || return
+    [ -d "$dir" ] || return 0
     for old_file in "$dir"/${prefix}-*.md; do
         [ -f "$old_file" ] || continue
         local base=$(basename "$old_file")
@@ -346,6 +346,45 @@ EOF
     echo "   + docs/DOCS.md created"
 else
     echo "   = docs/DOCS.md already exists"
+fi
+
+# ============================================================
+# CORTEX SHARED STORE (.omega/shared/)
+# ============================================================
+echo ""
+echo "  Initializing Cortex shared store..."
+
+if [ -e ".omega/shared" ] && [ ! -d ".omega/shared" ]; then
+    # .omega/shared exists but is a file, not a directory -- skip gracefully
+    echo "   WARNING: .omega/shared exists but is not a directory -- skipping shared store init"
+elif [ ! -d ".omega/shared" ]; then
+    mkdir -p .omega/shared/incidents
+    touch .omega/shared/.gitkeep
+    touch .omega/shared/incidents/.gitkeep
+    echo "   + .omega/shared/ initialized"
+else
+    # Directory exists -- ensure incidents/ subdir and .gitkeep files exist
+    mkdir -p .omega/shared/incidents
+    [ -f ".omega/shared/.gitkeep" ] || touch .omega/shared/.gitkeep
+    [ -f ".omega/shared/incidents/.gitkeep" ] || touch .omega/shared/incidents/.gitkeep
+    echo "   = .omega/shared/ already exists"
+fi
+
+# Gitignore: warn if .omega/shared/ would be excluded
+if [ -f ".gitignore" ]; then
+    if grep -qE '^\.omega/?$' .gitignore 2>/dev/null; then
+        echo "   WARNING: .omega/shared/ may be gitignored -- .omega/ pattern found in .gitignore. Cortex requires .omega/shared/ to be git-tracked"
+    fi
+    if grep -qE '^\.omega/shared' .gitignore 2>/dev/null; then
+        echo "   WARNING: .omega/shared/ appears to be gitignored -- Cortex requires it to be tracked"
+    fi
+fi
+
+# Ensure .omega/cortex-config.json is gitignored (may contain credential references)
+if [ -f ".gitignore" ]; then
+    if ! grep -q 'cortex-config.json' .gitignore 2>/dev/null; then
+        echo '.omega/cortex-config.json' >> .gitignore
+    fi
 fi
 
 # ============================================================
@@ -696,6 +735,8 @@ echo "    /omega:wizard-ux \"desc\"            Design wizard UX"
 echo "    /omega:learn \"rule\"                 Teach a behavioral learning"
 echo "    /omega:onboard                     Personalize your profile"
 echo "    /omega:resume                      Resume stopped workflow"
+echo "    /omega:share                       Share team knowledge (Cortex)"
+echo "    /omega:team-status                 Team knowledge dashboard"
 
 if [ -n "$EXTENSIONS" ]; then
     echo ""

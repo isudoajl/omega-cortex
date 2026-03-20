@@ -667,12 +667,12 @@ Other developer starts session
 | REQ-CTX-004 | 1 | Must | (filled by test-writer) | Module 1: Schema + Migration | `core/db/migrate-1.3.0.sh` | M1 |
 | REQ-CTX-005 | 1 | Must | (filled by test-writer) | Module 1: Schema + Migration | `core/db/migrate-1.3.0.sh` | M1 |
 | REQ-CTX-006 | 1 | Must | (filled by test-writer) | Module 1: Schema + Migration | `scripts/db-init.sh`, `core/db/migrate-1.3.0.sh` | M1 |
-| REQ-CTX-007 | 1 | Must | (filled by test-writer) | Module 2: Setup + Shared Store | `scripts/setup.sh` | M2 |
-| REQ-CTX-008 | 1 | Must | (filled by test-writer) | Module 2: Setup + Shared Store | `scripts/setup.sh` | M2 |
-| REQ-CTX-009 | 1 | Must | (filled by test-writer) | Module 3: Cortex Protocol | `core/protocols/cortex-protocol.md` | M2 |
+| REQ-CTX-007 | 1 | Must | TEST-CTX-M2-001 to M2-009, M2-033 to M2-038, M2-091, M2-092 | Module 2: Setup + Shared Store | `scripts/setup.sh` | M2 |
+| REQ-CTX-008 | 1 | Must | TEST-CTX-M2-010 to M2-013, M2-030 to M2-032, M2-093, M2-094, M2-096, M2-097 | Module 2: Setup + Shared Store | `scripts/setup.sh` | M2 |
+| REQ-CTX-009 | 1 | Must | TEST-CTX-M2-055 to M2-078 | Module 3: Cortex Protocol | `core/protocols/cortex-protocol.md` | M2 |
 | REQ-CTX-010 | 1 | Should | (filled by test-writer) | Module 1: Schema + Migration | `core/db/schema.sql` | M1 |
-| REQ-CTX-011 | 1 | Must | (filled by test-writer) | All Modules | All modified files | M2 |
-| REQ-CTX-012 | 1 | Should | (filled by test-writer) | Module 3: Cortex Protocol | `core/protocols/cortex-protocol.md` | M2 |
+| REQ-CTX-011 | 1 | Must | TEST-CTX-M2-014 to M2-029, M2-088 to M2-090, M2-095 | All Modules | All modified files | M2 |
+| REQ-CTX-012 | 1 | Should | TEST-CTX-M2-039 to M2-054, M2-079 to M2-087, M2-098, M2-099 | Module 3: Cortex Protocol | `core/protocols/cortex-protocol.md` | M2 |
 | REQ-CTX-013 | 2 | Must | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
 | REQ-CTX-014 | 2 | Must | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
 | REQ-CTX-015 | 2 | Must | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
