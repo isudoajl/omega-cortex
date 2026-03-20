@@ -673,17 +673,17 @@ Other developer starts session
 | REQ-CTX-010 | 1 | Should | (filled by test-writer) | Module 1: Schema + Migration | `core/db/schema.sql` | M1 |
 | REQ-CTX-011 | 1 | Must | TEST-CTX-M2-014 to M2-029, M2-088 to M2-090, M2-095 | All Modules | All modified files | M2 |
 | REQ-CTX-012 | 1 | Should | TEST-CTX-M2-039 to M2-054, M2-079 to M2-087, M2-098, M2-099 | Module 3: Cortex Protocol | `core/protocols/cortex-protocol.md` | M2 |
-| REQ-CTX-013 | 2 | Must | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
-| REQ-CTX-014 | 2 | Must | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
-| REQ-CTX-015 | 2 | Must | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
-| REQ-CTX-016 | 2 | Must | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
-| REQ-CTX-017 | 2 | Should | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
-| REQ-CTX-018 | 2 | Should | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
-| REQ-CTX-019 | 2 | Should | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
-| REQ-CTX-020 | 2 | Must | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
-| REQ-CTX-021 | 2 | Should | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
-| REQ-CTX-022 | 2 | Must | (filled by test-writer) | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
-| REQ-CTX-023 | 2 | Must | (filled by test-writer) | Module 5: Share Command | `core/commands/omega-share.md` | M3 |
+| REQ-CTX-013 | 2 | Must | TEST-CTX-M3-001 to M3-037, M3-123, M3-125, M3-127 to M3-129, M3-131 to M3-140 | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
+| REQ-CTX-014 | 2 | Must | TEST-CTX-M3-038 to M3-047, M3-099 to M3-103, M3-116, M3-131 | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
+| REQ-CTX-015 | 2 | Must | TEST-CTX-M3-048 to M3-052, M3-104, M3-105 | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
+| REQ-CTX-016 | 2 | Must | TEST-CTX-M3-053 to M3-057, M3-106 to M3-108, M3-135 | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
+| REQ-CTX-017 | 2 | Should | TEST-CTX-M3-058, M3-109 | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
+| REQ-CTX-018 | 2 | Should | TEST-CTX-M3-059, M3-110 | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
+| REQ-CTX-019 | 2 | Should | TEST-CTX-M3-060, M3-111 | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
+| REQ-CTX-020 | 2 | Must | TEST-CTX-M3-062 to M3-068, M3-116, M3-121 | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
+| REQ-CTX-021 | 2 | Should | TEST-CTX-M3-069 to M3-073, M3-112 | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
+| REQ-CTX-022 | 2 | Must | TEST-CTX-M3-074 to M3-079, M3-117, M3-118 | Module 4: Curator Agent | `core/agents/curator.md` | M3 |
+| REQ-CTX-023 | 2 | Must | TEST-CTX-M3-080 to M3-098, M3-124, M3-126, M3-130 | Module 5: Share Command | `core/commands/omega-share.md` | M3 |
 | REQ-CTX-024 | 2 | Should | (filled by test-writer) | Module 6: Session Close Trigger | `core/hooks/session-close.sh` | M4 |
 | REQ-CTX-025 | 3 | Must | (filled by test-writer) | Module 7: Briefing Import | `core/hooks/briefing.sh` | M5 |
 | REQ-CTX-026 | 3 | Must | (filled by test-writer) | Module 7: Briefing Import | `core/hooks/briefing.sh` | M5 |
