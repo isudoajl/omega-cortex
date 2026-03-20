@@ -9,8 +9,8 @@
 ## Phase 2: Curation
 | ID | Name | Status | Timestamp |
 |----|------|--------|-----------|
-| M3 | Curator Agent + Share Command | PENDING | |
-| M4 | Session Close Curation Trigger | PENDING | |
+| M3 | Curator Agent + Share Command | COMPLETE | 2026-03-20 |
+| M4 | Session Close Curation Trigger | COMPLETE | 2026-03-20 |
 
 ## Phase 3: Consumption
 | ID | Name | Status | Timestamp |

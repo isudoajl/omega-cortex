@@ -21,4 +21,18 @@ sqlite3 "$DB_PATH" "UPDATE hotspots SET risk_level = 'critical' WHERE times_touc
 sqlite3 "$DB_PATH" "UPDATE hotspots SET risk_level = 'high' WHERE times_touched >= 5 AND times_touched < 10 AND risk_level NOT IN ('critical', 'high');" 2>/dev/null || true
 sqlite3 "$DB_PATH" "UPDATE hotspots SET risk_level = 'medium' WHERE times_touched >= 3 AND times_touched < 5 AND risk_level NOT IN ('critical', 'high', 'medium');" 2>/dev/null || true
 
+# --- Cortex: Check for pending curation ---
+# Detect unsared high-confidence behavioral_learnings and resolved incidents.
+# If found, write a .curation_pending flag for the next session's briefing to detect.
+# Bash hooks cannot spawn Claude agents, so we flag instead of curating directly.
+PENDING_BL=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM behavioral_learnings WHERE confidence >= 0.8 AND status = 'active' AND COALESCE(is_private, 0) = 0 AND shared_uuid IS NULL;" 2>/dev/null || echo "0")
+PENDING_INC=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM incidents WHERE status = 'resolved' AND COALESCE(is_private, 0) = 0 AND shared_uuid IS NULL;" 2>/dev/null || echo "0")
+
+PENDING_TOTAL=$(( ${PENDING_BL:-0} + ${PENDING_INC:-0} ))
+
+if [ "$PENDING_TOTAL" -gt 0 ]; then
+    mkdir -p "$PROJECT_DIR/.claude/hooks" 2>/dev/null || true
+    echo "$PENDING_TOTAL entries pending curation ($PENDING_BL behavioral learnings, $PENDING_INC incidents)" > "$PROJECT_DIR/.claude/hooks/.curation_pending"
+fi
+
 exit 0
