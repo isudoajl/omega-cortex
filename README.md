@@ -328,11 +328,11 @@ Over time, your project accumulates the exact specialists it needs. A fintech pr
 
 | Your task | Use this, not /omega-consult |
 |---|---|
-| Fix a bug | `/omega-bugfix` |
+| Fix a bug (you know where it is) | `/omega-bugfix` |
+| Bug but unsure where or why | `/omega-diagnose` |
 | Add a feature | `/omega-new-feature` |
 | Refactor code | `/omega-improve` |
 | Code review | `/omega-audit` |
-| Hard bug, unknown cause | `/omega-diagnose` |
 | **Domain expertise outside development** | **`/omega-consult`** |
 
 ## Extension Packs
