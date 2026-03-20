@@ -209,17 +209,22 @@ if not entries:
 # Sort by confidence DESC
 entries.sort(key=lambda x: x[1], reverse=True)
 
-# Record new imports in shared_imports
+# Record new imports in shared_imports (parameterized — no SQL injection)
 if has_table and db_path:
-    for uuid, conf, rule, contrib in entries:
-        try:
-            subprocess.run(
-                ["sqlite3", db_path,
-                 f"INSERT OR IGNORE INTO shared_imports (shared_uuid, category, source_file) VALUES ('{uuid}', 'behavioral_learning', 'behavioral-learnings.jsonl');"],
-                capture_output=True, text=True, timeout=5
-            )
-        except Exception:
-            pass
+    try:
+        import sqlite3 as _sql
+        _conn = _sql.connect(db_path)
+        _cur = _conn.cursor()
+        for uuid, conf, rule, contrib in entries:
+            try:
+                _cur.execute("INSERT OR IGNORE INTO shared_imports (shared_uuid, category, source_file) VALUES (?, ?, ?)",
+                             (uuid, "behavioral_learning", "behavioral-learnings.jsonl"))
+            except Exception:
+                pass
+        _conn.commit()
+        _conn.close()
+    except Exception:
+        pass
 
 # Display top 10
 for uuid, confidence, rule, contributor in entries[:10]:
@@ -305,17 +310,22 @@ if not entries:
 # Sort by resolved_at DESC
 entries.sort(key=lambda x: x[3], reverse=True)
 
-# Record new imports in shared_imports
+# Record new imports in shared_imports (parameterized — no SQL injection)
 if has_table and db_path:
-    for inc_id, title, contrib, resolved_at, src in entries:
-        try:
-            subprocess.run(
-                ["sqlite3", db_path,
-                 f"INSERT OR IGNORE INTO shared_imports (shared_uuid, category, source_file) VALUES ('{inc_id}', 'incident', 'incidents/{src}');"],
-                capture_output=True, text=True, timeout=5
-            )
-        except Exception:
-            pass
+    try:
+        import sqlite3 as _sql
+        _conn = _sql.connect(db_path)
+        _cur = _conn.cursor()
+        for inc_id, title, contrib, resolved_at, src in entries:
+            try:
+                _cur.execute("INSERT OR IGNORE INTO shared_imports (shared_uuid, category, source_file) VALUES (?, ?, ?)",
+                             (inc_id, "incident", f"incidents/{src}"))
+            except Exception:
+                pass
+        _conn.commit()
+        _conn.close()
+    except Exception:
+        pass
 
 # Display top 3
 for inc_id, title, contributor, resolved_at, src in entries[:3]:
