@@ -14,7 +14,7 @@ OMEGA is **not** an application. It is a set of agent definitions, command orche
 |----|-----|
 | Flat `.claude/agents/` and `.claude/commands/` | `core/` + `extensions/` source organization |
 | All 20 agents copied to every project | Core (16) always; extensions opt-in via `--ext=` |
-| No cross-session memory | SQLite `.claude/memory.db` with 20 tables + 12 views |
+| No cross-session memory | SQLite `.claude/memory.db` with 21 tables + 12 views |
 | Agents act independently | Mandatory briefing/incremental logging/close-out + self-learning — agents log as they work and distill patterns |
 | `omega-feature.md` + `omega-new-feature.md` (duplicate) | Consolidated: only `omega-new-feature.md` |
 | `omega-improve.md` + `omega-improve-functionality.md` (duplicate) | Consolidated: only `omega-improve.md` |
@@ -26,7 +26,7 @@ OMEGA is **not** an application. It is a set of agent definitions, command orche
 omega/
 ├── core/                              # Universal foundation
 │   ├── agents/                        # 16 agents every project needs
-│   ├── commands/                      # 19 workflow orchestrators
+│   ├── commands/                      # 20 workflow orchestrators
 │   ├── db/                            # Institutional memory layer
 │   │   ├── schema.sql                 # SQLite schema (tables, views, indexes)
 │   │   └── queries/                   # Named query templates
@@ -39,7 +39,9 @@ omega/
 │   │   ├── incident-protocol.md      # Bug tracking with INC-NNN tickets
 │   │   ├── fail-safes.md             # Iteration limits, prerequisite gates
 │   │   ├── context-budget.md         # 60% budget, scoping strategy
-│   │   └── identity.md               # Experience levels, communication styles
+│   │   ├── identity.md               # Experience levels, communication styles
+│   │   ├── cortex-protocol.md        # JSONL format, curation rules, import rules
+│   │   └── sync-adapters.md          # Adapter interface specification
 │   └── hooks/                         # Claude Code automation hooks
 │       ├── briefing.sh                # UserPromptSubmit: auto-injects memory context (once per session)
 │       ├── learning-detector.sh       # UserPromptSubmit: detects corrections → nags until saved (every message)
@@ -47,11 +49,13 @@ omega/
 │       ├── debrief-gate.sh            # PreToolUse: blocks git commit without outcomes
 │       ├── incremental-gate.sh        # PreToolUse: blocks edits after 10 modifications without outcomes
 │       ├── debrief-nudge.sh           # PostToolUse: periodic incremental logging reminder
-│       └── session-close.sh           # Notification: promotes hotspot risk levels
+│       ├── session-close.sh           # Notification: promotes hotspot risk levels
+│       └── cortex_sanitize.py         # Library: Cortex security — input sanitization, HMAC, path validation
 │
 ├── extensions/                        # Domain-specific packs (opt-in)
 │   ├── blockchain/                    # 3 agents, 3 commands
-│   └── c2c-protocol/                  # 2 agents, 3 commands
+│   ├── c2c-protocol/                  # 2 agents, 3 commands
+│   └── cortex-bridge/                 # Self-hosted Cortex sync bridge (Rust/axum)
 │
 ├── scripts/
 │   ├── setup.sh                       # Deploy to target projects
@@ -239,7 +243,7 @@ Session 3: New session starts
 An agent is core if it is useful in **any** software project regardless of domain:
 
 - **Pipeline agents**: discovery, analyst, architect, test-writer, developer, qa, reviewer
-- **Utility agents**: feature-evaluator, functionality-analyst (read-only), codebase-expert (read-only), wizard-ux, diagnostician
+- **Utility agents**: feature-evaluator, functionality-analyst (read-only), codebase-expert (read-only), wizard-ux, diagnostician, curator
 - **Dispatch agent**: omega-router (intelligent specialist routing)
 - **Meta agents**: role-creator, role-auditor
 
@@ -320,15 +324,18 @@ The original design relied on agents voluntarily running briefing queries and de
 | "MANDATORY" is aspirational text | Hook execution is infrastructure-level |
 | AI skips it under cognitive load | Hook runs regardless of what the AI is doing |
 
-Four hooks cover the full lifecycle:
+Eight hooks cover the full lifecycle:
 
 | Hook | Enforcement |
 |-|-|
 | `briefing.sh` (UserPromptSubmit) | Automatic — behavioral learnings + open incidents injected on first prompt per session |
+| `learning-detector.sh` (UserPromptSubmit) | Reminder — detects user corrections, nags until saved as behavioral learnings |
+| `learning-gate.sh` (PreToolUse/Bash) | **Blocking** — git commits fail until pending corrections are saved |
 | `debrief-gate.sh` (PreToolUse/Bash) | **Blocking** — git commits fail without this session's self-scoring |
 | `incremental-gate.sh` (PreToolUse/Write,Edit) | **Blocking** — file modifications blocked after 10 edits without outcomes |
 | `debrief-nudge.sh` (PostToolUse) | Reminder — periodic nudge to log incrementally every 5th tool call |
 | `session-close.sh` (Notification) | Automatic — promotes hotspot risk levels |
+| `cortex_sanitize.py` (Library) | Security — input sanitization, HMAC verification, path validation for Cortex |
 
 Self-scoring and lesson distillation still require AI judgment, but the AI literally cannot commit code without doing it first. This is the closest analog to Omega's gateway — the infrastructure forces the protocol.
 
@@ -404,4 +411,4 @@ All backends implement the same adapter interface. The curator and briefing hook
 | `core/protocols/cortex-protocol.md` | Protocol | JSONL format, curation rules, import rules |
 | `core/protocols/sync-adapters.md` | Protocol | Adapter interface specification |
 | `core/commands/omega-cortex-config.md` | Command | Backend configuration |
-| `extensions/cortex-bridge/` | Extension | Self-hosted bridge server (Python/FastAPI) |
+| `extensions/cortex-bridge/` | Extension | Self-hosted bridge server (Rust/axum + rustls + SQLite) |

@@ -97,7 +97,7 @@ Then inside Claude Code:
 
 #### Using `omg` CLI
 ```bash
-omg init                              # Core only (16 agents, 19 commands, 7 hooks, SQLite memory)
+omg init                              # Core only (16 agents, 20 commands, 8 hooks, SQLite memory)
 omg init --ext=blockchain             # Core + specific extension
 omg init --ext=blockchain,c2c-protocol # Core + multiple extensions
 omg init --ext=all                    # Core + all extensions
@@ -128,9 +128,9 @@ When you run setup.sh, the following is created/updated in your target project:
 your-project/
 ├── .claude/
 │   ├── agents/           <- 16 core agent definitions (+ extension agents)
-│   ├── commands/         <- 19 core commands (+ extension commands)
-│   ├── protocols/        <- 5 on-demand protocol reference files
-│   ├── hooks/            <- 7 automation hooks
+│   ├── commands/         <- 20 core commands (+ extension commands)
+│   ├── protocols/        <- 7 on-demand protocol reference files
+│   ├── hooks/            <- 8 automation hooks
 │   ├── settings.json     <- Hook configuration (merged, not overwritten)
 │   ├── memory.db         <- SQLite institutional memory database
 │   └── db-queries/       <- Query reference files for agents
@@ -164,16 +164,17 @@ The setup script is fully idempotent with change detection:
 omega/
 ├── core/                              # Every project gets this
 │   ├── agents/                        # 16 universal agents
-│   ├── commands/                      # 19 universal commands
-│   ├── protocols/                     # 5 on-demand reference files (with @INDEX lazy-load)
+│   ├── commands/                      # 20 universal commands
+│   ├── protocols/                     # 7 on-demand reference files (with @INDEX lazy-load)
 │   ├── db/                            # Institutional memory layer
 │   │   ├── schema.sql                 # SQLite schema
 │   │   └── queries/                   # Named query templates
-│   └── hooks/                         # 7 automation hooks
+│   └── hooks/                         # 8 automation hooks
 │
 ├── extensions/                        # Opt-in per project
 │   ├── blockchain/                    # Ethereum, Solana, Cosmos, Substrate
-│   └── c2c-protocol/                  # C2C protocol research
+│   ├── c2c-protocol/                  # C2C protocol research
+│   └── cortex-bridge/                 # Self-hosted Cortex sync bridge (Rust/axum)
 │
 ├── cli/                               # Rust binary (omg) — recommended installer
 │   ├── src/                           # 11 modules (~2900 lines)
@@ -210,6 +211,9 @@ Every target project gets `.claude/memory.db` — a persistent knowledge base th
 | `decay_log` | Memory evolution audit trail |
 | `user_profile` | Per-project identity (name, experience level, communication style) |
 | `onboarding_state` | Tracks onboarding flow progress and resumability |
+| `shared_imports` | Tracks imported shared knowledge entries (deduplication) |
+| `cortex_security_log` | Security audit trail for Cortex operations |
+| `cortex_sync_state` | Middleware sync tracking for adapter backends |
 
 **Agent protocol**: Before work -> query DB (briefing). During work -> log incrementally. After work -> close-out (verify completeness, distill lessons, extract behavioral learnings, track bugs as incidents). The briefing hook injects an **OMEGA Identity** block and **behavioral learnings** at session start.
 
@@ -227,7 +231,7 @@ Bugs are tracked as **incidents** (INC-001, INC-002, ...). Each incident has a s
 
 ### Automation Hooks
 
-Seven hooks enforce the memory protocol automatically:
+Eight hooks enforce the memory protocol automatically:
 
 | Hook | Event | Purpose |
 |------|-------|---------|
@@ -238,6 +242,7 @@ Seven hooks enforce the memory protocol automatically:
 | `incremental-gate.sh` | PreToolUse (Write/Edit) | Blocks after 10 file edits without logging outcomes |
 | `debrief-nudge.sh` | PostToolUse | Periodic reminder to log incrementally |
 | `session-close.sh` | Notification | Promotes hotspot risk levels at session end |
+| `cortex_sanitize.py` | (library) | Cortex security: input sanitization, HMAC verification, path validation |
 
 ## Core Agents (16)
 
@@ -260,7 +265,7 @@ Seven hooks enforce the memory protocol automatically:
 | **curator** | Knowledge curation: evaluates memory.db entries for team sharing, exports to `.omega/shared/` |
 | **role-auditor** | Meta-agent: adversarial audit of role definitions (read-only) |
 
-## Core Commands (19)
+## Core Commands (20)
 
 | Command | Description |
 |---------|-------------|
@@ -283,6 +288,7 @@ Seven hooks enforce the memory protocol automatically:
 | `/omega:onboard [--update]` | Set up your OMEGA identity profile |
 | `/omega:share [--force] [--dry-run] [--scope]` | Export curated knowledge to shared team store |
 | `/omega:team-status` | Dashboard: shared knowledge stats, contributions, incidents, hotspots |
+| `/omega:cortex-config [--show] [--reset]` | Configure Cortex sync backend (git-jsonl, cloudflare-d1, turso, self-hosted) |
 
 ## Intelligent Specialist Routing
 
@@ -339,6 +345,11 @@ Over time, your project accumulates the exact specialists it needs. A fintech pr
 ### C2C Protocol (2 agents, 3 commands)
 - **proto-auditor** — Audits protocol specs across 12 dimensions at 3 levels
 - **proto-architect** — Generates patches from audit findings via 6-step pipeline
+
+### Cortex Bridge (Rust server)
+- Self-hosted sync bridge for OMEGA Cortex collective intelligence
+- Rust/axum HTTP server with TLS (rustls), HMAC-SHA256 authentication, SQLite storage
+- Docker deployment via included Dockerfile and docker-compose.yml
 
 ## Guardrails
 

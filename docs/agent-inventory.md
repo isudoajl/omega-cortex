@@ -1,6 +1,6 @@
 # Agent Inventory
 
-> All 23 agents: 16 core + 7 extensions. Each with tools, inputs, outputs, and memory protocol.
+> All 21 agents: 16 core + 5 extensions. Each with tools, inputs, outputs, and memory protocol.
 
 ## Core Agents (16)
 
@@ -311,7 +311,7 @@ Uses an 8-phase process with structural completeness verification.
 
 ---
 
-## Extension Agents (7)
+## Extension Agents (5)
 
 ### Blockchain Extension (3 agents)
 

@@ -54,10 +54,12 @@ The briefing/debrief protocol was originally voluntary — agents were told to r
 |------|-------|-------------|------------|
 | `briefing.sh` | UserPromptSubmit | Injects behavioral learnings + open incidents on first prompt per session | **Automatic** — AI sees it, can't skip it |
 | `learning-detector.sh` | UserPromptSubmit | Detects user corrections and prompts AI to save behavioral learnings (every message) | **Reminder** — fires on correction patterns |
+| `learning-gate.sh` | PreToolUse (Bash) | Blocks `git commit` until pending corrections are saved as behavioral learnings | **Blocking** — prevents knowledge loss |
 | `debrief-gate.sh` | PreToolUse (Bash) | Blocks `git commit` unless outcomes logged since session start (uses briefing timestamp) | **Blocking** — AI cannot commit without logging outcomes |
 | `incremental-gate.sh` | PreToolUse (Write/Edit) | Blocks file modifications after 10 edits without outcomes logged | **Blocking** — enforces incremental logging even without commits |
 | `debrief-nudge.sh` | PostToolUse | Reminds AI to log incrementally (every 5th tool call if no outcomes logged this session) | **Reminder** — periodic nudge |
 | `session-close.sh` | Notification | Promotes hotspot risk levels based on touch counts | **Automatic** — runs silently |
+| `cortex_sanitize.py` | (Library) | Cortex security: input sanitization, HMAC verification, path validation | **Security** — used by Cortex sync operations |
 
 Hook scripts live in `.claude/hooks/` and are configured in `.claude/settings.json`. All are deployed automatically by `setup.sh`.
 

@@ -43,12 +43,12 @@ Either method deploys everything:
 | What | Where | Notes |
 |------|-------|-------|
 | 16 agents | `.claude/agents/` | Core pipeline + dispatch + curator agents |
-| 19 commands | `.claude/commands/` | Workflow orchestrators (incl. Cortex: share, team-status) |
+| 20 commands | `.claude/commands/` | Workflow orchestrators (incl. Cortex: share, team-status, cortex-config) |
 | 7 protocols + index | `.claude/protocols/` | On-demand reference files with @INDEX lazy-load blocks |
 | Workflow rules | `CLAUDE.md` | **Appended** to existing CLAUDE.md (never overwrites) |
-| Automation hooks | `.claude/hooks/` | 7 hooks: auto-briefing, learning detector + gate, commit gate, incremental gate, debrief nudge, session close |
+| Automation hooks | `.claude/hooks/` | 8 hooks: auto-briefing, learning detector + gate, commit gate, incremental gate, debrief nudge, session close, cortex sanitize |
 | Hook config | `.claude/settings.json` | Registers hooks with Claude Code |
-| Memory DB | `.claude/memory.db` | SQLite with 20 tables, 12 views (incl. self-learning + Cortex) |
+| Memory DB | `.claude/memory.db` | SQLite with 21 tables, 12 views (incl. self-learning + Cortex) |
 | Shared store | `.omega/shared/` | Git-tracked team knowledge (Cortex collective intelligence) |
 | Query references | `.claude/db-queries/` | Briefing, debrief, maintenance SQL templates |
 | Scaffolding | `specs/SPECS.md`, `docs/DOCS.md` | Only created if they don't exist |
@@ -148,10 +148,13 @@ your-project/
 │   │   └── omega-blockchain-network.md  (if --ext=blockchain)
 │   ├── hooks/                 ← Automation hooks
 │   │   ├── briefing.sh        ← UserPromptSubmit: injects memory context on first prompt
+│   │   ├── learning-detector.sh ← UserPromptSubmit: detects corrections, nags until saved
+│   │   ├── learning-gate.sh   ← PreToolUse (Bash): blocks commit until corrections saved
 │   │   ├── debrief-gate.sh   ← PreToolUse (Bash): blocks git commit without outcomes
 │   │   ├── incremental-gate.sh ← PreToolUse (Write/Edit): blocks after 10 edits without outcomes
 │   │   ├── debrief-nudge.sh  ← PostToolUse: periodic incremental logging reminder
-│   │   └── session-close.sh   ← Notification: promotes hotspot risk levels
+│   │   ├── session-close.sh   ← Notification: promotes hotspot risk levels
+│   │   └── cortex_sanitize.py ← Library: Cortex security (sanitization, HMAC, path validation)
 │   ├── settings.json          ← Hook configuration (registers hooks with Claude Code)
 │   ├── memory.db              ← Institutional memory + self-learning (SQLite)
 │   ├── db-queries/            ← Query reference files
@@ -167,7 +170,7 @@ your-project/
 
 ## How Hooks Work (Automated Briefing/Incremental Logging Enforcement)
 
-OMEGA deploys seven Claude Code hooks that automate and enforce the institutional memory protocol:
+OMEGA deploys eight Claude Code hooks that automate and enforce the institutional memory protocol:
 
 ### `briefing.sh` (UserPromptSubmit)
 Runs on the first user prompt of each session (uses session_id to fire only once). It:
@@ -225,10 +228,13 @@ Runs after every tool execution. Throttled to avoid noise:
 | Hook | Event | Enforcement level |
 |------|-------|------------------|
 | `briefing.sh` | UserPromptSubmit | **Automatic** — context injected on first prompt per session |
+| `learning-detector.sh` | UserPromptSubmit | **Reminder** — detects corrections, nags until saved |
+| `learning-gate.sh` | PreToolUse (Bash) | **Blocking** — git commits fail until pending corrections saved |
 | `debrief-gate.sh` | PreToolUse (Bash) | **Blocking** — git commits fail without this session's outcomes |
 | `incremental-gate.sh` | PreToolUse (Write/Edit) | **Blocking** — file edits blocked after 10 modifications without outcomes |
 | `debrief-nudge.sh` | PostToolUse | **Reminder** — periodic nudge every 5th tool call |
 | `session-close.sh` | Notification | **Automatic** — promotes hotspot risk levels |
+| `cortex_sanitize.py` | (Library) | **Security** — input sanitization, HMAC verification, path validation |
 
 ### Verifying hooks are active
 In Claude Code, run:

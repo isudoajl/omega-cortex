@@ -21,6 +21,7 @@ On-demand protocol files loaded by agents when needed (deployed to `.claude/prot
 - `core/protocols/context-budget.md` — 60% budget, scoping strategy, heuristics
 - `core/protocols/identity.md` — Experience levels, communication styles, override hierarchy
 - `core/protocols/cortex-protocol.md` — Cortex shared knowledge: JSONL format, curation rules, import rules, privacy, contributor identity, conflict resolution, security (HMAC entry signing, sanitization rules, suspicious patterns, SQL parameterization, bridge auth, audit logging)
+- `core/protocols/sync-adapters.md` — Adapter interface specification for Cortex sync backends (git-jsonl, cloudflare-d1, self-hosted)
 
 ## Agent Reference
 
@@ -30,6 +31,7 @@ On-demand protocol files loaded by agents when needed (deployed to `.claude/prot
 
 - [Blockchain Extension](extensions/blockchain.md) — blockchain-network, blockchain-debug, stress-tester agents and commands
 - [C2C Protocol Extension](extensions/c2c-protocol.md) — proto-auditor, proto-architect agents and commands
+- [Cortex Bridge Extension](extensions/cortex-bridge.md) — Self-hosted Rust/axum sync bridge for OMEGA Cortex collective intelligence
 
 ## Codebase Functionalities
 
