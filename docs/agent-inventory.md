@@ -1,8 +1,8 @@
 # Agent Inventory
 
-> All 22 agents: 15 core + 7 extensions. Each with tools, inputs, outputs, and memory protocol.
+> All 23 agents: 16 core + 7 extensions. Each with tools, inputs, outputs, and memory protocol.
 
-## Core Agents (15)
+## Core Agents (16)
 
 All core agents include **mandatory briefing/incremental logging/close-out** for institutional memory. Agents log to memory.db incrementally during work (not batched at the end), ensuring data survives context compaction. They skip the memory protocol gracefully if `.claude/memory.db` does not exist.
 
@@ -133,7 +133,7 @@ The only agent that engages in extended back-and-forth with the user. Produces a
 
 ---
 
-### Utility Agents (5)
+### Utility Agents (6)
 
 These execute standalone or as gates in the pipeline.
 
@@ -206,6 +206,25 @@ Advisory — user always has final say. NO-GO can be overridden.
 | **Invoked by** | `omega:wizard-ux` |
 
 Produces specifications consumed by architect → test-writer → developer. Does NOT write implementation code.
+
+---
+
+#### Curator
+
+**File:** `core/agents/curator.md`
+**Model:** claude-sonnet-4-20250514
+**Tools:** Read, Write, Bash, Grep, Glob
+
+| | |
+|-|-|
+| **Role** | Knowledge curation: evaluates memory.db entries for team relevance, applies confidence quality gate (>= 0.8), deduplicates via content_hash, exports to `.omega/shared/` JSONL/JSON files |
+| **Input** | Local memory.db entries (behavioral_learnings, incidents, hotspots, lessons, patterns, decisions) |
+| **Output** | `.omega/shared/behavioral-learnings.jsonl`, `.omega/shared/incidents/INC-NNN.json`, `.omega/shared/hotspots.jsonl`, `.omega/shared/lessons.jsonl`, `.omega/shared/patterns.jsonl`, `.omega/shared/decisions.jsonl`, `.omega/shared/conflicts.jsonl` |
+| **Briefing reads** | Recent share runs, known conflicts, shared store stats |
+| **Debrief writes** | Export results, new conflicts, reinforcement data |
+| **Invoked by** | `omega:share` |
+
+Handles cross-contributor reinforcement (+0.2 boost for different contributors, 1.0 confidence at 3+ contributors), conflict detection (negation heuristic), and privacy filtering (is_private check). Uses python3 for JSONL manipulation. Part of the OMEGA Cortex shared knowledge system.
 
 ---
 

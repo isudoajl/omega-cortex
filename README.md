@@ -97,7 +97,7 @@ Then inside Claude Code:
 
 #### Using `omg` CLI
 ```bash
-omg init                              # Core only (15 agents, 17 commands, 7 hooks, SQLite memory)
+omg init                              # Core only (16 agents, 18 commands, 7 hooks, SQLite memory)
 omg init --ext=blockchain             # Core + specific extension
 omg init --ext=blockchain,c2c-protocol # Core + multiple extensions
 omg init --ext=all                    # Core + all extensions
@@ -127,8 +127,8 @@ When you run setup.sh, the following is created/updated in your target project:
 ```
 your-project/
 ├── .claude/
-│   ├── agents/           <- 15 core agent definitions (+ extension agents)
-│   ├── commands/         <- 16 core commands (+ extension commands)
+│   ├── agents/           <- 16 core agent definitions (+ extension agents)
+│   ├── commands/         <- 18 core commands (+ extension commands)
 │   ├── protocols/        <- 5 on-demand protocol reference files
 │   ├── hooks/            <- 7 automation hooks
 │   ├── settings.json     <- Hook configuration (merged, not overwritten)
@@ -280,10 +280,11 @@ Six hooks enforce the memory protocol automatically:
 | `/omega:diagnose "bug" [--scope] [--fix]` | Deep root cause diagnosis for hard bugs |
 | `/omega:learn "rule" [--list] [--remove]` | Manually teach OMEGA a behavioral learning |
 | `/omega:onboard [--update]` | Set up your OMEGA identity profile |
+| `/omega:share [--force] [--dry-run] [--scope]` | Export curated knowledge to shared team store |
 
 ## Intelligent Specialist Routing
 
-OMEGA ships with 15 agents that cover software development. But real projects need expertise in hundreds of domains — marketing, compliance, database optimization, DevOps, security hardening, content writing, etc.
+OMEGA ships with 16 agents that cover software development. But real projects need expertise in hundreds of domains — marketing, compliance, database optimization, DevOps, security hardening, content writing, etc.
 
 `/omega:consult` is the catch-all for domain expertise that doesn't fit the structured development commands:
 

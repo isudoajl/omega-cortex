@@ -14,8 +14,8 @@ There is no build system or runtime. To test changes:
 3. Run the workflow commands in the target project via Claude Code
 
 ### Key Structure
-- `core/agents/` — 15 core agent definitions
-- `core/commands/` — 16 core workflow commands
+- `core/agents/` — 16 core agent definitions
+- `core/commands/` — 18 core workflow commands
 - `core/protocols/` — Detailed protocol reference files (deployed to `.claude/protocols/`)
 - `core/db/` — SQLite schema and query templates
 - `core/hooks/` — Automation hooks (deployed to `.claude/hooks/`)
