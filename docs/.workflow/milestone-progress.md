@@ -16,7 +16,7 @@
 | ID | Name | Status | Timestamp |
 |----|------|--------|-----------|
 | M5 | Briefing Import + Shared Tracking | COMPLETE | 2026-03-20 |
-| M6 | Diagnostician + Team Status | PENDING | |
+| M6 | Diagnostician + Team Status | COMPLETE | 2026-03-20 |
 | M7 | Documentation + CLAUDE.md | PENDING | |
 
 ## Phase 4: Sync Adapters

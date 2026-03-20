@@ -168,6 +168,23 @@ sqlite3 .claude/memory.db "INSERT INTO incident_entries (incident_id, entry_type
 ```
 This is the most expensive artifact to regenerate — never lose it.
 
+#### Shared Incident Query (Cortex)
+
+If `.omega/shared/incidents/` exists and contains incident files, query them for pattern matching against the current investigation. This is an additive evidence source — it does NOT replace `incident_entries` or `failed_approaches` queries.
+
+1. **Read shared incidents**: Glob `.omega/shared/incidents/*.json` files. If the directory does not exist or contains no files, skip this step silently (graceful degradation).
+2. **Compare against current investigation**: For each shared incident JSON file, extract its `domain`, `tags`, `symptoms`, and `resolution` fields. Compare against the current investigation:
+   - **Domain match**: Same domain as the current bug (e.g., both in `auth`, both in `networking`)
+   - **Tag overlap**: Overlapping tags between the shared incident and the current investigation
+   - **Symptom similarity**: Keyword overlap between the shared incident's symptoms and the current bug's symptom profile (fuzzy match via keyword overlap)
+3. **Score matches**: A match is "strong" if 2+ criteria align (same domain AND overlapping tags, or same domain AND similar symptoms). A single-criterion match is "weak" — note it but don't surface prominently.
+4. **Add to constraint table**: If a match is found, add it as shared evidence:
+   ```
+   | Shared evidence from INC-NNN (resolved by Developer X) | [resolution summary] | [match strength] | Suggests: [relevant pattern] |
+   ```
+5. **Surface in hypothesis generation**: For strong matches, surface them during the Explorer phase: "This resembles INC-042 — [description of the similar incident]. See resolution: [summary]." This gives the Explorer additional hypotheses to consider.
+6. **Do NOT auto-apply the resolution**: The diagnostician must evaluate whether the shared resolution is relevant to the current bug. Shared incidents are suggestive evidence, not prescriptive solutions. The root cause may be similar but the context different.
+
 ### Phase 3: Hypothesis Generation and Elimination (The Loop)
 
 Run the Explorer/Skeptic/Analogist loop:
