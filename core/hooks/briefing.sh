@@ -136,11 +136,24 @@ if [ -d "$SHARED_DIR" ]; then
 
     # --- Shared Behavioral Learnings (top 10 by confidence DESC) ---
     if [ -f "$SHARED_DIR/behavioral-learnings.jsonl" ] && [ -s "$SHARED_DIR/behavioral-learnings.jsonl" ]; then
-        SHARED_BL=$(CORTEX_DB_PATH="$DB_PATH" CORTEX_SHARED_BL="$SHARED_DIR/behavioral-learnings.jsonl" python3 << 'PYEOF' 2>/dev/null || true
+        SHARED_BL=$(CORTEX_DB_PATH="$DB_PATH" CORTEX_SHARED_BL="$SHARED_DIR/behavioral-learnings.jsonl" CORTEX_PROJECT_DIR="$PROJECT_DIR" python3 << 'PYEOF' 2>/dev/null || true
 import json, sys, subprocess, os, re
 
 db_path = os.environ.get("CORTEX_DB_PATH", "")
 shared_file = os.environ.get("CORTEX_SHARED_BL", "")
+project_dir = os.environ.get("CORTEX_PROJECT_DIR", ".")
+
+# Import sanitization module (deployed alongside briefing.sh)
+sanitize_mod = None
+try:
+    hooks_dir = os.path.join(project_dir, ".claude", "hooks")
+    if os.path.isfile(os.path.join(hooks_dir, "cortex_sanitize.py")):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("cortex_sanitize", os.path.join(hooks_dir, "cortex_sanitize.py"))
+        sanitize_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sanitize_mod)
+except Exception:
+    pass
 
 def fix_json_line(line):
     """Fix bare decimals like .81 to 0.81 for JSON compliance."""
@@ -148,6 +161,16 @@ def fix_json_line(line):
 
 if not shared_file or not os.path.isfile(shared_file):
     sys.exit(0)
+
+# Load HMAC key if available (REQ-CTX-052)
+cortex_key = None
+key_path = os.path.join(project_dir, ".omega", ".cortex-key")
+try:
+    if os.path.isfile(key_path):
+        with open(key_path, "r") as kf:
+            cortex_key = kf.read().strip()
+except Exception:
+    pass
 
 # Check if shared_imports table exists
 has_table = False
@@ -178,6 +201,7 @@ if has_table and db_path:
 # Parse JSONL (first 500 lines)
 entries = []
 seen_uuids = set()
+security_events = []  # (event_type, severity, details, entry_uuid, contributor)
 try:
     with open(shared_file, "r") as f:
         for i, line in enumerate(f):
@@ -195,13 +219,57 @@ try:
                 continue
             if uuid in imported or uuid in seen_uuids:
                 continue
+
+            contributor = obj.get("contributor") or ""
+
+            # HMAC signature verification (REQ-CTX-052)
+            if cortex_key and sanitize_mod:
+                sig = obj.get("signature")
+                if not sig:
+                    # Unsigned entry — reject when key exists
+                    security_events.append(("unsigned_entry_rejected", "critical",
+                        f"Unsigned entry rejected: {uuid}", uuid, contributor))
+                    continue
+                if not sanitize_mod.verify_entry(obj, cortex_key):
+                    security_events.append(("signature_failure", "critical",
+                        f"Invalid signature for entry: {uuid}", uuid, contributor))
+                    continue
+
             seen_uuids.add(uuid)
             confidence = float(obj.get("confidence", 0))
             rule = obj.get("rule", "")
-            contributor = obj.get("contributor") or ""
+            context_field = obj.get("context", "")
+
+            # Sanitize text fields (REQ-CTX-051, REQ-CTX-055)
+            if sanitize_mod:
+                rule, rule_count = sanitize_mod.sanitize_field(rule)
+                context_field, ctx_count = sanitize_mod.sanitize_field(context_field)
+                total_redactions = rule_count + ctx_count
+                if total_redactions > 0:
+                    security_events.append(("content_sanitized", "warning",
+                        f"Sanitized {total_redactions} pattern(s) in behavioral learning",
+                        uuid, contributor))
+                if total_redactions >= 3:
+                    security_events.append(("content_rejected", "critical",
+                        f"Entry rejected: {total_redactions} redactions (threshold: 3)",
+                        uuid, contributor))
+                    continue
+
             entries.append((uuid, confidence, rule, contributor))
 except Exception:
     sys.exit(0)
+
+if not entries and not security_events:
+    sys.exit(0)
+
+# Log security events to cortex_security_log (REQ-CTX-060)
+if security_events and sanitize_mod and db_path and os.path.isfile(db_path):
+    for evt_type, sev, details, evt_uuid, evt_contrib in security_events:
+        try:
+            sanitize_mod.log_security_event(db_path, evt_type, sev, details,
+                "behavioral-learnings.jsonl", evt_uuid, evt_contrib)
+        except Exception:
+            pass
 
 if not entries:
     sys.exit(0)
@@ -247,14 +315,37 @@ PYEOF
     if [ -d "$SHARED_DIR/incidents" ]; then
         INCIDENT_FILES=$(find "$SHARED_DIR/incidents" -name "*.json" -type f 2>/dev/null || true)
         if [ -n "$INCIDENT_FILES" ]; then
-            SHARED_INC=$(CORTEX_DB_PATH="$DB_PATH" CORTEX_INCIDENTS_DIR="$SHARED_DIR/incidents" python3 << 'PYEOF' 2>/dev/null || true
+            SHARED_INC=$(CORTEX_DB_PATH="$DB_PATH" CORTEX_INCIDENTS_DIR="$SHARED_DIR/incidents" CORTEX_PROJECT_DIR="$PROJECT_DIR" python3 << 'PYEOF' 2>/dev/null || true
 import json, sys, subprocess, os, glob
 
 db_path = os.environ.get("CORTEX_DB_PATH", "")
 incidents_dir = os.environ.get("CORTEX_INCIDENTS_DIR", "")
+project_dir = os.environ.get("CORTEX_PROJECT_DIR", ".")
+
+# Import sanitization module
+sanitize_mod = None
+try:
+    hooks_dir = os.path.join(project_dir, ".claude", "hooks")
+    if os.path.isfile(os.path.join(hooks_dir, "cortex_sanitize.py")):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("cortex_sanitize", os.path.join(hooks_dir, "cortex_sanitize.py"))
+        sanitize_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sanitize_mod)
+except Exception:
+    pass
 
 if not incidents_dir or not os.path.isdir(incidents_dir):
     sys.exit(0)
+
+# Load HMAC key if available (REQ-CTX-052)
+cortex_key = None
+key_path = os.path.join(project_dir, ".omega", ".cortex-key")
+try:
+    if os.path.isfile(key_path):
+        with open(key_path, "r") as kf:
+            cortex_key = kf.read().strip()
+except Exception:
+    pass
 
 # Check if shared_imports table exists
 has_table = False
@@ -284,6 +375,7 @@ if has_table and db_path:
 
 # Parse incident JSON files
 entries = []
+security_events = []
 for fpath in glob.glob(os.path.join(incidents_dir, "*.json")):
     try:
         with open(fpath, "r") as f:
@@ -298,11 +390,53 @@ for fpath in glob.glob(os.path.join(incidents_dir, "*.json")):
         continue
     if incident_id in imported:
         continue
-    title = obj.get("title", "")
+
     contributor = obj.get("contributor") or ""
-    resolved_at = obj.get("resolved_at", "")
     source_file = os.path.basename(fpath)
+
+    # HMAC signature verification (REQ-CTX-052)
+    if cortex_key and sanitize_mod:
+        sig = obj.get("signature")
+        if not sig:
+            security_events.append(("unsigned_entry_rejected", "critical",
+                f"Unsigned incident rejected: {incident_id}", incident_id, contributor))
+            continue
+        if not sanitize_mod.verify_entry(obj, cortex_key):
+            security_events.append(("signature_failure", "critical",
+                f"Invalid signature for incident: {incident_id}", incident_id, contributor))
+            continue
+
+    title = obj.get("title", "")
+    description = obj.get("description", "")
+    resolution = obj.get("resolution", "")
+
+    # Sanitize text fields (REQ-CTX-051)
+    if sanitize_mod:
+        title, t_count = sanitize_mod.sanitize_field(title)
+        description, d_count = sanitize_mod.sanitize_field(description)
+        resolution, r_count = sanitize_mod.sanitize_field(resolution)
+        total_redactions = t_count + d_count + r_count
+        if total_redactions > 0:
+            security_events.append(("content_sanitized", "warning",
+                f"Sanitized {total_redactions} pattern(s) in incident {incident_id}",
+                incident_id, contributor))
+        if total_redactions >= 3:
+            security_events.append(("content_rejected", "critical",
+                f"Incident rejected: {total_redactions} redactions (threshold: 3)",
+                incident_id, contributor))
+            continue
+
+    resolved_at = obj.get("resolved_at", "")
     entries.append((incident_id, title, contributor, resolved_at, source_file))
+
+# Log security events (REQ-CTX-060)
+if security_events and sanitize_mod and db_path and os.path.isfile(db_path):
+    for evt_type, sev, details, evt_uuid, evt_contrib in security_events:
+        try:
+            sanitize_mod.log_security_event(db_path, evt_type, sev, details,
+                f"incidents/{evt_uuid}.json", evt_uuid, evt_contrib)
+        except Exception:
+            pass
 
 if not entries:
     sys.exit(0)
@@ -346,10 +480,24 @@ PYEOF
 
     # --- Shared Hotspots (top 5 by risk_level, NOT tracked in shared_imports) ---
     if [ -f "$SHARED_DIR/hotspots.jsonl" ] && [ -s "$SHARED_DIR/hotspots.jsonl" ]; then
-        SHARED_HS=$(CORTEX_SHARED_HS="$SHARED_DIR/hotspots.jsonl" python3 << 'PYEOF' 2>/dev/null || true
+        SHARED_HS=$(CORTEX_SHARED_HS="$SHARED_DIR/hotspots.jsonl" CORTEX_DB_PATH="$DB_PATH" CORTEX_PROJECT_DIR="$PROJECT_DIR" python3 << 'PYEOF' 2>/dev/null || true
 import json, sys, os
 
 shared_file = os.environ.get("CORTEX_SHARED_HS", "")
+db_path = os.environ.get("CORTEX_DB_PATH", "")
+project_dir = os.environ.get("CORTEX_PROJECT_DIR", ".")
+
+# Import sanitization module
+sanitize_mod = None
+try:
+    hooks_dir = os.path.join(project_dir, ".claude", "hooks")
+    if os.path.isfile(os.path.join(hooks_dir, "cortex_sanitize.py")):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("cortex_sanitize", os.path.join(hooks_dir, "cortex_sanitize.py"))
+        sanitize_mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sanitize_mod)
+except Exception:
+    pass
 
 if not shared_file or not os.path.isfile(shared_file):
     sys.exit(0)
@@ -357,6 +505,7 @@ if not shared_file or not os.path.isfile(shared_file):
 risk_order = {"critical": 4, "high": 3, "medium": 2, "low": 1}
 
 entries = []
+security_events = []
 try:
     with open(shared_file, "r") as f:
         for i, line in enumerate(f):
@@ -370,12 +519,43 @@ try:
             except (json.JSONDecodeError, ValueError):
                 continue
             file_path = obj.get("file_path", "")
+            uuid = obj.get("uuid", "")
+            contributor = obj.get("contributor", "")
+
+            # Validate file path (REQ-CTX-055)
+            if sanitize_mod:
+                validated = sanitize_mod.validate_file_path(file_path)
+                if validated == "[INVALID PATH]":
+                    security_events.append(("path_traversal_blocked", "warning",
+                        f"Invalid file path blocked: {file_path}", uuid, contributor))
+                    file_path = validated
+                else:
+                    file_path = validated
+
+            # Sanitize description field (REQ-CTX-051)
+            description = obj.get("description", "")
+            if sanitize_mod and description:
+                description, desc_count = sanitize_mod.sanitize_field(description)
+                if desc_count > 0:
+                    security_events.append(("content_sanitized", "warning",
+                        f"Sanitized {desc_count} pattern(s) in hotspot description",
+                        uuid, contributor))
+
             risk_level = obj.get("risk_level", "low")
             times_touched = int(obj.get("times_touched", 0))
             contributor_count = int(obj.get("contributor_count", 0))
             entries.append((file_path, risk_level, times_touched, contributor_count))
 except Exception:
     sys.exit(0)
+
+# Log security events (REQ-CTX-060)
+if security_events and sanitize_mod and db_path and os.path.isfile(db_path):
+    for evt_type, sev, details, evt_uuid, evt_contrib in security_events:
+        try:
+            sanitize_mod.log_security_event(db_path, evt_type, sev, details,
+                "hotspots.jsonl", evt_uuid, evt_contrib)
+        except Exception:
+            pass
 
 if not entries:
     sys.exit(0)
@@ -392,6 +572,50 @@ PYEOF
             TEAM_OUTPUT="${TEAM_OUTPUT}${SHARED_HS}"$'\n'
             HAS_TEAM_CONTENT=true
         fi
+    fi
+
+    # --- Surface critical security events (REQ-CTX-060) ---
+    SECURITY_WARNINGS=$(CORTEX_DB_PATH="$DB_PATH" python3 << 'PYEOF' 2>/dev/null || true
+import sys, os, subprocess
+
+db_path = os.environ.get("CORTEX_DB_PATH", "")
+if not db_path or not os.path.isfile(db_path):
+    sys.exit(0)
+
+# Check if cortex_security_log table exists
+try:
+    r = subprocess.run(
+        ["sqlite3", db_path, "SELECT 1 FROM sqlite_master WHERE type='table' AND name='cortex_security_log' LIMIT 1;"],
+        capture_output=True, text=True, timeout=5
+    )
+    if not r.stdout.strip():
+        sys.exit(0)
+except Exception:
+    sys.exit(0)
+
+# Count critical events from last 24 hours
+try:
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT event_type, COUNT(*) FROM cortex_security_log "
+        "WHERE severity = 'critical' AND timestamp > datetime('now', '-24 hours') "
+        "GROUP BY event_type"
+    )
+    rows = cur.fetchall()
+    conn.close()
+    if rows:
+        for event_type, count in rows:
+            label = event_type.replace('_', ' ')
+            print(f"  [SECURITY] {count} {label} event(s) in last 24h (run /omega:team-status for details)")
+except Exception:
+    pass
+PYEOF
+    )
+    if [ -n "$SECURITY_WARNINGS" ]; then
+        TEAM_OUTPUT="${TEAM_OUTPUT}${SECURITY_WARNINGS}"$'\n'
+        HAS_TEAM_CONTENT=true
     fi
 
     # Output the TEAM KNOWLEDGE section if any content was generated

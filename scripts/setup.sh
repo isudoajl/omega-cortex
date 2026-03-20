@@ -387,6 +387,13 @@ if [ -f ".gitignore" ]; then
     fi
 fi
 
+# Ensure .omega/.cortex-key is gitignored (HMAC signing secret — REQ-CTX-052)
+if [ -f ".gitignore" ]; then
+    if ! grep -q '\.cortex-key' .gitignore 2>/dev/null; then
+        echo '.omega/.cortex-key' >> .gitignore
+    fi
+fi
+
 # ============================================================
 # HOOKS (automated briefing/debrief)
 # ============================================================
@@ -414,6 +421,22 @@ done
 if [ "$VERBOSE" = false ] && [ "$SECTION_UNCHANGED" -gt 0 ]; then
     echo "   ($SECTION_UNCHANGED unchanged)"
 fi
+
+# Deploy Python modules used by hooks (e.g., cortex_sanitize.py)
+for pymod in "$SCRIPT_DIR/core/hooks/"*.py; do
+    [ -f "$pymod" ] || continue
+    name=$(basename "$pymod")
+    copy_if_changed "$pymod" ".claude/hooks/$name"
+    case "$COPY_STATUS" in
+        new)       echo "   + module: $name" ;;
+        updated)   echo "   ~ module: $name" ;;
+        unchanged)
+            if [ "$VERBOSE" = true ]; then
+                echo "   = module: $name"
+            fi
+            ;;
+    esac
+done
 
 # Configure hooks in settings.json (merge, don't overwrite)
 # Use absolute path — $CLAUDE_PROJECT_DIR doesn't reliably expand at runtime

@@ -1,5 +1,5 @@
 -- Claude Workflow Institutional Memory Schema
--- Version: 1.3.0 — Added Cortex collective intelligence layer
+-- Version: 1.5.0 — Added Cortex security hardening (import sanitization, entry signing, audit logging)
 -- Every workflow execution writes to this DB. Every agent reads from it before acting.
 
 PRAGMA journal_mode = WAL;
@@ -341,6 +341,20 @@ CREATE TABLE IF NOT EXISTS shared_imports (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_shared_imports_uuid ON shared_imports(shared_uuid);
+
+-- ============================================================
+-- CORTEX SECURITY LOG — audit trail for security events during import/export
+-- ============================================================
+CREATE TABLE IF NOT EXISTS cortex_security_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,              -- signature_failure, content_sanitized, content_rejected, suspicious_pattern, auth_failure, rate_limited, size_exceeded, path_traversal_blocked, unsigned_entry_rejected
+    severity TEXT NOT NULL CHECK(severity IN ('info', 'warning', 'critical')),
+    details TEXT,
+    source_file TEXT,
+    entry_uuid TEXT,
+    contributor TEXT,
+    timestamp TEXT DEFAULT (datetime('now'))
+);
 
 -- ============================================================
 -- VIEWS — pre-built queries agents use frequently
