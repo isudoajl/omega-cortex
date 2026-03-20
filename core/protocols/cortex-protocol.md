@@ -5,6 +5,7 @@ IMPORT-RULES                             98-134
 PRIVACY                                  135-154
 CONTRIBUTOR-IDENTITY                     155-179
 CONFLICT-RESOLUTION                      180-207
+SECURITY                                 211-325
 @/INDEX -->
 
 # Cortex Protocol
@@ -205,3 +206,120 @@ When the Curator must decide and conflict resolution is unavailable:
 
 ### Future (v2)
 Dedicated `/omega:resolve-conflicts` command (deferred -- REQ-CTX-038).
+
+---
+## SECURITY
+
+The Cortex security model addresses the critical threat that shared entries are injected into Claude's conversation context via `briefing.sh`. A malicious or tampered entry could contain prompt injection, SQL injection, or shell injection payloads. Defense is layered: curator validates before export, entries are HMAC-signed, and the import pipeline sanitizes + verifies before injection.
+
+### Entry Signing (HMAC-SHA256)
+
+Every shared entry MUST include a `signature` field containing an HMAC-SHA256 hex digest.
+
+**Key management:**
+- Project-level shared secret stored at `.omega/.cortex-key` (gitignored)
+- Format: 64-character hex string (256-bit key)
+- Generation: `openssl rand -hex 32 > .omega/.cortex-key && chmod 600 .omega/.cortex-key`
+- Distribution: out-of-band (team members share the key manually)
+
+**Signature computation:**
+```
+1. Remove the `signature` field from the entry
+2. JSON-serialize the remaining entry: sorted keys, no whitespace
+   json.dumps(entry, sort_keys=True, separators=(',', ':'))
+3. Compute HMAC-SHA256 using the hex-decoded key
+   hmac.new(bytes.fromhex(key), canonical.encode('utf-8'), hashlib.sha256).hexdigest()
+4. Store the hex digest in the entry's `signature` field
+```
+
+**Verification (on import):**
+```
+1. Extract `signature` field from entry
+2. Remove `signature` field, recompute canonical JSON
+3. Compute expected HMAC-SHA256
+4. Constant-time compare: hmac.compare_digest(stored, expected)
+5. If mismatch: REJECT entry, log to cortex_security_log
+```
+
+**Backward compatibility:**
+- If `.omega/.cortex-key` does not exist at import time, skip signature verification
+- Entries without a `signature` field are treated as unsigned
+- If key exists but entry is unsigned: REJECT entry
+
+### Sanitization Rules
+
+All shared entries are sanitized at import time before injection into Claude's context or insertion into `memory.db`. Sanitization applies to ALL text fields: `rule`, `context`, `title`, `description`, `content`, `resolution`, `rationale`, `decision`, `name`.
+
+**What is stripped/redacted:**
+
+1. **Prompt injection patterns** (case-insensitive):
+   - `ignore previous`, `ignore all previous`, `ignore above`
+   - `system:`, `assistant:`, `human:` (with optional whitespace before colon)
+   - `you are now`, `new instructions`, `override`, `disregard`
+   - `forget everything`
+   - `<system>`, `</system>`, `<instructions>`, `[INST]`, `<<SYS>>`
+
+2. **Shell injection patterns**:
+   - Command chaining: `;` followed by word character
+   - Pipe: `|` followed by word character
+   - Command substitution: `$(`, backticks
+   - Boolean chains: `&&`
+   - Redirects: `>` or `<` followed by `/`
+   - Variable expansion: `${`, `$((`
+
+3. **SQL injection patterns** (case-insensitive):
+   - `'; DROP`, `'; INSERT`, `'; UPDATE`, `'; DELETE`, `'; ALTER`, `'; CREATE`
+   - `UNION SELECT`
+   - `-- ` (SQL comment with trailing space)
+   - `/*`, `*/` (block comments)
+   - `OR 1=1`
+   - `EXEC(`, `xp_`
+
+**Behavior:**
+- Each matched pattern is replaced with `[REDACTED]` (transparency over silent stripping)
+- If an entry has 3 or more redactions: entire entry is REJECTED
+- Sanitized entries and rejections are logged to `cortex_security_log` table
+- Normal entries pass through sanitization unchanged (no false positives on typical text)
+
+### File Path Validation
+
+Shared hotspot entries contain `file_path` fields. These are validated on import:
+- REJECT paths containing `..` (path traversal)
+- REJECT paths starting with `/` (absolute paths)
+- REJECT paths containing glob characters: `*`, `?`, `[`, `]`, `{`, `}`
+- Only relative paths within the project tree are accepted
+
+### SQL Parameterization
+
+All `sqlite3` operations that insert shared data MUST use parameterized queries:
+- Use python3 `sqlite3.connect()` + `cursor.execute("... VALUES (?, ?, ?)", (val1, val2, val3))`
+- NEVER use `f"INSERT ... VALUES ('{data}'...)"` with shared data
+- NEVER use `subprocess.run(["sqlite3", db, f"INSERT ..."])` with shared data interpolated
+
+### Suspicious Pattern Detection (Curator)
+
+The curator scans entries BEFORE export. Entries flagged by these patterns are NOT exported:
+- All prompt injection patterns listed above
+- Base64-encoded payloads: strings matching `^[A-Za-z0-9+/]{40,}={0,2}$` (40+ base64 chars)
+- External URLs: `http://` or `https://` in behavioral learning `rule` fields
+- Excessive length: `rule` > 500 chars, `context`/`description`/`resolution` > 1000 chars
+- All shell injection patterns listed above
+- All SQL injection patterns listed above
+
+Human override: `/omega:share --force-entry=UUID` after manual review.
+
+### Bridge Authentication
+
+Network backend (self-hosted bridge) API requests require dual authentication:
+1. **HMAC-SHA256 signature**: `X-Cortex-Signature: hmac-sha256=<hex_digest>` computed from `<timestamp>.<request_body>`
+2. **Bearer token**: `Authorization: Bearer <token>` from `CORTEX_BRIDGE_TOKEN` env var
+3. **Timestamp**: `X-Cortex-Timestamp: <unix_epoch_seconds>` -- reject if > 5 minutes from server time
+4. **TLS**: mandatory in production (TLS 1.2+ minimum)
+
+### Security Audit Log
+
+Security events are logged to `memory.db` table `cortex_security_log`:
+- `event_type`: `signature_failure`, `content_sanitized`, `content_rejected`, `suspicious_pattern`, `auth_failure`, `rate_limited`, `size_exceeded`, `path_traversal_blocked`, `unsigned_entry_rejected`
+- `severity`: `info`, `warning`, `critical`
+- Critical events surfaced in briefing output as `[SECURITY]` warnings
+- Viewable via `/omega:team-status` "Security Events" section

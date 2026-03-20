@@ -20,7 +20,7 @@ On-demand protocol files loaded by agents when needed (deployed to `.claude/prot
 - `core/protocols/fail-safes.md` — Prerequisite gates, iteration limits, error recovery
 - `core/protocols/context-budget.md` — 60% budget, scoping strategy, heuristics
 - `core/protocols/identity.md` — Experience levels, communication styles, override hierarchy
-- `core/protocols/cortex-protocol.md` — Cortex shared knowledge: JSONL format, curation rules, import rules, privacy, contributor identity, conflict resolution, sync adapters
+- `core/protocols/cortex-protocol.md` — Cortex shared knowledge: JSONL format, curation rules, import rules, privacy, contributor identity, conflict resolution, security (HMAC entry signing, sanitization rules, suspicious patterns, SQL parameterization, bridge auth, audit logging)
 
 ## Agent Reference
 
